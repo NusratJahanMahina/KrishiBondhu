@@ -6,8 +6,14 @@ load_dotenv()
 
 def get_connection():
     try:
-        # Point to the NEW Instant Client folder
-        oracledb.init_oracle_client(lib_dir=r"C:\Users\Mahina\Downloads\instantclient-basic-windows.x64-23.26.3.0.0\instantclient_23_26")
+        # Read Instant Client path from .env (NOT hardcoded)
+        instant_client_path = os.getenv("INSTANT_CLIENT_PATH")
+        
+        if instant_client_path:
+            oracledb.init_oracle_client(lib_dir=instant_client_path)
+        else:
+            print("Warning: INSTANT_CLIENT_PATH not found in .env")
+            print("Trying to connect without Oracle Client...")
 
         connection = oracledb.connect(
             user=os.getenv("DB_USER"),
