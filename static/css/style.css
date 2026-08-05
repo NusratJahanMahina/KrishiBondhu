@@ -1,0 +1,207 @@
+:root {
+    --primary-green: #1B5E20;
+    --secondary-green: #2E7D32;
+    --accent-green: #4CAF50;
+    --light-green: #E8F5E9;
+    --soft-green: #F1F8E9;
+    --dark-text: #1A1A2E;
+    --light-text: #6C757D;
+    --white: #FFFFFF;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    --radius: 16px;
+}
+
+body {
+    font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
+    background-color: var(--soft-green);
+    color: var(--dark-text);
+    min-height: 100vh;
+}
+
+.bg-primary-green {
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+    box-shadow: 0 2px 15px rgba(27, 94, 32, 0.3);
+}
+
+.navbar-brand .brand-text {
+    font-weight: 700;
+    font-size: 1.4rem;
+    letter-spacing: -0.5px;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 50%, #1a5e2e 100%);
+    padding: 80px 0;
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+}
+
+.min-vh-75 {
+    min-height: 75vh;
+}
+
+.feature-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(76, 175, 80, 0.1);
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(27, 94, 32, 0.12);
+    border-color: var(--accent-green);
+}
+
+.feature-card i {
+    color: var(--secondary-green);
+}
+
+.nav-pills .nav-link {
+    font-weight: 600;
+    padding: 12px 28px;
+    transition: all 0.3s ease;
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--secondary-green);
+    color: var(--white);
+    box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+}
+
+.nav-pills .nav-link:not(.active) {
+    color: var(--dark-text);
+}
+
+.nav-pills .nav-link:not(.active):hover {
+    background-color: var(--light-green);
+}
+
+.role-card {
+    border-radius: var(--radius);
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 0.9rem;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #e0e0e0;
+    background: var(--white);
+}
+
+.role-card i {
+    font-size: 2rem;
+    color: var(--secondary-green);
+    transition: all 0.3s ease;
+}
+
+.role-card:hover {
+    border-color: var(--accent-green);
+    background: var(--light-green);
+    transform: scale(1.02);
+}
+
+.btn-check:checked + .role-card {
+    border-color: var(--secondary-green);
+    background: var(--light-green);
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.25);
+}
+
+.btn-check:checked + .role-card i {
+    color: var(--primary-green);
+    transform: scale(1.1);
+}
+
+.form-control, .input-group-text {
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+}
+
+.form-control:focus {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15);
+}
+
+.btn-success {
+    background-color: var(--secondary-green);
+    border-color: var(--secondary-green);
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    background-color: var(--primary-green);
+    border-color: var(--primary-green);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(46, 125, 50, 0.25);
+}
+
+.btn-outline-success {
+    border-radius: 10px;
+    border-color: var(--secondary-green);
+    color: var(--secondary-green);
+}
+
+.btn-outline-success:hover {
+    background-color: var(--secondary-green);
+    color: var(--white);
+}
+
+.btn-outline-secondary {
+    border-radius: 10px;
+}
+
+.card {
+    border-radius: var(--radius);
+    border: none;
+    overflow: hidden;
+}
+
+.card.shadow-lg {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+}
+
+.alert {
+    border-radius: 12px;
+    border-left: 5px solid;
+    font-weight: 500;
+}
+
+.alert-success {
+    border-left-color: var(--secondary-green);
+    background-color: var(--light-green);
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+    background-color: #fff3cd;
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 40px 0;
+        min-height: auto;
+    }
+    
+    .role-card {
+        min-height: 100px;
+        font-size: 0.8rem;
+    }
+    
+    .role-card i {
+        font-size: 1.5rem;
+    }
+}
