@@ -23,7 +23,6 @@
                         <div class="progress-bar bg-success" style="width: 66%;"></div>
                     </div>
                     
-                    <!-- Flash Messages -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
@@ -38,7 +37,6 @@
                     <form method="POST" action="{{ url_for('register_step2') }}" autocomplete="off">
                         <div class="row justify-content-center">
                             <div class="col-12">
-                                <!-- Row 1: First Name + Last Name -->
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold">
@@ -59,7 +57,6 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Row 2: Phone + Username -->
                                 <div class="row g-3 mt-2">
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold">
@@ -82,7 +79,6 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Row 3: Password -->
                                 <div class="row g-3 mt-2">
                                     <div class="col-md-8 mx-auto">
                                         <label class="form-label fw-semibold">
@@ -95,7 +91,6 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Row 4: Confirm Password -->
                                 <div class="row g-3 mt-2">
                                     <div class="col-md-8 mx-auto">
                                         <label class="form-label fw-semibold">
