@@ -1,0 +1,844 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Agent Dashboard - KrishiBondhu{% else %}এজেন্ট ড্যাশবোর্ড - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="row g-4">
+
+        <!-- ============================================= -->
+        <!-- LEFT COLUMN (1): PROFILE + STATS + RANKING    -->
+        <!-- ============================================= -->
+        <div class="col-lg-3">
+
+            <!-- Profile Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div>
+                            <i class="fas fa-user-circle fa-5x text-secondary"></i>
+                        </div>
+
+                        <div>
+                            <h5 class="fw-bold mb-1">
+                                {{ user.first_name }} {{ user.last_name }}
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1">
+                                    {% if session.get('language') == 'en' %}
+                                        Active
+                                    {% else %}
+                                        সক্রিয়
+                                    {% endif %}
+                                </span>
+
+                                <span class="ms-2 text-muted">
+                                    {{ agent_data.agent_code or 'N/A' }}
+                                </span>
+                            </p>
+
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-building me-1"></i>
+                                {% if session.get('language') == 'en' %}
+                                    {{ agent_data.center_name or 'Not Assigned' }}
+                                {% else %}
+                                    {{ agent_data.center_name or 'বরাদ্দ করা হয়নি' }}
+                                {% endif %}
+                            </p>
+
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                {{ agent_data.upazila or 'N/A' }},
+                                {{ agent_data.district or 'N/A' }}
+                            </p>
+
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-phone me-1"></i>
+                                {{ agent_data.phone or 'N/A' }}
+                            </p>
+
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                {% if session.get('language') == 'en' %}
+                                    Joined
+                                {% else %}
+                                    যোগদানের তারিখ
+                                {% endif %}
+                                : {{ agent_data.join_date or 'N/A' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+<!-- Performance Stats (Mid-Size) -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body p-3">
+        <h6 class="fw-bold mb-2" style="font-size: 0.95rem;">{% if session.get('language') == 'en' %}Performance{% else %}পারফরম্যান্স{% endif %}</h6>
+        <div class="row g-1">
+            <div class="col-3">
+                <div class="p-2 bg-light rounded-3 text-center">
+                    <div class="text-muted small" style="font-size: 9px;">{% if session.get('language') == 'en' %}Farmers{% else %}কৃষক{% endif %}</div>
+                    <div class="fw-bold text-success" style="font-size: 1.25rem;">{{ agent_data.total_farmers or 0 }}</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="p-2 bg-light rounded-3 text-center">
+                    <div class="text-muted small" style="font-size: 9px;">KYC</div>
+                    <div class="fw-bold text-primary" style="font-size: 1.25rem;">{{ agent_data.kyc_done or 0 }}</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="p-2 bg-light rounded-3 text-center">
+                    <div class="text-muted small" style="font-size: 9px;">{% if session.get('language') == 'en' %}Loans{% else %}ঋণ{% endif %}</div>
+                    <div class="fw-bold text-warning" style="font-size: 1.25rem;">{{ agent_data.loans_approved or 0 }}</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="p-2 bg-light rounded-3 text-center">
+                    <div class="text-muted small" style="font-size: 9px;">{% if session.get('language') == 'en' %}Pending{% else %}অপেক্ষমাণ{% endif %}</div>
+                    <div class="fw-bold text-danger" style="font-size: 1.25rem;">{{ agent_data.pending_loans or 0 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+            <!-- Agent Ranking -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+
+                    <h5 class="fw-bold mb-3">
+                        {% if session.get('language') == 'en' %}
+                            Agent Ranking
+                        {% else %}
+                            এজেন্টদের র‍্যাঙ্কিং
+                        {% endif %}
+                    </h5>
+
+                    {% if ranking %}
+
+                        <div style="max-height: 200px; overflow-y: auto;">
+
+                            <table class="table table-sm table-borderless mb-0">
+
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+
+                                        <th>
+                                            {% if session.get('language') == 'en' %}
+                                                Agent
+                                            {% else %}
+                                                এজেন্ট
+                                            {% endif %}
+                                        </th>
+
+                                        <th>
+                                            {% if session.get('language') == 'en' %}
+                                                Rate
+                                            {% else %}
+                                                সাফল্যের হার
+                                            {% endif %}
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    {% for agent in ranking %}
+
+                                    <tr>
+
+                                        <td>
+                                            <span class="badge bg-{% if loop.index == 1 %}success{% elif loop.index == 2 %}warning{% else %}secondary{% endif %} rounded-pill">
+                                                {{ loop.index }}
+                                            </span>
+                                        </td>
+
+                                        <td>{{ agent[1] }}</td>
+
+                                        <td>{{ agent[4] }}%</td>
+
+                                    </tr>
+
+                                    {% endfor %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    {% else %}
+
+                        <p class="text-muted mb-0">
+                            {% if session.get('language') == 'en' %}
+                                No data available.
+                            {% else %}
+                                কোনো তথ্য পাওয়া যায়নি।
+                            {% endif %}
+                        </p>
+
+                    {% endif %}
+
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- ============================================= -->
+        <!-- MIDDLE COLUMN (2): MY FARMERS + ADMIN POSTS   -->
+        <!-- ============================================= -->
+        <div class="col-lg-6">
+
+            <!-- My Farmers -->
+            <div class="card border-0 shadow-sm mb-4">
+
+                <div class="card-body p-4">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+
+                        <h5 class="fw-bold mb-0">
+                            {% if session.get('language') == 'en' %}
+                                My Farmers
+                            {% else %}
+                                আমার কৃষকরা
+                            {% endif %}
+                        </h5>
+
+                        <span class="badge bg-light text-dark rounded-pill px-3 py-2">
+                            {{ my_farmers|length }}
+                        </span>
+
+                    </div>
+
+                    <div style="max-height: 450px; overflow-y: auto;">
+
+                        {% if my_farmers %}
+
+                            <table class="table table-sm table-borderless mb-0">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            {% if session.get('language') == 'en' %}
+                                                Code
+                                            {% else %}
+                                                কোড
+                                            {% endif %}
+                                        </th>
+
+                                        <th>
+                                            {% if session.get('language') == 'en' %}
+                                                Name
+                                            {% else %}
+                                                নাম
+                                            {% endif %}
+                                        </th>
+
+                                        <th>
+                                            {% if session.get('language') == 'en' %}
+                                                Phone
+                                            {% else %}
+                                                ফোন
+                                            {% endif %}
+                                        </th>
+
+                                        <th>KYC</th>
+
+                                        <th>
+                                            {% if session.get('language') == 'en' %}
+                                                Loan
+                                            {% else %}
+                                                ঋণ
+                                            {% endif %}
+                                        </th>
+
+                                        <th>
+                                            {% if session.get('language') == 'en' %}
+                                                Due
+                                            {% else %}
+                                                বকেয়া
+                                            {% endif %}
+                                        </th>
+
+                                        <th>
+                                            {% if session.get('language') == 'en' %}
+                                                Order
+                                            {% else %}
+                                                অর্ডার
+                                            {% endif %}
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    {% for farmer in my_farmers %}
+
+                                    <tr>
+
+                                        <td>
+                                            <strong>{{ farmer[0] or 'N/A' }}</strong>
+                                        </td>
+
+                                        <td>{{ farmer[1] or 'N/A' }}</td>
+
+                                        <td>{{ farmer[2] or 'N/A' }}</td>
+
+
+                                        <!-- KYC Status -->
+                                        <td>
+
+                                            {% if farmer[3] == 'VERIFIED' %}
+
+                                                <span class="badge bg-success bg-opacity-10 text-success">
+                                                    {% if session.get('language') == 'en' %}
+                                                        Verified
+                                                    {% else %}
+                                                        যাচাইকৃত
+                                                    {% endif %}
+                                                </span>
+
+                                            {% elif farmer[3] == 'PENDING' %}
+
+                                                <span class="badge bg-warning bg-opacity-10 text-warning">
+                                                    {% if session.get('language') == 'en' %}
+                                                        Pending
+                                                    {% else %}
+                                                        অপেক্ষমাণ
+                                                    {% endif %}
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                    -
+                                                </span>
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Loan Status -->
+                                        <td>
+
+                                            {% if farmer[4] == 'Paid' %}
+
+                                                <span class="badge bg-success bg-opacity-10 text-success">
+                                                    {% if session.get('language') == 'en' %}
+                                                        Paid
+                                                    {% else %}
+                                                        পরিশোধিত
+                                                    {% endif %}
+                                                </span>
+
+                                            {% elif farmer[4] == 'Active Loan' %}
+
+                                                <span class="badge bg-primary bg-opacity-10 text-primary">
+                                                    {% if session.get('language') == 'en' %}
+                                                        Active
+                                                    {% else %}
+                                                        চলমান
+                                                    {% endif %}
+                                                </span>
+
+                                            {% elif farmer[4] == 'Loan Pending' %}
+
+                                                <span class="badge bg-warning bg-opacity-10 text-warning">
+                                                    {% if session.get('language') == 'en' %}
+                                                        Pending
+                                                    {% else %}
+                                                        অপেক্ষমাণ
+                                                    {% endif %}
+                                                </span>
+
+                                            {% elif farmer[4] == 'No Loan' %}
+
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                    {% if session.get('language') == 'en' %}
+                                                        No Loan
+                                                    {% else %}
+                                                        কোনো ঋণ নেই
+                                                    {% endif %}
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                    {{ farmer[4] or 'N/A' }}
+                                                </span>
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Due -->
+                                        <td>
+                                            {{ farmer[5] or '-' }}
+                                        </td>
+
+
+                                        <!-- Order -->
+                                        <td>
+
+                                            {% if farmer[6] == 'Yes' %}
+
+                                                <span class="badge bg-info bg-opacity-10 text-info">
+                                                    {% if session.get('language') == 'en' %}
+                                                        Yes
+                                                    {% else %}
+                                                        হ্যাঁ
+                                                    {% endif %}
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary">
+                                                    {% if session.get('language') == 'en' %}
+                                                        No
+                                                    {% else %}
+                                                        না
+                                                    {% endif %}
+                                                </span>
+
+                                            {% endif %}
+
+                                        </td>
+
+                                    </tr>
+
+                                    {% endfor %}
+
+                                </tbody>
+
+                            </table>
+
+                        {% else %}
+
+                            <div class="text-center py-4">
+
+                                <i class="fas fa-users text-muted fa-3x mb-2"></i>
+
+                                <p class="text-muted mb-0">
+
+                                    {% if session.get('language') == 'en' %}
+                                        No farmers assigned yet.
+                                    {% else %}
+                                        এখনো কোনো কৃষক বরাদ্দ করা হয়নি।
+                                    {% endif %}
+
+                                </p>
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Admin Posts -->
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h5 class="fw-bold mb-3">
+
+                        {% if session.get('language') == 'en' %}
+                            Admin Posts
+                        {% else %}
+                            অ্যাডমিনের পোস্ট
+                        {% endif %}
+
+                    </h5>
+
+                    <div style="max-height: 180px; overflow-y: auto;">
+
+                        {% if posts %}
+
+                            {% for post in posts %}
+
+                                <div class="border-bottom pb-2 mb-2">
+
+                                    <p class="mb-0">
+                                        {{ post[1] }}
+                                    </p>
+
+                                    <span class="text-muted small">
+                                        {{ post[2] }}
+                                    </span>
+
+                                </div>
+
+                            {% endfor %}
+
+                        {% else %}
+
+                            <p class="text-muted mb-0">
+
+                                {% if session.get('language') == 'en' %}
+                                    No posts from admin yet.
+                                {% else %}
+                                    অ্যাডমিনের পক্ষ থেকে এখনো কোনো পোস্ট নেই।
+                                {% endif %}
+
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ============================================= -->
+        <!-- RIGHT COLUMN (1): ACTION BUTTONS              -->
+        <!-- ============================================= -->
+        <div class="col-lg-3">
+
+            <!-- Action / Job to Do -->
+            <div class="card border-0 shadow-sm mb-4">
+
+                <div class="card-body p-4">
+
+                    <h5 class="fw-bold mb-3">
+
+                        <i class="fas fa-tasks text-muted me-2"></i>
+
+                        {% if session.get('language') == 'en' %}
+                            Action
+                        {% else %}
+                            করণীয়
+                        {% endif %}
+
+                    </h5>
+
+
+                    <div class="row g-2">
+
+                        <!-- KYC -->
+                        <div class="col-6">
+
+                            <a href="{{ url_for('agent_kyc_requests') }}" class="text-decoration-none">
+
+                                <div class="p-3 bg-light rounded-3 text-center hover-card">
+
+                                    <i class="fas fa-file-signature text-warning fs-2"></i>
+
+                                    <p class="mb-0 mt-1">KYC</p>
+
+                                    {% if agent_data.pending_kyc > 0 %}
+                                        <span class="badge bg-danger rounded-pill mt-1">
+                                            {{ agent_data.pending_kyc }}
+                                        </span>
+                                    {% endif %}
+
+                                </div>
+
+                            </a>
+
+                        </div>
+
+
+                        <!-- Loans -->
+                        <div class="col-6">
+
+                            <a href="{{ url_for('agent_loan_requests') }}" class="text-decoration-none">
+
+                                <div class="p-3 bg-light rounded-3 text-center hover-card">
+
+                                    <i class="fas fa-hand-holding-usd text-success fs-2"></i>
+
+                                    <p class="mb-0 mt-1">
+
+                                        {% if session.get('language') == 'en' %}
+                                            Loans
+                                        {% else %}
+                                            ঋণ
+                                        {% endif %}
+
+                                    </p>
+
+                                    {% if agent_data.pending_loans > 0 %}
+                                        <span class="badge bg-danger rounded-pill mt-1">
+                                            {{ agent_data.pending_loans }}
+                                        </span>
+                                    {% endif %}
+
+                                </div>
+
+                            </a>
+
+                        </div>
+
+
+                        <!-- Deliveries -->
+                        <div class="col-6">
+
+                            <a href="{{ url_for('agent_purchases') }}" class="text-decoration-none">
+
+                                <div class="p-3 bg-light rounded-3 text-center hover-card">
+
+                                    <i class="fas fa-box text-info fs-2"></i>
+
+                                    <p class="mb-0 mt-1">
+
+                                        {% if session.get('language') == 'en' %}
+                                            Deliveries
+                                        {% else %}
+                                            পণ্য সরবরাহ
+                                        {% endif %}
+
+                                    </p>
+
+                                </div>
+
+                            </a>
+
+                        </div>
+
+
+                        <!-- Inventory -->
+                        <div class="col-6">
+
+                            <a href="{{ url_for('agent_inventory') }}" class="text-decoration-none">
+
+                                <div class="p-3 bg-light rounded-3 text-center hover-card">
+
+                                    <i class="fas fa-warehouse text-secondary fs-2"></i>
+
+                                    <p class="mb-0 mt-1">
+
+                                        {% if session.get('language') == 'en' %}
+                                            Inventory
+                                        {% else %}
+                                            মজুতপণ্য
+                                        {% endif %}
+
+                                    </p>
+
+                                </div>
+
+                            </a>
+
+                        </div>
+
+
+                        <!-- Farmers -->
+                        <div class="col-6">
+
+                            <a href="{{ url_for('agent_farmers') }}" class="text-decoration-none">
+
+                                <div class="p-3 bg-light rounded-3 text-center hover-card">
+
+                                    <i class="fas fa-users text-primary fs-2"></i>
+
+                                    <p class="mb-0 mt-1">
+
+                                        {% if session.get('language') == 'en' %}
+                                            Farmers
+                                        {% else %}
+                                            কৃষক
+                                        {% endif %}
+
+                                    </p>
+
+                                </div>
+
+                            </a>
+
+                        </div>
+
+
+                        <!-- Farmer Support -->
+                        <div class="col-6">
+
+                            <a href="{{ url_for('agent_outreach') }}" class="text-decoration-none">
+
+                                <div class="p-3 bg-light rounded-3 text-center hover-card">
+
+                                    <i class="fas fa-bullhorn text-danger fs-2"></i>
+
+                                    <p class="mb-0 mt-1">
+
+                                        {% if session.get('language') == 'en' %}
+                                            Publicity
+                                        {% else %}
+                                            প্রচার
+                                        {% endif %}
+
+                                    </p>
+
+                                </div>
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Risk Prediction -->
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h5 class="fw-bold mb-2">
+
+                        <i class="fas fa-robot me-2"></i>
+
+                        {% if session.get('language') == 'en' %}
+                            Risk Prediction
+                        {% else %}
+                            ঝুঁকি পূর্বাভাস
+                        {% endif %}
+
+                    </h5>
+
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3 py-2">
+
+                        {% if session.get('language') == 'en' %}
+                            Coming Soon
+                        {% else %}
+                            শীঘ্রই আসছে
+                        {% endif %}
+
+                    </span>
+
+                    <p class="text-muted mt-2 mb-0">
+
+                        {% if session.get('language') == 'en' %}
+
+                            Predicts farmer default risk based on activity.
+
+                        {% else %}
+
+                            কৃষকের কার্যক্রমের ভিত্তিতে ঋণ খেলাপির ঝুঁকি পূর্বাভাস দেয়।
+
+                        {% endif %}
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+
+    .hover-card {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .hover-card:hover {
+        background-color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        transform: translateY(-2px);
+    }
+
+    .table td {
+        padding: 8px 6px;
+        vertical-align: middle;
+        font-size: 14px;
+    }
+
+    .table th {
+        font-size: 13px;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .container {
+        max-width: 1400px;
+    }
+
+    .bg-opacity-10 {
+        --bs-bg-opacity: 0.1;
+    }
+
+    .shadow-sm {
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04) !important;
+    }
+
+    .rounded-3 {
+        border-radius: 12px !important;
+    }
+
+    .badge {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+
+    ::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #d0d0d0;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #b0b0b0;
+    }
+
+    .fs-2 {
+        font-size: 1.8rem !important;
+    }
+
+    .fs-5 {
+        font-size: 1.2rem !important;
+    }
+
+    h5 {
+        font-size: 1.2rem !important;
+    }
+
+    .table td {
+        font-size: 14px !important;
+    }
+
+    .table th {
+        font-size: 13px !important;
+    }
+
+</style>
+
+{% endblock %}
