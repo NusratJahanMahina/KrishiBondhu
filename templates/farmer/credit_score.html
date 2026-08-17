@@ -1,0 +1,236 @@
+{% extends "farmer/base_farmer.html" %}
+
+{% block title %}Credit Score - KrishiBondhu{% endblock %}
+
+{% block content %}
+<h4 class="text-muted mb-3">
+    <i class="fas fa-star me-2"></i>Credit Score
+</h4>
+
+<!-- Credit Score Card -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="credit-score-card mb-4">
+            <div class="label">Your Credit Score</div>
+            <div class="score">
+                {% if credit_score %}
+                    {{ credit_score[0] }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+            <div class="update-date">
+                Last updated: 
+                {% if credit_score %}
+                    {{ credit_score[1] }}
+                {% else %}
+                    Never
+                {% endif %}
+            </div>
+            <div class="mt-3">
+                <span class="badge bg-light text-dark px-3 py-2">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Score ranges from 0 to 100
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="tab-content-section">
+            <h6 class="mb-3">
+                <i class="fas fa-chart-bar me-2 text-success"></i>Breakdown
+            </h6>
+            
+            {% if credit_breakdown %}
+                {% set referrals = credit_breakdown[0] or 0 %}
+                {% set likes = credit_breakdown[1] or 0 %}
+                {% set repayments = credit_breakdown[2] or 0 %}
+                {% set loans = credit_breakdown[3] or 0 %}
+                
+                {% set referral_width = referrals * 5 %}
+                {% set likes_width = likes * 2 %}
+                {% set repayment_width = repayments * 5 %}
+                {% set loan_width = loans * 10 %}
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Referrals</span>
+                        <span class="fw-semibold">{{ referrals }}</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="--width: {{ referral_width }}%; width: var(--width);"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Community Likes</span>
+                        <span class="fw-semibold">{{ likes }}</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-info" style="--width: {{ likes_width }}%; width: var(--width);"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Repayments</span>
+                        <span class="fw-semibold">{{ repayments }}</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-warning" style="--width: {{ repayment_width }}%; width: var(--width);"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Active Loans</span>
+                        <span class="fw-semibold">{{ loans }}</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-danger" style="--width: {{ loan_width }}%; width: var(--width);"></div>
+                    </div>
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Complete your profile and activities to build your credit score.
+                </p>
+                <div class="alert alert-info small">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Tip:</strong> Refer friends, make timely repayments, and engage with the community to improve your score!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- How to Improve -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="tab-content-section">
+            <h6 class="mb-3">
+                <i class="fas fa-lightbulb me-2 text-warning"></i>How to Improve Your Score
+            </h6>
+            <div class="row g-3">
+                <div class="col-md-3 col-sm-6 text-center">
+                    <div class="p-3 bg-light rounded-3">
+                        <i class="fas fa-handshake text-success fa-2x mb-2"></i>
+                        <p class="small mb-0">Refer other farmers</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 text-center">
+                    <div class="p-3 bg-light rounded-3">
+                        <i class="fas fa-money-bill-wave text-success fa-2x mb-2"></i>
+                        <p class="small mb-0">Make timely repayments</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 text-center">
+                    <div class="p-3 bg-light rounded-3">
+                        <i class="fas fa-thumbs-up text-success fa-2x mb-2"></i>
+                        <p class="small mb-0">Engage with community</p>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 text-center">
+                    <div class="p-3 bg-light rounded-3">
+                        <i class="fas fa-id-card text-success fa-2x mb-2"></i>
+                        <p class="small mb-0">Complete KYC verification</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Understanding Your Score -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="tab-content-section bg-light">
+            <h6 class="mb-3">
+                <i class="fas fa-graduation-cap me-2 text-success"></i>Understanding Your Credit Score
+            </h6>
+            <div class="row g-3">
+                <div class="col-md-3 col-sm-6 text-center">
+                    <span class="badge bg-success rounded-pill px-3 py-2 mb-2 d-inline-block">80-100</span>
+                    <p class="small text-muted mb-0">Excellent</p>
+                </div>
+                <div class="col-md-3 col-sm-6 text-center">
+                    <span class="badge bg-info rounded-pill px-3 py-2 mb-2 d-inline-block">60-79</span>
+                    <p class="small text-muted mb-0">Good</p>
+                </div>
+                <div class="col-md-3 col-sm-6 text-center">
+                    <span class="badge bg-warning rounded-pill px-3 py-2 mb-2 d-inline-block">40-59</span>
+                    <p class="small text-muted mb-0">Fair</p>
+                </div>
+                <div class="col-md-3 col-sm-6 text-center">
+                    <span class="badge bg-danger rounded-pill px-3 py-2 mb-2 d-inline-block">0-39</span>
+                    <p class="small text-muted mb-0">Needs Improvement</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .credit-score-card {
+        background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(27, 94, 32, 0.3);
+    }
+    .credit-score-card .score {
+        font-size: 4rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .credit-score-card .label {
+        font-size: 1rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .credit-score-card .update-date {
+        font-size: 0.8rem;
+        opacity: 0.7;
+        margin-top: 5px;
+    }
+    .credit-score-card .badge {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .tab-content-section {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        border: 1px solid #f0f0f0;
+    }
+    .tab-content-section.bg-light {
+        background: #f8f9fa !important;
+    }
+    .progress {
+        background-color: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .progress-bar {
+        transition: width 0.6s ease;
+    }
+    .rounded-3 {
+        border-radius: 12px !important;
+    }
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+    .badge {
+        font-weight: 600;
+    }
+    .d-inline-block {
+        display: inline-block !important;
+    }
+</style>
+{% endblock %}

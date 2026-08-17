@@ -1,0 +1,99 @@
+{% extends "farmer/base_farmer.html" %}
+
+{% block title %}My Consultations - KrishiBondhu{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="text-muted mb-0">
+        <i class="fas fa-user-md me-2"></i>My Consultations
+    </h4>
+    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#requestConsultationModal">
+        <i class="fas fa-plus me-1"></i> Request Consultation
+    </button>
+</div>
+
+<div class="tab-content-section">
+    {% if consultations %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Session</th>
+                    <th>Advisor</th>
+                    <th>Topic</th>
+                    <th>Scheduled</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for con in consultations %}
+                <tr>
+                    <td>
+                        <span class="fw-semibold text-success">{{ con[0] }}</span>
+                    </td>
+                    <td>{{ con[1] }}</td>
+                    <td>{{ con[2] }}</td>
+                    <td>{{ con[3] }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'warning' if con[5] == 'PENDING' else 'success' if con[5] == 'COMPLETED' else 'info' if con[5] == 'ACCEPTED' else 'danger' if con[5] == 'CANCELLED' else 'secondary' }}">
+                            {{ con[5] }}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="{{ con[6] or 'No notes' }}">
+                            <i class="fas fa-sticky-note"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-user-md text-muted fa-3x mb-3"></i>
+        <p class="text-muted mb-3">No consultations yet.</p>
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#requestConsultationModal">
+            <i class="fas fa-plus me-1"></i> Request your first consultation
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Request Consultation Modal -->
+<div class="modal fade" id="requestConsultationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-plus me-2"></i>Request Consultation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('request_consultation') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Topic</label>
+                        <input type="text" name="topic" class="form-control" required placeholder="e.g., Boro Season Planning, Pest Control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Preferred Date</label>
+                        <input type="date" name="scheduled_date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="Additional details about your consultation request"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane me-1"></i> Send Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

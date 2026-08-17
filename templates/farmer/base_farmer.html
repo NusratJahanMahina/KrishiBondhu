@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}কৃষক ড্যাশবোর্ড - কৃষিবন্ধু{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        /* Sidebar Styling */
+        .sidebar {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            border-right: 1px solid #e9ecef;
+            padding-top: 20px;
+            position: sticky;
+            top: 0;
+        }
+        .sidebar .nav-link {
+            color: #6c757d;
+            font-weight: 500;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #e9ecef;
+        }
+        .sidebar .nav-link.active {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+            border-left: 4px solid #1b5e20;
+        }
+        .sidebar .nav-link i {
+            width: 24px;
+        }
+        
+        .stat-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            background: #fff;
+            padding: 15px;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .stat-card .title {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+        .stat-card .number {
+            font-size: 2.2rem;
+            font-weight: 300;
+            color: #333;
+        }
+        .stat-card.border-left-green { border-left: 4px solid #1b5e20; }
+        .stat-card.border-left-orange { border-left: 4px solid #f39c12; }
+        .stat-card.border-left-blue { border-left: 4px solid #3498db; }
+        .stat-card.border-left-purple { border-left: 4px solid #9b59b6; }
+        
+        .kyc-badge {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .kyc-badge.pending { background-color: #fff3cd; color: #856404; }
+        .kyc-badge.rejected { background-color: #f8d7da; color: #721c24; }
+
+        .tab-content-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        
+        .activity-item {
+            border-bottom: 1px solid #f1f1f1;
+            padding: 10px 0;
+        }
+        .activity-item:last-child { border-bottom: none; }
+        
+        .top-header {
+            background: #fff;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+        
+        .notification-badge {
+            position: relative;
+            cursor: pointer;
+        }
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border: 1px solid #eee;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 350px;
+            display: none;
+            z-index: 1000;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .notification-dropdown.show { display: block; }
+        .notification-item {
+            border-bottom: 1px solid #f1f1f1;
+            padding: 12px 15px;
+            transition: background 0.2s;
+        }
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-item:last-child { border-bottom: none; }
+        .notification-item.unread {
+            background-color: #e8f5e9;
+            border-left: 3px solid #1b5e20;
+        }
+        .notification-item .time {
+            font-size: 0.75rem;
+            color: #999;
+        }
+        
+        .table th { font-weight: 500; color: #6c757d; border-top: none; }
+        .table td { vertical-align: middle; }
+        
+        .btn-success {
+            background-color: #1b5e20;
+            border-color: #1b5e20;
+        }
+        .btn-success:hover {
+            background-color: #145214;
+            border-color: #145214;
+        }
+        
+        .modal-header.bg-success {
+            background-color: #1b5e20 !important;
+        }
+        
+        .credit-score-card {
+            background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+        }
+        .credit-score-card .score {
+            font-size: 4rem;
+            font-weight: 700;
+        }
+        .credit-score-card .label {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        .credit-score-card .update-date {
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+                position: relative;
+            }
+            .sidebar .nav {
+                flex-direction: row;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+            .sidebar .nav-link {
+                white-space: nowrap;
+                font-size: 0.85rem;
+                padding: 8px 15px;
+            }
+            .sidebar .nav-link i {
+                margin-right: 5px;
+            }
+            .stat-card .number {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- ============================================
+         TOP HEADER WITH NOTIFICATIONS
+         ============================================ -->
+    <div class="container-fluid bg-white border-bottom py-2">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-success fw-bold">
+                <i class="fas fa-seedling me-2"></i>KrishiBondhu
+            </h5>
+            <div class="d-flex align-items-center gap-3">
+                <div class="notification-badge" onclick="toggleNotifications()">
+                    <i class="fas fa-bell fa-lg text-muted"></i>
+                    <span class="badge bg-danger rounded-pill" id="notifCount" style="font-size:0.7rem; position:absolute; top:-5px; right:-5px; display:none;">0</span>
+                    <div class="notification-dropdown p-0" id="notifDropdown">
+                        <div class="p-3 border-bottom">
+                            <h6 class="mb-0 fw-bold">Notifications</h6>
+                        </div>
+                        <div id="notifList" class="p-2">
+                            <p class="text-muted small text-center py-3 mb-0">Loading notifications...</p>
+                        </div>
+                        <div class="p-2 border-top text-center">
+                            <small class="text-muted">Click notification to view details</small>
+                        </div>
+                    </div>
+                </div>
+                <span class="fw-semibold">{{ user.first_name }} {{ user.last_name }}</span>
+                <a href="{{ url_for('farmer_logout') }}" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         FLASH MESSAGES
+         ============================================ -->
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- ============================================
+         MAIN CONTENT
+         ============================================ -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3 col-md-4 sidebar">
+                <div class="nav flex-column nav-pills" role="tablist">
+                    <a class="nav-link {{ 'active' if active_tab == 'overview' else '' }}" 
+                       href="{{ url_for('farmer_dashboard') }}">
+                        <i class="fas fa-th-large me-2"></i> Overview
+                    </a>
+                    <a class="nav-link {{ 'active' if active_tab == 'loans' else '' }}" 
+                       href="{{ url_for('farmer_loans') }}">
+                        <i class="fas fa-hand-holding-usd me-2"></i> Loans
+                    </a>
+                    <a class="nav-link {{ 'active' if active_tab == 'assets' else '' }}" 
+                       href="{{ url_for('farmer_assets') }}">
+                        <i class="fas fa-boxes me-2"></i> Assets
+                    </a>
+                    <a class="nav-link {{ 'active' if active_tab == 'repayments' else '' }}" 
+                       href="{{ url_for('farmer_repayments') }}">
+                        <i class="fas fa-money-bill-wave me-2"></i> Repayments
+                    </a>
+                    <a class="nav-link {{ 'active' if active_tab == 'consultations' else '' }}" 
+                       href="{{ url_for('farmer_consultations') }}">
+                        <i class="fas fa-user-md me-2"></i> Consultations
+                    </a>
+                    <a class="nav-link {{ 'active' if active_tab == 'community' else '' }}" 
+                       href="{{ url_for('farmer_community') }}">
+                        <i class="fas fa-users me-2"></i> Community
+                    </a>
+                    <a class="nav-link {{ 'active' if active_tab == 'credit' else '' }}" 
+                       href="{{ url_for('farmer_credit_score') }}">
+                        <i class="fas fa-star me-2"></i> Credit Score
+                    </a>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="col-lg-9 col-md-8 py-3">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         BOOTSTRAP JS
+         ============================================ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Notification Toggle Logic
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notifDropdown');
+            const isShowing = dropdown.classList.contains('show');
+            
+            if (isShowing) {
+                dropdown.classList.remove('show');
+                return;
+            }
+            
+            dropdown.classList.add('show');
+            fetchNotifications();
+        }
+
+        function fetchNotifications() {
+            const list = document.getElementById('notifList');
+            list.innerHTML = '<p class="text-muted small text-center py-3 mb-0">Loading...</p>';
+            
+            fetch('{{ url_for("get_notifications_api") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const count = document.getElementById('notifCount');
+                    if (!data.notifications || data.notifications.length === 0) {
+                        list.innerHTML = '<p class="text-muted small text-center py-3 mb-0">No new notifications</p>';
+                        count.style.display = 'none';
+                    } else {
+                        let html = '';
+                        const unread = data.notifications.filter(n => n[3] === 'NO').length;
+                        data.notifications.forEach(n => {
+                            const isUnread = n[3] === 'NO';
+                            html += `
+                                <div class="notification-item ${isUnread ? 'unread' : ''}">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="small fw-${isUnread ? 'bold' : 'normal'}">${n[1]}</span>
+                                        ${n[4] ? `<span class="badge bg-${n[4] === 'LOAN' ? 'primary' : n[4] === 'KYC' ? 'info' : n[4] === 'PAYMENT' ? 'success' : 'secondary'}">${n[4]}</span>` : ''}
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <small class="text-muted">${n[2]}</small>
+                                        ${n[5] ? `<a href="${n[5]}" class="text-success small">View</a>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        list.innerHTML = html;
+                        
+                        if (unread > 0) {
+                            count.innerText = unread;
+                            count.style.display = 'block';
+                        } else {
+                            count.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching notifications:', error);
+                    list.innerHTML = '<p class="text-muted small text-center py-3 mb-0">Error loading notifications</p>';
+                });
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            var dropdown = document.getElementById('notifDropdown');
+            var bell = document.querySelector('.notification-badge');
+            if (bell && !bell.contains(event.target) && dropdown && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Auto-refresh notifications every 30 seconds
+        setInterval(() => {
+            if (document.getElementById('notifDropdown').classList.contains('show')) {
+                fetchNotifications();
+            }
+        }, 30000);
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
