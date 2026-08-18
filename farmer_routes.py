@@ -19,9 +19,7 @@ def get_flash_message(bn_msg, en_msg):
 
 def register_farmer_routes(app):
 
-    # ============================================
-    # DASHBOARD - OVERVIEW
-    # ============================================
+    #dashboard overview
     @app.route('/farmer/dashboard')
     def farmer_dashboard():
         """Farmer Dashboard - Overview Tab"""
@@ -58,9 +56,8 @@ def register_farmer_routes(app):
                                farmer_code=farmer_code,
                                active_tab='overview')
 
-    # ============================================
-    # LOANS
-    # ============================================
+
+   #loan
     @app.route('/farmer/loans')
     def farmer_loans():
         """Farmer Loans Tab"""
@@ -203,9 +200,9 @@ def register_farmer_routes(app):
                               loan_no=loan_no,
                               user=session['user'])
 
-    # ============================================
+   
     # ASSETS
-    # ============================================
+    
     @app.route('/farmer/assets')
     def farmer_assets():
         """Farmer Assets Tab"""
@@ -626,6 +623,105 @@ def register_farmer_routes(app):
                 if conn:
                     conn.close()
         return jsonify({"notifications": notifs})
+
+    # ============================================
+    # INVENTORY & PURCHASES
+    # ============================================
+    @app.route('/farmer/inventory')
+    def farmer_inventory():
+        """Display the inventory page for the farmer to order items"""
+        if 'user' not in session or session['user']['role'] != 'FARMER':
+            flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
+            return redirect(url_for('login_register'))
+        
+        conn = get_connection()
+        inventory = []
+        farmer_code = None
+        
+        if conn:
+            cursor = conn.cursor()
+            try:
+                farmer_code = get_farmer_code(cursor, session['user']['person_id'])
+                if farmer_code:
+                    center_code = get_center_code_for_farmer(cursor, farmer_code)
+                    if center_code:
+                        inventory = get_inventory_items(cursor, center_code)
+                cursor.close()
+                conn.close()
+            except Exception as e:
+                print(f"Inventory error: {e}")
+                if conn: 
+                    conn.close()
+                
+        return render_template('farmer/inventory.html', 
+                              user=session['user'], 
+                              inventory=inventory,
+                              farmer_code=farmer_code,
+                              active_tab='inventory')
+
+    @app.route('/farmer/place_order', methods=['POST'])
+    def place_order():
+        """Process the order when the farmer clicks 'Buy Now'"""
+        if 'user' not in session or session['user']['role'] != 'FARMER':
+            flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
+            return redirect(url_for('login_register'))
+
+        # Grab data from the HTML form
+        inventory_id = request.form.get('inventory_id')
+        quantity = request.form.get('quantity')
+        payment_method = request.form.get('payment_method', 'CASH')
+        
+        if not inventory_id or not quantity:
+            flash(get_flash_message('পণ্য এবং পরিমাণ নির্বাচন করুন।', 'Please select an item and quantity.'), 'danger')
+            return redirect(url_for('farmer_inventory'))
+            
+        try:
+            quantity = int(quantity)
+            if quantity <= 0:
+                flash(get_flash_message('পরিমাণ ০ এর বেশি হতে হবে।', 'Quantity must be greater than 0.'), 'danger')
+                return redirect(url_for('farmer_inventory'))
+        except ValueError:
+            flash(get_flash_message('অবৈধ পরিমাণ।', 'Invalid quantity.'), 'danger')
+            return redirect(url_for('farmer_inventory'))
+
+        conn = get_connection()
+        if conn:
+            cursor = conn.cursor()
+            try:
+                farmer_code = get_farmer_code(cursor, session['user']['person_id'])
+                if not farmer_code:
+                    flash(get_flash_message('কৃষক কোড পাওয়া যায়নি।', 'Farmer code not found.'), 'danger')
+                    return redirect(url_for('farmer_inventory'))
+                
+                # Get the agent and item price
+                agent_code = get_farmer_agent_code(cursor, farmer_code)
+                cursor.execute("SELECT unit_price FROM INVENTORY WHERE inventory_id = :1", (inventory_id,))
+                price_row = cursor.fetchone()
+                
+                if not price_row:
+                    flash(get_flash_message('পণ্য পাওয়া যায়নি।', 'Item not found.'), 'danger')
+                    return redirect(url_for('farmer_inventory'))
+                
+                unit_price = price_row[0]
+                
+                # 1. Create the Purchase record
+                purchase_id = create_new_purchase(cursor, farmer_code, agent_code, payment_method, generate_id)
+                
+                # 2. Add the item to the order and update inventory stock
+                add_item_to_purchase(cursor, purchase_id, inventory_id, quantity, unit_price, generate_id)
+                
+                conn.commit()
+                flash(get_flash_message('অর্ডার সফলভাবে সম্পন্ন হয়েছে!', 'Order placed successfully!'), 'success')
+                
+            except Exception as e:
+                conn.rollback()
+                flash(get_flash_message('ত্রুটি: ' + str(e), 'Error: ' + str(e)), 'danger')
+                print(f"Order error: {e}")
+            finally:
+                cursor.close()
+                conn.close()
+                
+        return redirect(url_for('farmer_inventory'))
 
     # ============================================
     # LOGOUT

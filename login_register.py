@@ -383,7 +383,7 @@ def register_login_routes(app):
             return redirect(url_for('agent_dashboard'))
 
         template_map = {
-            'farmer': 'dashboard_farmer.html',
+            'farmer': 'farmer/dashboard.html',
             'admin': 'dashboard_admin.html',
             'advisor': 'dashboard_advisor.html'
         }

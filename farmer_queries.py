@@ -1,6 +1,4 @@
-# ============================================
-# FARMER QUERIES - Complete Version
-# ============================================
+
 
 def get_farmer_code(cursor, person_id):
     cursor.execute("SELECT farmer_code FROM FARMER WHERE person_id = :1", (person_id,))
@@ -13,7 +11,7 @@ def get_farmer_dashboard_stats(cursor, farmer_code):
             (SELECT COUNT(*) FROM LOAN WHERE farmer_code = :1 AND loan_state = 'ACTIVE') as active_loans,
             (SELECT COUNT(*) FROM REPAYMENT r JOIN LOAN l ON r.loan_no = l.loan_no 
              WHERE l.farmer_code = :1 AND r.payment_state = 'OVERDUE') as pending_repayments,
-            (SELECT COUNT(*) FROM CONSULTATION WHERE farmer_code = :1) as total_consultations,
+            (SELECT COUNT(*) FROM ATTENDS WHERE farmer_code = :1) as total_consultations,
             (SELECT NVL(identity_verified, 'PENDING') FROM KYC WHERE farmer_code = :1) as kyc_status
         FROM DUAL
     """, (farmer_code,))
