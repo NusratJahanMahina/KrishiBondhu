@@ -286,6 +286,14 @@
                        href="{{ url_for('farmer_community') }}">
                         <i class="fas fa-users me-2"></i> Community
                     </a>
+                    <a class="nav-link {{ 'active' if active_tab == 'inventory' else '' }}" 
+                       href="{{ url_for('farmer_inventory') }}">
+                        <i class="fas fa-shopping-cart me-2"></i> Inventory
+                    </a>
+                    <a class="nav-link {{ 'active' if active_tab == 'orders' else '' }}" 
+                       href="{{ url_for('farmer_orders') }}">
+                        <i class="fas fa-clipboard-list me-2"></i> My Orders
+                    </a>
                     <a class="nav-link {{ 'active' if active_tab == 'credit' else '' }}" 
                        href="{{ url_for('farmer_credit_score') }}">
                         <i class="fas fa-star me-2"></i> Credit Score

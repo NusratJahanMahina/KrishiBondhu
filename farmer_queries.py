@@ -1,5 +1,3 @@
-
-
 def get_farmer_code(cursor, person_id):
     cursor.execute("SELECT farmer_code FROM FARMER WHERE person_id = :1", (person_id,))
     row = cursor.fetchone()
@@ -77,14 +75,16 @@ def get_farmer_consultations(cursor, farmer_code):
         SELECT c.session_id, 
                NVL(p.first_name || ' ' || p.last_name, 'Not Assigned') as advisor_name, 
                c.topic, 
-               TO_CHAR(c.scheduled_date, 'DD-Mon-YYYY') as sched_date,
-               TO_CHAR(c.actual_date, 'DD-Mon-YYYY') as actual_date, 
-               c.resolution_status, c.notes,
+               TO_CHAR(a.scheduled_date, 'DD-Mon-YYYY') as sched_date,
+               TO_CHAR(a.actual_date, 'DD-Mon-YYYY') as actual_date, 
+               a.resolution_status, 
+               a.notes,
                TO_CHAR(c.created_at, 'DD-Mon-YYYY') as created_date
-        FROM CONSULTATION c
-        LEFT JOIN PERSON p ON c.advisor_id = p.person_id
-        WHERE c.farmer_code = :1
-        ORDER BY c.scheduled_date DESC
+        FROM ATTENDS a
+        JOIN CONSULTATION c ON a.session_id = c.session_id
+        LEFT JOIN PERSON p ON a.advisor_id = p.person_id
+        WHERE a.farmer_code = :1
+        ORDER BY a.scheduled_date DESC
     """, (farmer_code,))
     return cursor.fetchall()
 
@@ -133,3 +133,81 @@ def get_notifications(cursor, farmer_code):
 
 def mark_notifications_read(cursor, farmer_code):
     cursor.execute("UPDATE NOTIFICATION SET is_read = 'YES' WHERE farmer_code = :1 AND is_read = 'NO'", (farmer_code,))
+
+
+# ============================================
+# NEW: INVENTORY & ORDER HISTORY QUERIES
+# ============================================
+
+def get_center_code_for_farmer(cursor, farmer_code):
+    cursor.execute("SELECT center_code FROM FARMER WHERE farmer_code = :1", (farmer_code,))
+    row = cursor.fetchone()
+    return row[0] if row else None
+
+def get_inventory_items(cursor, center_code):
+    cursor.execute("""
+        SELECT 
+            i.inventory_id,
+            i.name,
+            i.quantity,
+            i.price_per_unit,
+            CASE 
+                WHEN s.inventory_id IS NOT NULL THEN 'SEED'
+                WHEN f.inventory_id IS NOT NULL THEN 'FERTILIZER'
+                WHEN c.inventory_id IS NOT NULL THEN 'CHEMICAL'
+                ELSE 'OTHER'
+            END AS category,
+            i.unit,
+            i.min_stock_level
+        FROM INVENTORY i
+        LEFT JOIN SEED_INVENTORY s ON i.inventory_id = s.inventory_id
+        LEFT JOIN FERTILIZER_INVENTORY f ON i.inventory_id = f.inventory_id
+        LEFT JOIN CHEMICAL_INVENTORY c ON i.inventory_id = c.inventory_id
+        WHERE i.center_code = :1 AND i.quantity > 0
+        ORDER BY i.name
+    """, (center_code,))
+    return cursor.fetchall()
+
+def get_farmer_agent_code(cursor, farmer_code):
+    cursor.execute("SELECT agent_code FROM FARMER WHERE farmer_code = :1", (farmer_code,))
+    row = cursor.fetchone()
+    return row[0] if row else None
+
+def get_farmer_order_history(cursor, farmer_code):
+    cursor.execute("""
+        SELECT 
+            purchase_id,
+            purchase_date,
+            payment_status,
+            payment_method,
+            item_name,
+            quantity,
+            total_cost
+        FROM VIEW_FARMER_ORDER_DETAILS
+        WHERE farmer_code = :1
+        ORDER BY purchase_date DESC
+    """, (farmer_code,))
+    return cursor.fetchall()
+
+def create_new_purchase(cursor, farmer_code, agent_code, payment_method, generate_id_func):
+    purchase_id = 'PUR-' + str(generate_id_func())[:8]
+    cursor.execute("""
+        INSERT INTO PURCHASE (purchase_id, farmer_code, agent_code, payment_method, payment_status, purchase_date)
+        VALUES (:1, :2, :3, :4, 'PENDING', SYSDATE)
+    """, (purchase_id, farmer_code, agent_code, payment_method))
+    return purchase_id
+
+def add_item_to_purchase(cursor, purchase_id, inventory_id, quantity, unit_price, generate_id_func):
+    total_cost = quantity * unit_price
+    item_id = 'PI-' + str(generate_id_func())[:8]
+    
+    cursor.execute("""
+        INSERT INTO ORDERED_ITEM (item_id, purchase_id, inventory_id, quantity, unit_price, total_cost)
+        VALUES (:1, :2, :3, :4, :5, :6)
+    """, (item_id, purchase_id, inventory_id, quantity, unit_price, total_cost))
+    
+    cursor.execute("""
+        UPDATE INVENTORY 
+        SET quantity = quantity - :1 
+        WHERE inventory_id = :2
+    """, (quantity, inventory_id))

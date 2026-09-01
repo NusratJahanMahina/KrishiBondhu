@@ -4,25 +4,24 @@ from farmer_queries import *
 import random
 import time
 from datetime import datetime
+import json
+
+import uuid
 
 def generate_id():
-    """Generate a unique ID based on timestamp and random number"""
-    return int(str(int(time.time() * 1000)) + str(random.randint(10, 99)))
+    """Generate a unique ID using UUID (avoids duplicate IDs)"""
+    return str(uuid.uuid4().int)[:12]
 
 def get_lang():
-    """Get current language from session"""
     return session.get('language', 'bn')
 
 def get_flash_message(bn_msg, en_msg):
-    """Get flash message in appropriate language"""
     return bn_msg if get_lang() == 'bn' else en_msg
 
 def register_farmer_routes(app):
 
-    #dashboard overview
     @app.route('/farmer/dashboard')
     def farmer_dashboard():
-        """Farmer Dashboard - Overview Tab"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -56,11 +55,8 @@ def register_farmer_routes(app):
                                farmer_code=farmer_code,
                                active_tab='overview')
 
-
-   #loan
     @app.route('/farmer/loans')
     def farmer_loans():
-        """Farmer Loans Tab"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -77,7 +73,6 @@ def register_farmer_routes(app):
                 farmer_code = get_farmer_code(cursor, person_id)
                 if farmer_code:
                     loans = get_farmer_loans(cursor, farmer_code)
-                    # Get repayments for each loan
                     for loan in loans:
                         loan_no = loan[0]
                         repayments = get_loan_repayments(cursor, loan_no)
@@ -98,7 +93,6 @@ def register_farmer_routes(app):
 
     @app.route('/farmer/apply_loan', methods=['POST'])
     def apply_loan():
-        """Apply for a new loan"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -135,7 +129,6 @@ def register_farmer_routes(app):
                     flash(get_flash_message('কৃষক কোড পাওয়া যায়নি।', 'Farmer code not found.'), 'danger')
                     return redirect(url_for('farmer_loans'))
                 
-                # Get center and bank for farmer
                 cursor.execute("SELECT center_code, agent_code FROM FARMER WHERE farmer_code = :1", (farmer_code,))
                 farmer_data = cursor.fetchone()
                 
@@ -143,7 +136,6 @@ def register_farmer_routes(app):
                     flash(get_flash_message('সেন্টার তথ্য পাওয়া যায়নি।', 'Center info not found.'), 'danger')
                     return redirect(url_for('farmer_loans'))
                 
-                # Get an active bank
                 cursor.execute("SELECT bank_code FROM BANK WHERE bank_state='ACTIVE' AND ROWNUM=1")
                 bank_data = cursor.fetchone()
                 if not bank_data:
@@ -157,7 +149,6 @@ def register_farmer_routes(app):
                 """, (loan_no, farmer_code, farmer_data[0], bank_data[0], amount, tenure, purpose))
                 conn.commit()
                 
-                # Add to activity record
                 activity_id = 'ACT-' + str(generate_id())[:8]
                 cursor.execute("""
                     INSERT INTO ACTIVITY_RECORD (activity_id, farmer_code, activity_type, description, activity_date, reference_id)
@@ -177,7 +168,6 @@ def register_farmer_routes(app):
 
     @app.route('/farmer/loans/<loan_no>/repayments')
     def farmer_loan_repayments(loan_no):
-        """View repayments for a specific loan"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -200,12 +190,8 @@ def register_farmer_routes(app):
                               loan_no=loan_no,
                               user=session['user'])
 
-   
-    # ASSETS
-    
     @app.route('/farmer/assets')
     def farmer_assets():
-        """Farmer Assets Tab"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -236,7 +222,6 @@ def register_farmer_routes(app):
 
     @app.route('/farmer/add_asset', methods=['POST'])
     def add_asset():
-        """Add a new asset"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -249,13 +234,11 @@ def register_farmer_routes(app):
         expected_completion_date = request.form.get('expected_completion_date')
         revenue_generated = request.form.get('revenue_generated', 0)
         total_expense = request.form.get('total_expense', 0)
-        notes = request.form.get('notes', '')
         
         if not asset_type or not asset_name:
             flash(get_flash_message('সম্পদের ধরন এবং নাম প্রয়োজন।', 'Asset type and name are required.'), 'danger')
             return redirect(url_for('farmer_assets'))
         
-        # Validate asset_type
         valid_types = ['LAND', 'LIVESTOCK', 'EQUIPMENT', 'POULTRY', 'AQUACULTURE', 'VEHICLE', 'OTHER']
         if asset_type not in valid_types:
             flash(get_flash_message('অবৈধ সম্পদের ধরন।', 'Invalid asset type.'), 'danger')
@@ -281,12 +264,12 @@ def register_farmer_routes(app):
                 asset_id = 'AST-' + str(generate_id())[:8]
                 cursor.execute("""
                     INSERT INTO ASSET (asset_id, farmer_code, asset_type, asset_name, quantity, unit, 
-                                       acquisition_date, expected_completion_date, revenue_generated, total_expense, notes, asset_status)
+                                       acquisition_date, expected_completion_date, revenue_generated, total_expense, asset_status)
                     VALUES (:1, :2, :3, :4, :5, :6, TO_DATE(:7, 'YYYY-MM-DD'), 
-                            TO_DATE(:8, 'YYYY-MM-DD'), :9, :10, :11, 'ACTIVE')
+                            TO_DATE(:8, 'YYYY-MM-DD'), :9, :10, 'ACTIVE')
                 """, (asset_id, farmer_code, asset_type, asset_name, quantity, unit, 
                       acquisition_date or datetime.now().strftime('%Y-%m-%d'), 
-                      expected_completion_date, revenue_generated, total_expense, notes))
+                      expected_completion_date, revenue_generated, total_expense))
                 conn.commit()
                 flash(get_flash_message('সম্পদ সফলভাবে যোগ করা হয়েছে!', 'Asset added successfully!'), 'success')
             except Exception as e:
@@ -298,12 +281,8 @@ def register_farmer_routes(app):
                 conn.close()
         return redirect(url_for('farmer_assets'))
 
-    # ============================================
-    # REPAYMENTS
-    # ============================================
     @app.route('/farmer/repayments')
     def farmer_repayments():
-        """Farmer Repayments Tab"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -337,7 +316,6 @@ def register_farmer_routes(app):
 
     @app.route('/farmer/make_payment', methods=['POST'])
     def make_payment():
-        """Make a payment for a loan"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -368,14 +346,12 @@ def register_farmer_routes(app):
                     flash(get_flash_message('কৃষক কোড পাওয়া যায়নি।', 'Farmer code not found.'), 'danger')
                     return redirect(url_for('farmer_repayments'))
                 
-                # Verify loan belongs to this farmer
                 cursor.execute("SELECT COUNT(*) FROM LOAN WHERE loan_no = :1 AND farmer_code = :2", 
                               (loan_no, farmer_code))
                 if cursor.fetchone()[0] == 0:
                     flash(get_flash_message('এই ঋণটি আপনার নয়।', 'This loan does not belong to you.'), 'danger')
                     return redirect(url_for('farmer_repayments'))
                 
-                # Get next installment number
                 cursor.execute("SELECT NVL(MAX(installment_no), 0) + 1 FROM REPAYMENT WHERE loan_no = :1", (loan_no,))
                 installment_no = cursor.fetchone()[0]
                 
@@ -385,7 +361,6 @@ def register_farmer_routes(app):
                 """, (loan_no, installment_no, amount, payment_method))
                 conn.commit()
                 
-                # Add to activity record
                 activity_id = 'ACT-' + str(generate_id())[:8]
                 cursor.execute("""
                     INSERT INTO ACTIVITY_RECORD (activity_id, farmer_code, activity_type, description, activity_date, reference_id)
@@ -403,12 +378,8 @@ def register_farmer_routes(app):
                 conn.close()
         return redirect(url_for('farmer_repayments'))
 
-    # ============================================
-    # CONSULTATIONS
-    # ============================================
     @app.route('/farmer/consultations')
     def farmer_consultations():
-        """Farmer Consultations Tab"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -439,7 +410,6 @@ def register_farmer_routes(app):
 
     @app.route('/farmer/request_consultation', methods=['POST'])
     def request_consultation():
-        """Request a consultation"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -462,13 +432,16 @@ def register_farmer_routes(app):
                     return redirect(url_for('farmer_consultations'))
                 
                 session_id = 'CON-' + str(generate_id())[:8]
-                cursor.execute("""
-                    INSERT INTO CONSULTATION (session_id, farmer_code, topic, scheduled_date, notes, resolution_status, created_at)
-                    VALUES (:1, :2, :3, TO_DATE(:4, 'YYYY-MM-DD'), :5, 'PENDING', SYSDATE)
-                """, (session_id, farmer_code, topic, scheduled_date, notes))
+                cursor.execute("INSERT INTO CONSULTATION (session_id, topic) VALUES (:1, :2)", (session_id, topic))
                 conn.commit()
                 
-                # Add to activity record
+                advisor_id = 1004  # Default Admin, will change later
+                cursor.execute("""
+                    INSERT INTO ATTENDS (advisor_id, farmer_code, session_id, scheduled_date, notes, resolution_status)
+                    VALUES (:1, :2, :3, TO_DATE(:4, 'YYYY-MM-DD'), :5, 'PENDING')
+                """, (advisor_id, farmer_code, session_id, scheduled_date, notes))
+                conn.commit()
+                
                 activity_id = 'ACT-' + str(generate_id())[:8]
                 cursor.execute("""
                     INSERT INTO ACTIVITY_RECORD (activity_id, farmer_code, activity_type, description, activity_date, reference_id)
@@ -486,12 +459,8 @@ def register_farmer_routes(app):
                 conn.close()
         return redirect(url_for('farmer_consultations'))
 
-    # ============================================
-    # COMMUNITY
-    # ============================================
     @app.route('/farmer/community')
     def farmer_community():
-        """Farmer Community Tab"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -520,7 +489,6 @@ def register_farmer_routes(app):
 
     @app.route('/farmer/toggle_like/<post_id>')
     def toggle_like(post_id):
-        """Toggle like/unlike on a community post"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             return redirect(url_for('login_register'))
         
@@ -536,15 +504,11 @@ def register_farmer_routes(app):
                 exists = cursor.fetchone()[0]
                 
                 if exists > 0:
-                    # Unlike
                     cursor.execute("DELETE FROM POST_LIKE WHERE post_id = :1 AND farmer_code = :2", (post_id, farmer_code))
-                    # Remove from activity record
                     cursor.execute("DELETE FROM ACTIVITY_RECORD WHERE farmer_code = :1 AND reference_id = :2 AND activity_type = 'LIKE'", 
                                   (farmer_code, post_id))
                 else:
-                    # Like
                     cursor.execute("INSERT INTO POST_LIKE (post_id, farmer_code, liked_date) VALUES (:1, :2, SYSDATE)", (post_id, farmer_code))
-                    # Add to activity record
                     activity_id = 'ACT-' + str(generate_id())[:8]
                     cursor.execute("""
                         INSERT INTO ACTIVITY_RECORD (activity_id, farmer_code, activity_type, description, activity_date, reference_id)
@@ -560,12 +524,8 @@ def register_farmer_routes(app):
                     conn.close()
         return redirect(url_for('farmer_community'))
 
-    # ============================================
-    # CREDIT SCORE
-    # ============================================
     @app.route('/farmer/credit_score')
     def farmer_credit_score():
-        """Farmer Credit Score Tab"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -597,12 +557,8 @@ def register_farmer_routes(app):
                               farmer_code=farmer_code,
                               active_tab='credit')
 
-    # ============================================
-    # NOTIFICATIONS API
-    # ============================================
     @app.route('/farmer/notifications')
     def get_notifications_api():
-        """Get notifications for the logged-in farmer (API endpoint)"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             return jsonify({"error": "Unauthorized"}), 401
         
@@ -624,12 +580,8 @@ def register_farmer_routes(app):
                     conn.close()
         return jsonify({"notifications": notifs})
 
-    # ============================================
-    # INVENTORY & PURCHASES
-    # ============================================
     @app.route('/farmer/inventory')
     def farmer_inventory():
-        """Display the inventory page for the farmer to order items"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -659,31 +611,54 @@ def register_farmer_routes(app):
                               farmer_code=farmer_code,
                               active_tab='inventory')
 
+    @app.route('/farmer/orders')
+    def farmer_orders():
+        if 'user' not in session or session['user']['role'] != 'FARMER':
+            flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
+            return redirect(url_for('login_register'))
+        
+        conn = get_connection()
+        order_history = []
+        farmer_code = None
+        
+        if conn:
+            cursor = conn.cursor()
+            try:
+                farmer_code = get_farmer_code(cursor, session['user']['person_id'])
+                if farmer_code:
+                    order_history = get_farmer_order_history(cursor, farmer_code)
+                cursor.close()
+                conn.close()
+            except Exception as e:
+                print(f"Order history error: {e}")
+                if conn: 
+                    conn.close()
+                
+        return render_template('farmer/orders.html', 
+                              user=session['user'], 
+                              order_history=order_history,
+                              farmer_code=farmer_code,
+                              active_tab='orders')
+
     @app.route('/farmer/place_order', methods=['POST'])
     def place_order():
-        """Process the order when the farmer clicks 'Buy Now'"""
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
 
-        # Grab data from the HTML form
-        inventory_id = request.form.get('inventory_id')
-        quantity = request.form.get('quantity')
+        cart_data = request.form.get('cart_data')
         payment_method = request.form.get('payment_method', 'CASH')
         
-        if not inventory_id or not quantity:
-            flash(get_flash_message('পণ্য এবং পরিমাণ নির্বাচন করুন।', 'Please select an item and quantity.'), 'danger')
+        if not cart_data:
+            flash(get_flash_message('আপনার কার্ট খালি!', 'Your cart is empty!'), 'danger')
             return redirect(url_for('farmer_inventory'))
-            
+        
         try:
-            quantity = int(quantity)
-            if quantity <= 0:
-                flash(get_flash_message('পরিমাণ ০ এর বেশি হতে হবে।', 'Quantity must be greater than 0.'), 'danger')
-                return redirect(url_for('farmer_inventory'))
-        except ValueError:
-            flash(get_flash_message('অবৈধ পরিমাণ।', 'Invalid quantity.'), 'danger')
+            cart = json.loads(cart_data)
+        except:
+            flash(get_flash_message('কার্ট ডেটা অবৈধ।', 'Invalid cart data.'), 'danger')
             return redirect(url_for('farmer_inventory'))
-
+        
         conn = get_connection()
         if conn:
             cursor = conn.cursor()
@@ -693,22 +668,24 @@ def register_farmer_routes(app):
                     flash(get_flash_message('কৃষক কোড পাওয়া যায়নি।', 'Farmer code not found.'), 'danger')
                     return redirect(url_for('farmer_inventory'))
                 
-                # Get the agent and item price
                 agent_code = get_farmer_agent_code(cursor, farmer_code)
-                cursor.execute("SELECT unit_price FROM INVENTORY WHERE inventory_id = :1", (inventory_id,))
-                price_row = cursor.fetchone()
                 
-                if not price_row:
-                    flash(get_flash_message('পণ্য পাওয়া যায়নি।', 'Item not found.'), 'danger')
-                    return redirect(url_for('farmer_inventory'))
-                
-                unit_price = price_row[0]
-                
-                # 1. Create the Purchase record
+                # REMOVED collection_point - now passes 5 arguments
                 purchase_id = create_new_purchase(cursor, farmer_code, agent_code, payment_method, generate_id)
                 
-                # 2. Add the item to the order and update inventory stock
-                add_item_to_purchase(cursor, purchase_id, inventory_id, quantity, unit_price, generate_id)
+                for item in cart:
+                    inventory_id = item.get('id')
+                    quantity = item.get('qty')
+                    
+                    # FIXED: Changed from unit_price to price_per_unit
+                    cursor.execute("SELECT price_per_unit FROM INVENTORY WHERE inventory_id = :1", (inventory_id,))
+                    price_row = cursor.fetchone()
+                    
+                    if not price_row:
+                        continue
+                    
+                    unit_price = price_row[0]
+                    add_item_to_purchase(cursor, purchase_id, inventory_id, quantity, unit_price, generate_id)
                 
                 conn.commit()
                 flash(get_flash_message('অর্ডার সফলভাবে সম্পন্ন হয়েছে!', 'Order placed successfully!'), 'success')
@@ -721,14 +698,10 @@ def register_farmer_routes(app):
                 cursor.close()
                 conn.close()
                 
-        return redirect(url_for('farmer_inventory'))
+        return redirect(url_for('farmer_orders'))
 
-    # ============================================
-    # LOGOUT
-    # ============================================
     @app.route('/farmer/logout')
     def farmer_logout():
-        """Logout farmer and redirect to home"""
         session.clear()
         flash(get_flash_message('আপনি লগআউট হয়েছেন।', 'You have been logged out.'), 'info')
         return redirect(url_for('index'))

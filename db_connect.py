@@ -22,7 +22,7 @@ def get_connection():
             dsn=os.getenv("DB_DSN")
         )
         
-        # CRITICAL FIX: Force the session to recognize new tables
+        
         cursor = connection.cursor()
         cursor.execute("ALTER SESSION SET CURRENT_SCHEMA = " + os.getenv("DB_USER").upper())
         cursor.close()
