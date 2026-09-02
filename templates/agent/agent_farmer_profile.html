@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Farmer Profile - KrishiBondhu{% else %}কৃষক প্রোফাইল - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold mb-0">
+            <i class="fas fa-user-check text-success me-2"></i>
+            {% if session.get('language') == 'en' %}Farmer Profile{% else %}কৃষক প্রোফাইল{% endif %}
+        </h4>
+        <a href="{{ url_for('agent_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> {% if session.get('language') == 'en' %}Back to Dashboard{% else %}ড্যাশবোর্ডে ফিরে যান{% endif %}
+        </a>
+    </div>
+
+    <!-- Search Form -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="GET" action="{{ url_for('agent_farmer_profile') }}" class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-search me-1"></i>
+                        {% if session.get('language') == 'en' %}Enter Farmer Code{% else %}কৃষক কোড দিন{% endif %}
+                    </label>
+                    <input type="text" class="form-control" name="farmer_code" 
+                           placeholder="{% if session.get('language') == 'en' %}e.g. FR-001{% else %}যেমন: FR-001{% endif %}" 
+                           value="{{ request.args.get('farmer_code', '') }}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-search me-2"></i> {% if session.get('language') == 'en' %}Search{% else %}খুঁজুন{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Farmer Profile Results -->
+    {% if farmer %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-success text-white py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-user me-2"></i>
+                {% if session.get('language') == 'en' %}Farmer Details{% else %}কৃষকের বিবরণ{% endif %}
+            </h5>
+            <small class="text-white-50">(VIEW: FARMER_ELIGIBILITY_VIEW)</small>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <!-- Left Column -->
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <h6 class="fw-bold text-success border-bottom pb-2 mb-3">
+                            <i class="fas fa-info-circle me-1"></i> 
+                            {% if session.get('language') == 'en' %}Basic Information{% else %}মৌলিক তথ্য{% endif %}
+                        </h6>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">{% if session.get('language') == 'en' %}Farmer Code{% else %}কৃষক কোড{% endif %}:</span>
+                            <span class="fw-semibold">{{ farmer[0] }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">{% if session.get('language') == 'en' %}Name{% else %}নাম{% endif %}:</span>
+                            <span class="fw-semibold">{{ farmer[1] }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">KYC Status:</span>
+                            <span>
+                                {% if farmer[3] == 'VERIFIED' %}
+                                    <span class="badge bg-success">{% if session.get('language') == 'en' %}Verified{% else %}যাচাইকৃত{% endif %}</span>
+                                {% elif farmer[3] == 'PENDING' %}
+                                    <span class="badge bg-warning">{% if session.get('language') == 'en' %}Pending{% else %}অপেক্ষমাণ{% endif %}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ farmer[3] }}</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">{% if session.get('language') == 'en' %}Active Loans{% else %}সক্রিয় ঋণ{% endif %}:</span>
+                            <span class="fw-semibold">{{ farmer[4] or 0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">{% if session.get('language') == 'en' %}Total Assets{% else %}মোট সম্পত্তি{% endif %}:</span>
+                            <span class="fw-semibold">৳{{ farmer[5] or 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                            <i class="fas fa-chart-line me-1"></i> 
+                            {% if session.get('language') == 'en' %}Eligibility & Risk{% else %}যোগ্যতা ও ঝুঁকি{% endif %}
+                        </h6>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">{% if session.get('language') == 'en' %}Credit Score{% else %}ক্রেডিট স্কোর{% endif %}:</span>
+                            <span class="fw-semibold">{{ farmer[2] or 0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">{% if session.get('language') == 'en' %}Eligibility{% else %}যোগ্যতা{% endif %}:</span>
+                            <span>
+                                {% if farmer[6] == 'ELIGIBLE' %}
+                                    <span class="badge bg-success">{% if session.get('language') == 'en' %}Eligible{% else %}যোগ্য{% endif %}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{% if session.get('language') == 'en' %}Not Eligible{% else %}অযোগ্য{% endif %}</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">{% if session.get('language') == 'en' %}Max Loan Amount{% else %}সর্বোচ্চ ঋণ{% endif %}:</span>
+                            <span class="fw-semibold text-success">৳{{ farmer[7] or 0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">{% if session.get('language') == 'en' %}Risk Category{% else %}ঝুঁকি বিভাগ{% endif %}:</span>
+                            <span>
+                                <span class="badge bg-{{ 'success' if farmer[8] == 'LOW_RISK' else 'warning' if farmer[8] == 'MEDIUM_RISK' else 'danger' }}">
+                                    {{ farmer[8] }}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">{% if session.get('language') == 'en' %}KYC Document{% else %}KYC নথি{% endif %}:</span>
+                            <span>
+                                {% if farmer[9] %}
+                                    <a href="#" class="text-success"><i class="fas fa-file-pdf me-1"></i> View</a>
+                                {% else %}
+                                    <span class="text-muted">{% if session.get('language') == 'en' %}Not uploaded{% else %}আপলোড করা হয়নি{% endif %}</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-4 pt-3 border-top d-flex gap-2 flex-wrap">
+                <a href="{{ url_for('agent_farmer_detail', farmer_code=farmer[0]) }}" class="btn btn-success">
+                    <i class="fas fa-eye me-1"></i> {% if session.get('language') == 'en' %}View Full Details{% else %}সম্পূর্ণ বিবরণ দেখুন{% endif %}
+                </a>
+                <a href="{{ url_for('agent_kyc_requests') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-file-signature me-1"></i> {% if session.get('language') == 'en' %}KYC Requests{% else %}KYC অনুরোধ{% endif %}
+                </a>
+                <a href="{{ url_for('agent_loan_requests') }}" class="btn btn-outline-success">
+                    <i class="fas fa-hand-holding-usd me-1"></i> {% if session.get('language') == 'en' %}Loan Requests{% else %}ঋণ অনুরোধ{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% elif request.args.get('farmer_code') %}
+        <!-- Show message when search returns no results -->
+        <div class="text-center py-5">
+            <i class="fas fa-user-slash text-muted fa-4x mb-3"></i>
+            <h5 class="text-muted">{% if session.get('language') == 'en' %}Farmer not found{% else %}কৃষক পাওয়া যায়নি{% endif %}</h5>
+            <p class="text-muted">{% if session.get('language') == 'en' %}Please check the farmer code and try again.{% else %}দয়া করে কৃষক কোড চেক করে আবার চেষ্টা করুন।{% endif %}</p>
+        </div>
+    {% else %}
+        <!-- Initial state - no search performed -->
+        <div class="text-center py-5">
+            <i class="fas fa-search text-muted fa-4x mb-3"></i>
+            <h5 class="text-muted">{% if session.get('language') == 'en' %}Search for a Farmer{% else %}কৃষক খুঁজুন{% endif %}</h5>
+            <p class="text-muted">{% if session.get('language') == 'en' %}Enter a farmer code above to view their profile.{% else %}উপরে কৃষক কোড দিন প্রোফাইল দেখতে।{% endif %}</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

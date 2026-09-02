@@ -16,17 +16,18 @@ from agent_queries import (
     get_farmer_repayments,
     get_farmer_purchases,
     get_community_posts,
-    get_agent_ranking
+    get_agent_ranking,
+    get_monthly_performance,
+    get_followup_farmers,
+    get_absorption_rate,
+    get_risk_prediction
 )
-
 
 def get_lang():
     return session.get('language', 'bn')
 
-
 def get_flash_message(bn_msg, en_msg):
     return bn_msg if get_lang() == 'bn' else en_msg
-
 
 def register_agent_routes(app):
 
@@ -57,6 +58,10 @@ def register_agent_routes(app):
         my_farmers = []
         posts = []
         ranking = []
+        monthly_performance = []
+        followup_farmers = []
+        absorption_rate = []
+        risk_prediction = []
         
         if conn:
             cursor = conn.cursor()
@@ -84,6 +89,11 @@ def register_agent_routes(app):
                     my_farmers = get_my_farmers(cursor, person_id)
                     posts = get_community_posts(cursor)
                     ranking = get_agent_ranking(cursor)
+                    
+                    monthly_performance = get_monthly_performance(cursor, person_id)
+                    followup_farmers = get_followup_farmers(cursor, person_id)
+                    absorption_rate = get_absorption_rate(cursor, person_id)
+                    risk_prediction = get_risk_prediction(cursor, person_id)
                 
                 cursor.close()
                 conn.close()
@@ -97,7 +107,11 @@ def register_agent_routes(app):
                               agent_data=agent_data,
                               my_farmers=my_farmers,
                               posts=posts,
-                              ranking=ranking)
+                              ranking=ranking,
+                              monthly_performance=monthly_performance,
+                              followup_farmers=followup_farmers,
+                              absorption_rate=absorption_rate,
+                              risk_prediction=risk_prediction)
 
 
     @app.route('/agent/kyc-requests')
@@ -376,6 +390,65 @@ def register_agent_routes(app):
             flash('Error verifying KYC: ' + str(e), 'danger')
 
         return redirect(url_for('agent_kyc_requests'))
+
+
+    @app.route('/agent/farmer-profile')
+    def agent_farmer_profile():
+        farmer_code = request.args.get('farmer_code')
+        
+        # If no farmer_code provided, just show the search form
+        if not farmer_code:
+            return render_template('agent/agent_farmer_profile.html', 
+                                  user=session['user'], 
+                                  farmer=None)
+
+        conn = get_connection()
+        if not conn:
+            flash('Database connection failed.', 'danger')
+            return render_template('agent/agent_farmer_profile.html', 
+                                  user=session['user'], 
+                                  farmer=None)
+        
+        cursor = conn.cursor()
+        try:
+            # ✅ USE THE VIEW - FARMER_ELIGIBILITY_VIEW
+            cursor.execute("""
+                SELECT 
+                    farmer_code,
+                    farmer_name,
+                    credit_score,
+                    kyc_status,
+                    active_loans,
+                    total_assets,
+                    eligibility_status,
+                    max_loan_amount,
+                    risk_category,
+                    kyc_doc
+                FROM FARMER_ELIGIBILITY_VIEW
+                WHERE farmer_code = :1
+            """, (farmer_code,))
+            row = cursor.fetchone()
+
+            cursor.close()
+            conn.close()
+
+            if not row:
+                flash('Farmer not found. Please check the code.', 'danger')
+                return render_template('agent/agent_farmer_profile.html', 
+                                      user=session['user'], 
+                                      farmer=None)
+
+            return render_template('agent/agent_farmer_profile.html', 
+                                  user=session['user'], 
+                                  farmer=row)
+
+        except Exception as e:
+            cursor.close()
+            conn.close()
+            flash(f'Error: {str(e)}', 'danger')
+            return render_template('agent/agent_farmer_profile.html', 
+                                  user=session['user'], 
+                                  farmer=None)
 
 
     @app.route('/agent/reject-kyc', methods=['POST'])

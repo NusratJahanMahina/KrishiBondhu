@@ -1,7 +1,4 @@
-# ============================================
-# AGENT QUERIES - VERSION 2 (Agent Module)
-# All functions needed for the Agent UI.
-# ============================================
+
 
 def get_agent_dashboard_data(cursor, person_id):
     cursor.execute("""
@@ -183,7 +180,7 @@ def get_pending_purchases(cursor, center_code):
 
 def get_community_posts(cursor):
     cursor.execute("""
-        SELECT post_id, content, TO_CHAR(post_date, 'DD-Mon-YYYY') AS post_date
+        SELECT post_id, content, TO_CHAR(post_date, 'DD-Mon-YYYY') AS post_date, image
         FROM COMMUNITY_POST
         ORDER BY post_date DESC
     """)
@@ -283,4 +280,108 @@ def get_farmer_purchases(cursor, farmer_code):
         WHERE farmer_code = :1
         ORDER BY purchase_date DESC
     """, (farmer_code,))
+    return cursor.fetchall()
+
+
+
+
+def get_monthly_performance(cursor, person_id):
+    cursor.execute("""
+        SELECT 
+            TO_CHAR(k.verified_date, 'YYYY-MM') AS month,
+            COUNT(DISTINCT k.kyc_id) AS kyc_verified,
+            COUNT(DISTINCT l.loan_no) AS loans_approved
+        FROM FIELD_AGENT a
+        LEFT JOIN KYC k ON a.agent_code = k.agent_code
+        LEFT JOIN FARMER f ON f.agent_code = a.agent_code
+        LEFT JOIN LOAN l ON l.farmer_code = f.farmer_code AND l.loan_state = 'ACTIVE'
+        WHERE a.person_id = :1
+        GROUP BY TO_CHAR(k.verified_date, 'YYYY-MM')
+        ORDER BY month DESC
+    """, (person_id,))
+    return cursor.fetchall()
+
+
+def get_followup_farmers(cursor, person_id):
+    cursor.execute("""
+        SELECT 
+            f.farmer_code,
+            p.first_name || ' ' || p.last_name AS farmer_name,
+            p.login_phone,
+            l.loan_no AS loan_id,
+            l.amount AS loan_amount,
+            NVL(SUM(r.amount_paid), 0) AS total_paid,
+            l.amount - NVL(SUM(r.amount_paid), 0) AS remaining_balance,
+            ROUND(SYSDATE - MAX(r.payment_date)) AS days_since_last_payment
+        FROM FARMER f
+        JOIN PERSON p ON f.person_id = p.person_id
+        JOIN LOAN l ON f.farmer_code = l.farmer_code
+        LEFT JOIN REPAYMENT r ON l.loan_no = r.loan_no
+        WHERE f.agent_code = (SELECT agent_code FROM FIELD_AGENT WHERE person_id = :1)
+        AND l.loan_state = 'ACTIVE'
+        GROUP BY f.farmer_code, p.first_name, p.last_name, p.login_phone, l.loan_no, l.amount
+        HAVING l.amount - NVL(SUM(r.amount_paid), 0) > 0
+        ORDER BY days_since_last_payment DESC
+    """, (person_id,))
+    return cursor.fetchall()
+
+
+def get_absorption_rate(cursor, person_id):
+    cursor.execute("""
+        WITH agent_loans AS (
+            SELECT 
+                f.farmer_code,
+                l.loan_no AS loan_id,
+                l.amount AS loan_amount,
+                l.approval_date
+            FROM LOAN l
+            JOIN FARMER f ON l.farmer_code = f.farmer_code
+            WHERE f.agent_code = (SELECT agent_code FROM FIELD_AGENT WHERE person_id = :1)
+            AND l.loan_state IN ('ACTIVE', 'CLOSED')
+        ),
+        agent_purchases AS (
+            SELECT 
+                p.farmer_code,
+                p.purchase_id,
+                SUM(oi.total_cost) AS total_spent,
+                p.purchase_date
+            FROM PURCHASE p
+            JOIN ORDERED_ITEM oi ON p.purchase_id = oi.purchase_id
+            WHERE p.farmer_code IN (SELECT farmer_code FROM agent_loans)
+            GROUP BY p.farmer_code, p.purchase_id, p.purchase_date
+        )
+        SELECT 
+            al.farmer_code,
+            al.loan_amount,
+            NVL(SUM(ap.total_spent), 0) AS total_spent_on_inputs,
+            ROUND(NVL(SUM(ap.total_spent), 0) / NULLIF(al.loan_amount, 0) * 100, 2) AS absorption_percentage,
+            CASE 
+                WHEN NVL(SUM(ap.total_spent), 0) / NULLIF(al.loan_amount, 0) >= 0.8 THEN 'GOOD'
+                WHEN NVL(SUM(ap.total_spent), 0) / NULLIF(al.loan_amount, 0) >= 0.5 THEN 'MODERATE'
+                ELSE 'POOR'
+            END AS absorption_rating
+        FROM agent_loans al
+        LEFT JOIN agent_purchases ap ON al.farmer_code = ap.farmer_code
+        GROUP BY al.farmer_code, al.loan_amount
+        ORDER BY absorption_percentage DESC
+    """, (person_id,))
+    return cursor.fetchall()
+
+
+def get_risk_prediction(cursor, person_id):
+    cursor.execute("""
+        SELECT 
+            farmer_code,
+            farmer_name,
+            credit_score,
+            repayment_reliability,
+            risk_category
+        FROM V_RISK_PREDICTION
+        WHERE farmer_code IN (
+            SELECT farmer_code FROM FARMER WHERE agent_code = (
+                SELECT agent_code FROM FIELD_AGENT WHERE person_id = :1
+            )
+        )
+        ORDER BY risk_category, credit_score
+    """, (person_id,))
     return cursor.fetchall()
