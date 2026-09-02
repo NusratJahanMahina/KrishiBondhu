@@ -1,0 +1,160 @@
+{% extends "farmer/base_farmer.html" %}
+
+{% block title %}My Loans - KrishiBondhu{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="text-muted mb-0">
+        <i class="fas fa-hand-holding-usd me-2"></i>My Loans
+    </h4>
+    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#applyLoanModal">
+        <i class="fas fa-plus me-1"></i> Apply for New Loan
+    </button>
+</div>
+
+<div class="tab-content-section">
+    {% if loans %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Loan ID</th>
+                    <th>Amount</th>
+                    <th>Purpose</th>
+                    <th>Status</th>
+                    <th>Applied</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in loans %}
+                <tr>
+                    <td>
+                        <span class="fw-semibold text-success">{{ loan[0] }}</span>
+                    </td>
+                    <td>৳ {{ loan[1] }}</td>
+                    <td>{{ loan[4] }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'warning' if loan[5] == 'PENDING' else 'success' if loan[5] == 'ACTIVE' else 'secondary' if loan[5] == 'CLOSED' else 'danger' }}">
+                            {{ loan[5] }}
+                        </span>
+                    </td>
+                    <td>{{ loan[6] }}</td>
+                    <td>
+                        <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#repaymentModal{{ loop.index }}">
+                            <i class="fas fa-eye"></i> Schedule
+                        </button>
+                    </td>
+                </tr>
+
+                <!-- Repayment Modal -->
+                <div class="modal fade" id="repaymentModal{{ loop.index }}" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-money-bill-wave me-2"></i>
+                                    Repayment Schedule: {{ loan[0] }}
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                {% if loan_repayments and loan[0] in loan_repayments and loan_repayments[loan[0]] %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Installment</th>
+                                                <th>Amount Paid</th>
+                                                <th>Date</th>
+                                                <th>Method</th>
+                                                <th>Late Fee</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for rep in loan_repayments[loan[0]] %}
+                                            <tr>
+                                                <td>{{ rep[0] }}</td>
+                                                <td>৳ {{ rep[1] }}</td>
+                                                <td>{{ rep[2] }}</td>
+                                                <td>{{ rep[3] }}</td>
+                                                <td>৳ {{ rep[4] }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ 'success' if rep[5]=='PAID' else 'warning' if rep[5]=='PARTIAL' else 'danger' }}">
+                                                        {{ rep[5] }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <p class="text-center text-muted py-3">
+                                    <i class="fas fa-info-circle me-2"></i>No repayments recorded yet.
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-hand-holding-usd text-muted fa-3x mb-3"></i>
+        <p class="text-muted mb-3">No loans found.</p>
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#applyLoanModal">
+            <i class="fas fa-plus me-1"></i> Apply for your first loan
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Apply Loan Modal -->
+<div class="modal fade" id="applyLoanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Apply for New Loan
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('apply_loan') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Amount (BDT)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">৳</span>
+                            <input type="number" name="amount" class="form-control" required min="500" max="200000" placeholder="Enter amount">
+                        </div>
+                        <small class="text-muted">Minimum: 500 BDT, Maximum: 200,000 BDT</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Purpose</label>
+                        <input type="text" name="purpose" class="form-control" required placeholder="e.g., Boro Season, Poultry, Irrigation">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tenure (Months)</label>
+                        <input type="number" name="tenure_months" class="form-control" required value="12" min="1" max="24">
+                        <small class="text-muted">Choose between 1-24 months</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane me-1"></i> Submit Application
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

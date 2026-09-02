@@ -1,0 +1,154 @@
+{% extends "farmer/base_farmer.html" %}
+
+{% block title %}My Assets - KrishiBondhu{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="text-muted mb-0">
+        <i class="fas fa-boxes me-2"></i>My Assets
+    </h4>
+    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+        <i class="fas fa-plus me-1"></i> Add Asset
+    </button>
+</div>
+
+<div class="tab-content-section">
+    {% if assets %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Qty</th>
+                    <th>Acquired</th>
+                    <th>Revenue</th>
+                    <th>Expense</th>
+                    <th>Profit</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for asset in assets %}
+                <tr>
+                    <td>
+                        <span class="badge bg-{{ 'primary' if asset[0] == 'LAND' else 'success' if asset[0] == 'LIVESTOCK' else 'info' if asset[0] == 'EQUIPMENT' else 'warning' if asset[0] == 'POULTRY' else 'secondary' }}">
+                            {{ asset[0] }}
+                        </span>
+                    </td>
+                    <td>{{ asset[1] }}</td>
+                    <td>{{ asset[2] }} {{ asset[3] }}</td>
+                    <td>{{ asset[4] }}</td>
+                    <td>৳ {{ asset[6] }}</td>
+                    <td>৳ {{ asset[7] }}</td>
+                    <td class="{{ 'text-success' if asset[8] > 0 else 'text-danger' }}">
+                        ৳ {{ asset[8] }}
+                    </td>
+                    <td>
+                        <span class="badge bg-{{ 'success' if asset[9] == 'ACTIVE' else 'secondary' if asset[9] == 'COMPLETED' else 'warning' if asset[9] == 'SOLD' else 'danger' }}">
+                            {{ asset[9] }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-boxes text-muted fa-3x mb-3"></i>
+        <p class="text-muted mb-3">No assets recorded yet.</p>
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+            <i class="fas fa-plus me-1"></i> Add your first asset
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Asset Modal -->
+<div class="modal fade" id="addAssetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Add New Asset
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('add_asset') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Asset Type</label>
+                        <select name="asset_type" class="form-select" required>
+                            <option value="">Select Type</option>
+                            <option value="LAND">Land</option>
+                            <option value="LIVESTOCK">Livestock</option>
+                            <option value="EQUIPMENT">Equipment</option>
+                            <option value="POULTRY">Poultry</option>
+                            <option value="AQUACULTURE">Aquaculture</option>
+                            <option value="VEHICLE">Vehicle</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Asset Name</label>
+                        <input type="text" name="asset_name" class="form-control" required placeholder="e.g., Agricultural Land, Dairy Cows">
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Quantity</label>
+                                <input type="number" name="quantity" class="form-control" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Unit</label>
+                                <input type="text" name="unit" class="form-control" placeholder="e.g., Bigha, Head, Piece">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Acquisition Date</label>
+                                <input type="date" name="acquisition_date" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Expected Completion</label>
+                                <input type="date" name="expected_completion_date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Revenue Generated</label>
+                                <input type="number" name="revenue_generated" class="form-control" value="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Total Expense</label>
+                                <input type="number" name="total_expense" class="form-control" value="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="Additional details"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-1"></i> Save Asset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

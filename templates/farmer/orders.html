@@ -1,0 +1,66 @@
+{% extends "farmer/base_farmer.html" %}
+
+{% block title %}My Orders - KrishiBondhu{% endblock %}
+
+{% block content %}
+<style>
+    .orders-container { padding: 20px; }
+    .order-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); padding: 20px; margin-bottom: 20px; }
+    .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+    .order-id { font-weight: 600; color: #1b5e20; }
+    .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .status-PENDING { background: #fff3cd; color: #856404; }
+    .status-CONFIRMED { background: #d1ecf1; color: #0c5460; }
+    .status-SHIPPED { background: #d4edda; color: #155724; }
+    .status-DELIVERED { background: #d4edda; color: #155724; }
+    .status-CANCELLED { background: #f8d7da; color: #721c24; }
+    .order-item-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #eee; }
+    .item-name { font-weight: 500; color: #333; }
+    .item-quantity { font-size: 0.9rem; color: #6c757d; }
+    .item-price { font-weight: 600; color: #1b5e20; }
+    .order-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #eee; }
+    .total-amount { font-size: 1.3rem; font-weight: 700; color: #1b5e20; }
+</style>
+
+<div class="orders-container">
+    <h4 class="mb-4 text-muted">
+        <i class="fas fa-clipboard-list me-2"></i>My Orders
+    </h4>
+
+    {% if order_history %}
+        {% for order in order_history %}
+        <div class="order-card">
+            <div class="order-header">
+                <div>
+                    <span class="order-id">{{ order[0] }}</span>
+                    <span class="text-muted ms-2">{{ order[1] }}</span>
+                </div>
+                <span class="status-badge status-{{ order[2] }}">{{ order[2] }}</span>
+            </div>
+            <div class="order-items">
+                <div class="order-item-row">
+                    <div>
+                        <div class="item-name">{{ order[4] }}</div>
+                        <div class="item-quantity">Quantity: {{ order[5] }}</div>
+                    </div>
+                    <div class="item-price">৳ {{ order[6] }}</div>
+                </div>
+            </div>
+            <div class="order-footer">
+                <span class="text-muted">Payment: {{ order[3] if order[3] else 'Not Specified' }}</span>
+                <span class="total-amount">Total: ৳ {{ order[6] }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-shopping-bag fa-4x text-muted mb-3"></i>
+            <h5>No orders yet</h5>
+            <p class="text-muted">Visit the Inventory page to buy supplies.</p>
+            <a href="{{ url_for('farmer_inventory') }}" class="btn btn-success">
+                <i class="fas fa-shopping-cart me-2"></i>Shop Now
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

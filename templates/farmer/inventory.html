@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Buy Supplies - KrishiBondhu{% endblock %}
+
+{% block content %}
+<style>
+    .inventory-container { padding: 20px; }
+    .filter-bar { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .filter-btn { border-radius: 20px; padding: 6px 20px; font-size: 0.9rem; border: 1px solid #dee2e6; background: #fff; color: #6c757d; margin-right: 8px; transition: all 0.3s ease; }
+    .filter-btn.active { background: #1b5e20; color: #fff; border-color: #1b5e20; }
+    .filter-btn:hover { background: #e8f5e9; color: #1b5e20; border-color: #1b5e20; }
+    .product-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.04); height: 100%; transition: all 0.3s ease; }
+    .product-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+    .product-img { height: 150px; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #1b5e20; }
+    .product-details { padding: 15px; }
+    .product-name { font-weight: 600; color: #333; margin-bottom: 5px; }
+    .product-price { font-size: 1.1rem; color: #1b5e20; font-weight: 700; }
+    .product-stock { font-size: 0.8rem; color: #6c757d; margin-bottom: 10px; }
+    .add-to-cart-btn { width: 100%; background: #1b5e20; color: #fff; border: none; border-radius: 8px; padding: 8px; font-weight: 500; transition: all 0.3s ease; }
+    .add-to-cart-btn:hover { background: #145214; }
+    .add-to-cart-btn:disabled { background: #ccc; }
+
+    .cart-sidebar { position: fixed; top: 0; right: -400px; width: 400px; height: 100vh; background: #fff; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1050; display: flex; flex-direction: column; }
+    .cart-sidebar.show { right: 0; }
+    .cart-header { background: #1b5e20; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .cart-items { flex: 1; overflow-y: auto; padding: 20px; }
+    .cart-item { border-bottom: 1px solid #eee; padding: 10px 0; }
+    .cart-item-qty { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+    .qty-btn { background: #e8f5e9; border: none; border-radius: 50%; width: 24px; height: 24px; color: #1b5e20; cursor: pointer; font-weight: bold; }
+    .remove-item-btn { background: none; border: none; color: #dc3545; cursor: pointer; }
+    .cart-footer { border-top: 1px solid #eee; padding: 15px 20px; }
+    .checkout-btn { width: 100%; background: #1b5e20; color: #fff; border: none; border-radius: 8px; padding: 12px; font-weight: 600; }
+    .cart-icon { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #1b5e20; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1040; }
+    .cart-count { position: absolute; top: -5px; right: -5px; background: #dc3545; color: #fff; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; }
+
+    .stock-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; }
+    .badge-low { background: #fff3cd; color: #856404; }
+    .badge-out { background: #f8d7da; color: #721c24; }
+    .badge-ok { background: #d4edda; color: #155724; }
+</style>
+
+<div class="inventory-container">
+    <div class="filter-bar">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0 fw-bold text-success">Shop Supplies</h5>
+                <small class="text-muted">Order from your local center</small>
+            </div>
+            <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="CHEMICAL">Chemical</button>
+                <button class="filter-btn" data-filter="SEED">Seed</button>
+                <button class="filter-btn" data-filter="FERTILIZER">Fertilizer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4" id="productGrid">
+        {% for item in inventory %}
+        <!-- item[0]=id, item[1]=name, item[2]=qty, item[3]=price, item[4]=category, item[5]=unit, item[6]=min_stock -->
+        <div class="col-md-6 col-lg-3 product-item" data-category="{{ item[4]|default('OTHER')|upper }}">
+            <div class="product-card">
+                <div class="product-img">
+                    <i class="fas fa-{{ 'flask' if item[4]|default('')|upper == 'CHEMICAL' else 'seedling' if item[4]|default('')|upper == 'SEED' else 'tractor' if item[4]|default('')|upper == 'FERTILIZER' else 'box' }}"></i>
+                </div>
+                <div class="product-details">
+                    <div class="product-name">{{ item[1] }}</div>
+                    <div class="product-price">৳ {{ item[3] }} <small class="text-muted">/ {{ item[5] if item[5] else 'unit' }}</small></div>
+                    
+                    {% if item[2] == 0 %}
+                        <div class="product-stock"><span class="stock-badge badge-out">Out of Stock</span></div>
+                    {% elif item[2] < item[6] %}
+                        <div class="product-stock"><span class="stock-badge badge-low">Low Stock ({{ item[2] }} left)</span></div>
+                    {% else %}
+                        <div class="product-stock"><span class="stock-badge badge-ok">In Stock: {{ item[2] }} {{ item[5] if item[5] else 'units' }}</span></div>
+                    {% endif %}
+                    
+                    <button class="add-to-cart-btn" 
+                        data-id="{{ item[0] }}"
+                        data-name="{{ item[1] }}"
+                        data-price="{{ item[3] }}"
+                        data-stock="{{ item[2] }}"
+                        data-unit="{{ item[5] if item[5] else 'units' }}"
+                        onclick="handleAddToCart(this)"
+                        {% if item[2] <= 0 %}disabled{% endif %}>
+                        <i class="fas fa-cart-plus me-1"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="cart-icon" onclick="toggleCart()">
+    <i class="fas fa-shopping-cart"></i>
+    <span class="cart-count" id="cartCount">0</span>
+</div>
+
+<div class="cart-sidebar" id="cartSidebar">
+    <div class="cart-header">
+        <h5 class="mb-0">Your Cart</h5>
+        <button class="btn btn-sm btn-outline-light" onclick="toggleCart()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+        <p class="text-muted text-center py-4">Your cart is empty</p>
+    </div>
+    <div class="cart-footer">
+        <div class="d-flex justify-content-between">
+            <span>Total Items:</span>
+            <span id="totalItems">0</span>
+        </div>
+        <div class="d-flex justify-content-between mt-1">
+            <span>Total Price:</span>
+            <span class="fw-bold text-success fs-5" id="totalPrice">৳ 0</span>
+        </div>
+        <form action="{{ url_for('place_order') }}" method="POST" id="checkoutForm">
+            <input type="hidden" name="cart_data" id="cartData">
+            <div class="mb-2">
+                <label class="form-label fw-bold small">Payment Method</label>
+                <select name="payment_method" class="form-select form-select-sm" required>
+                    <option value="CASH">Cash on Delivery</option>
+                    <option value="MOBILE_BANKING">Mobile Banking (bKash/Rocket)</option>
+                    <option value="BANK_TRANSFER">Bank Transfer</option>
+                    <option value="CHEQUE">Cheque</option>
+                </select>
+            </div>
+            <button type="submit" class="checkout-btn mt-3" id="checkoutBtn" disabled>
+                <i class="fas fa-check-circle me-2"></i> Place Order
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let cart = [];
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedCart = localStorage.getItem('krishibondhuCart');
+        if (savedCart) { cart = JSON.parse(savedCart); updateCartUI(); }
+    });
+
+    function handleAddToCart(button) {
+        const id = button.getAttribute('data-id');
+        const name = button.getAttribute('data-name');
+        const price = parseFloat(button.getAttribute('data-price'));
+        const stock = parseInt(button.getAttribute('data-stock'));
+        const unit = button.getAttribute('data-unit');
+        addToCart(id, name, price, stock, unit);
+    }
+
+    function addToCart(id, name, price, stock, unit) {
+        const existingItem = cart.find(item => item.id === id);
+        if (existingItem) {
+            if (existingItem.qty < stock) existingItem.qty++;
+            else { alert('Stock limit reached!'); return; }
+        } else {
+            cart.push({ id, name, price, stock, unit, qty: 1 });
+        }
+        saveCart(); updateCartUI();
+    }
+
+    function updateQty(id, delta) {
+        const item = cart.find(item => item.id === id);
+        if (!item) return;
+        if (delta > 0 && item.qty < item.stock) item.qty++;
+        else if (delta < 0 && item.qty > 1) item.qty--;
+        saveCart(); updateCartUI();
+    }
+
+    function removeItem(id) {
+        cart = cart.filter(item => item.id !== id);
+        saveCart(); updateCartUI();
+    }
+
+    function saveCart() { localStorage.setItem('krishibondhuCart', JSON.stringify(cart)); }
+
+    function updateCartUI() {
+        const cartItems = document.getElementById('cartItems');
+        const cartCount = document.getElementById('cartCount');
+        const totalItems = document.getElementById('totalItems');
+        const totalPrice = document.getElementById('totalPrice');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+        cartCount.textContent = totalQty;
+        totalItems.textContent = totalQty;
+        const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        totalPrice.textContent = '৳ ' + total.toLocaleString();
+        checkoutBtn.disabled = cart.length === 0;
+        document.getElementById('cartData').value = JSON.stringify(cart);
+        if (cart.length === 0) {
+            cartItems.innerHTML = '<p class="text-muted text-center py-4">Your cart is empty</p>';
+        } else {
+            cartItems.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="fw-bold">${item.name}</div>
+                            <small class="text-muted">৳ ${item.price} / ${item.unit}</small>
+                            <div class="cart-item-qty">
+                                <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
+                                <span>${item.qty}</span>
+                                <button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold mb-2">৳ ${(item.price * item.qty).toLocaleString()}</div>
+                            <button class="remove-item-btn" onclick="removeItem('${item.id}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    function toggleCart() { document.getElementById('cartSidebar').classList.toggle('show'); }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const filter = this.getAttribute('data-filter');
+            document.querySelectorAll('.product-item').forEach(product => {
+                product.style.display = (filter === 'all' || product.getAttribute('data-category') === filter) ? 'block' : 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}
