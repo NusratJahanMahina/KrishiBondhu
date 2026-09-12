@@ -1,83 +1,111 @@
 {% extends "base.html" %}
 
+{% set is_en = session.get('language') == 'en' %}
+
 {% block title %}
-    {% if session.get('language') == 'en' %}Agent Dashboard - KrishiBondhu{% else %}এজেন্ট ড্যাশবোর্ড - কৃষিবন্ধু{% endif %}
+    {% if is_en %}Agent Dashboard - KrishiBondhu{% else %}এজেন্ট ড্যাশবোর্ড - কৃষিবন্ধু{% endif %}
 {% endblock %}
 
 {% block content %}
 
-<div class="container py-4">
+<div class="dashboard-wrap">
 
-    <div class="row g-4">
+    <!-- ============ VERIFICATION BANNER ============ -->
+    {% if v_status == 'PENDING' %}
+    <div class="alert alert-warning alert-dismissible fade show shadow-sm mb-3" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Profile Unverified:</strong> Please
+        <a href="{{ url_for('agent_verify_profile') }}" class="alert-link">update your agent information here</a>
+        to unlock all features.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% elif v_status == 'VERIFIED' %}
+    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-3" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>Verified Agent:</strong> Your profile is fully verified.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    <!-- ============ END BANNER ============ -->
 
-        <!-- ============================================= -->
-        <!-- LEFT COLUMN: PROFILE + STATS + RANKING        -->
-        <!-- ============================================= -->
-        <div class="col-lg-3">
+    <!-- ============================================ -->
+    <!--  FIXED 3-WAY GRID  20% : 40% : 40%           -->
+    <!--  Quick Actions spans the middle + right      -->
+    <!--  Everything fills the viewport exactly       -->
+    <!-- ============================================ -->
+    <div class="dashboard-grid">
+
+        <!-- ============ LEFT COLUMN — 20% ============ -->
+        <div class="col-left">
 
             <!-- Profile Card -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body p-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div>
-                            <i class="fas fa-user-circle fa-5x text-secondary"></i>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-user-circle fa-4x text-secondary" aria-hidden="true"></i>
                         </div>
-                        <div>
-                            <h5 class="fw-bold mb-1" style="font-size: 1.1rem;">{{ user.first_name }} {{ user.last_name }}</h5>
-                            <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1" style="font-size: 0.75rem;">
-                                    {% if session.get('language') == 'en' %}Active{% else %}সক্রিয়{% endif %}
+                        <div class="min-w-0">
+                            <h6 class="fw-bold mb-1 text-truncate" style="font-size: 1rem;">
+                                {{ user.first_name }} {{ user.last_name }}
+                            </h6>
+                            <div class="d-flex align-items-center flex-wrap gap-1 mb-1">
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill" style="font-size: 0.65rem; padding: 3px 10px;">
+                                    {% if is_en %}Active{% else %}সক্রিয়{% endif %}
                                 </span>
-                                <span class="ms-2 text-muted" style="font-size: 0.85rem;">{{ agent_data.agent_code or 'N/A' }}</span>
-                            </p>
-                            <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                                <i class="fas fa-building me-1" style="font-size: 0.75rem;"></i>
+                                <span class="text-muted" style="font-size: 0.7rem;">{{ agent_data.agent_code or 'N/A' }}</span>
+                            </div>
+                            <p class="text-muted mb-0 text-truncate" style="font-size: 0.75rem;">
+                                <i class="fas fa-building me-1" style="font-size: 0.65rem;" aria-hidden="true"></i>
                                 {{ agent_data.center_name or 'Not Assigned' }}
                             </p>
-                            <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                                <i class="fas fa-map-marker-alt me-1" style="font-size: 0.75rem;"></i>
+                            <p class="text-muted mb-0 text-truncate" style="font-size: 0.75rem;">
+                                <i class="fas fa-map-marker-alt me-1" style="font-size: 0.65rem;" aria-hidden="true"></i>
                                 {{ agent_data.upazila or 'N/A' }}, {{ agent_data.district or 'N/A' }}
                             </p>
-                            <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                                <i class="fas fa-phone me-1" style="font-size: 0.75rem;"></i>
+                            <p class="text-muted mb-0 text-truncate" style="font-size: 0.75rem;">
+                                <i class="fas fa-phone me-1" style="font-size: 0.65rem;" aria-hidden="true"></i>
                                 {{ agent_data.phone or 'N/A' }}
                             </p>
-                            <p class="text-muted mb-0" style="font-size: 0.85rem;">
-                                <i class="fas fa-calendar-alt me-1" style="font-size: 0.75rem;"></i>
-                                {% if session.get('language') == 'en' %}Joined{% else %}যোগদানের তারিখ{% endif %}: {{ agent_data.join_date or 'N/A' }}
+                            <p class="text-muted mb-0 text-truncate" style="font-size: 0.75rem;">
+                                <i class="fas fa-calendar-alt me-1" style="font-size: 0.65rem;" aria-hidden="true"></i>
+                                {% if is_en %}Joined{% else %}যোগদান{% endif %}: {{ agent_data.join_date or 'N/A' }}
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Performance Stats -->
-            <div class="card border-0 shadow-sm mb-3">
+            <!-- Performance -->
+            <div class="card border-0 shadow-sm">
                 <div class="card-body p-3">
-                    <h6 class="fw-bold mb-2" style="font-size: 0.9rem;">{% if session.get('language') == 'en' %}Performance{% else %}পারফরম্যান্স{% endif %}</h6>
-                    <div class="row g-1">
-                        <div class="col-3">
-                            <div class="p-2 bg-light rounded-3 text-center">
-                                <div class="text-muted" style="font-size: 0.65rem;">{% if session.get('language') == 'en' %}Farmers{% else %}কৃষক{% endif %}</div>
-                                <div class="fw-bold text-success" style="font-size: 1.2rem;">{{ agent_data.total_farmers or 0 }}</div>
+                    <h6 class="fw-bold mb-2 d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                        <i class="fas fa-chart-line text-success" aria-hidden="true"></i>
+                        {% if is_en %}Performance{% else %}পারফরম্যান্স{% endif %}
+                    </h6>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="stat-tile stat-tile-success">
+                                <div class="stat-label">{% if is_en %}Farmers{% else %}কৃষক{% endif %}</div>
+                                <div class="stat-value">{{ agent_data.total_farmers or 0 }}</div>
                             </div>
                         </div>
-                        <div class="col-3">
-                            <div class="p-2 bg-light rounded-3 text-center">
-                                <div class="text-muted" style="font-size: 0.65rem;">KYC</div>
-                                <div class="fw-bold text-primary" style="font-size: 1.2rem;">{{ agent_data.kyc_done or 0 }}</div>
+                        <div class="col-6">
+                            <div class="stat-tile stat-tile-primary">
+                                <div class="stat-label">KYC</div>
+                                <div class="stat-value">{{ agent_data.kyc_done or 0 }}</div>
                             </div>
                         </div>
-                        <div class="col-3">
-                            <div class="p-2 bg-light rounded-3 text-center">
-                                <div class="text-muted" style="font-size: 0.65rem;">{% if session.get('language') == 'en' %}Loans{% else %}ঋণ{% endif %}</div>
-                                <div class="fw-bold text-warning" style="font-size: 1.2rem;">{{ agent_data.loans_approved or 0 }}</div>
+                        <div class="col-6">
+                            <div class="stat-tile stat-tile-warning">
+                                <div class="stat-label">{% if is_en %}Loans{% else %}ঋণ{% endif %}</div>
+                                <div class="stat-value">{{ agent_data.loans_approved or 0 }}</div>
                             </div>
                         </div>
-                        <div class="col-3">
-                            <div class="p-2 bg-light rounded-3 text-center">
-                                <div class="text-muted" style="font-size: 0.65rem;">{% if session.get('language') == 'en' %}Pending{% else %}অপেক্ষমাণ{% endif %}</div>
-                                <div class="fw-bold text-danger" style="font-size: 1.2rem;">{{ agent_data.pending_loans or 0 }}</div>
+                        <div class="col-6">
+                            <div class="stat-tile stat-tile-danger">
+                                <div class="stat-label">{% if is_en %}Pending{% else %}অপেক্ষমাণ{% endif %}</div>
+                                <div class="stat-value">{{ agent_data.pending_loans or 0 }}</div>
                             </div>
                         </div>
                     </div>
@@ -85,64 +113,71 @@
             </div>
 
             <!-- Agent Ranking -->
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3" style="font-size: 1rem;">{% if session.get('language') == 'en' %}Agent Ranking{% else %}এজেন্টদের র‍্যাঙ্কিং{% endif %}</h5>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <h6 class="fw-bold mb-2 d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                        <i class="fas fa-trophy text-warning" aria-hidden="true"></i>
+                        {% if is_en %}Agent Ranking{% else %}এজেন্ট র‍্যাঙ্কিং{% endif %}
+                    </h6>
                     {% if ranking %}
-                        <div style="max-height: 150px; overflow-y: auto;">
+                        <div class="scroll-y-sm">
                             <table class="table table-sm table-borderless mb-0">
                                 <thead>
                                     <tr>
-                                        <th style="font-size: 0.75rem;">#</th>
-                                        <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Agent{% else %}এজেন্ট{% endif %}</th>
-                                        <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Rate{% else %}সাফল্যের হার{% endif %}</th>
+                                        <th style="font-size: 0.7rem;">#</th>
+                                        <th style="font-size: 0.7rem;">{% if is_en %}Agent{% else %}এজেন্ট{% endif %}</th>
+                                        <th style="font-size: 0.7rem;">{% if is_en %}Rate{% else %}হার{% endif %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for agent in ranking %}
                                     <tr>
-                                        <td style="font-size: 0.8rem;"><span class="badge bg-{% if loop.index == 1 %}success{% elif loop.index == 2 %}warning{% else %}secondary{% endif %} rounded-pill" style="font-size: 0.65rem;">{{ loop.index }}</span></td>
-                                        <td style="font-size: 0.8rem;">{{ agent[1] }}</td>
-                                        <td style="font-size: 0.8rem;">{{ agent[4] }}%</td>
+                                        <td style="font-size: 0.75rem;">
+                                            <span class="badge bg-{% if loop.index == 1 %}success{% elif loop.index == 2 %}warning{% else %}secondary{% endif %} rounded-pill" style="font-size: 0.6rem;">{{ loop.index }}</span>
+                                        </td>
+                                        <td style="font-size: 0.75rem;">{{ agent[1] }}</td>
+                                        <td style="font-size: 0.75rem;">{{ agent[4] }}%</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
                     {% else %}
-                        <p class="text-muted mb-0" style="font-size: 0.8rem;">{% if session.get('language') == 'en' %}No data available.{% else %}কোনো তথ্য পাওয়া যায়নি।{% endif %}</p>
+                        <p class="text-muted mb-0" style="font-size: 0.75rem;">
+                            {% if is_en %}No data available.{% else %}কোনো তথ্য পাওয়া যায়নি।{% endif %}
+                        </p>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- ===== MONTHLY PERFORMANCE ===== -->
+            <!-- Monthly Performance -->
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-info text-white py-2">
-                    <h6 class="mb-0 fw-semibold" style="font-size: 0.85rem;">
-                        <i class="fas fa-calendar-alt me-2" style="font-size: 0.75rem;"></i>
-                        {% if session.get('language') == 'en' %}Monthly Performance{% else %}মাসিক পারফরম্যান্স{% endif %}
+                <div class="card-header bg-info text-white py-2 d-flex align-items-center gap-2">
+                    <i class="fas fa-calendar-alt" style="font-size: 0.75rem;" aria-hidden="true"></i>
+                    <h6 class="mb-0 fw-semibold" style="font-size: 0.8rem;">
+                        {% if is_en %}Monthly Performance{% else %}মাসিক পারফরম্যান্স{% endif %}
                     </h6>
                 </div>
-                <div class="card-body p-2" style="max-height: 150px; overflow-y: auto;">
+                <div class="card-body p-2 scroll-y-sm">
                     <table class="table table-sm table-borderless mb-0">
                         <thead>
                             <tr>
-                                <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Month{% else %}মাস{% endif %}</th>
-                                <th style="font-size: 0.75rem;">KYC</th>
-                                <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Loans{% else %}ঋণ{% endif %}</th>
+                                <th style="font-size: 0.7rem;">{% if is_en %}Month{% else %}মাস{% endif %}</th>
+                                <th style="font-size: 0.7rem;">KYC</th>
+                                <th style="font-size: 0.7rem;">{% if is_en %}Loans{% else %}ঋণ{% endif %}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for row in monthly_performance %}
                             <tr>
-                                <td style="font-size: 0.8rem;">{{ row[0] }}</td>
-                                <td style="font-size: 0.8rem;">{{ row[1] }}</td>
-                                <td style="font-size: 0.8rem;">{{ row[2] }}</td>
+                                <td style="font-size: 0.75rem;">{{ row[0] }}</td>
+                                <td style="font-size: 0.75rem;">{{ row[1] }}</td>
+                                <td style="font-size: 0.75rem;">{{ row[2] }}</td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="3" class="text-muted text-center" style="font-size: 0.75rem;">
-                                    {% if session.get('language') == 'en' %}No data{% else %}কোনো তথ্য নেই{% endif %}
+                                <td colspan="3" class="text-muted text-center" style="font-size: 0.7rem;">
+                                    {% if is_en %}No data{% else %}কোনো তথ্য নেই{% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -151,174 +186,34 @@
                 </div>
             </div>
 
-        </div>
-
-        <!-- ============================================= -->
-        <!-- MIDDLE COLUMN: MY FARMERS + ADMIN POSTS      -->
-        <!-- ============================================= -->
-        <div class="col-lg-6">
-
-            <!-- My Farmers -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold mb-0" style="font-size: 1rem;">{% if session.get('language') == 'en' %}My Farmers{% else %}আমার কৃষকরা{% endif %}</h5>
-                        <span class="badge bg-light text-dark rounded-pill px-3 py-2" style="font-size: 0.8rem;">{{ my_farmers|length }}</span>
-                    </div>
-                    <div style="max-height: 450px; overflow-y: auto;">
-                        {% if my_farmers %}
-                            <table class="table table-sm table-borderless mb-0">
-                                <thead>
-                                    <tr>
-                                        <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Code{% else %}কোড{% endif %}</th>
-                                        <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Name{% else %}নাম{% endif %}</th>
-                                        <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Phone{% else %}ফোন{% endif %}</th>
-                                        <th style="font-size: 0.75rem;">KYC</th>
-                                        <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Loan{% else %}ঋণ{% endif %}</th>
-                                        <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Due{% else %}বকেয়া{% endif %}</th>
-                                        <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Order{% else %}অর্ডার{% endif %}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for farmer in my_farmers %}
-                                    <tr>
-                                        <td style="font-size: 0.8rem;"><strong>{{ farmer[0] or 'N/A' }}</strong></td>
-                                        <td style="font-size: 0.8rem;">{{ farmer[1] or 'N/A' }}</td>
-                                        <td style="font-size: 0.8rem;">{{ farmer[2] or 'N/A' }}</td>
-                                        <td style="font-size: 0.8rem;">
-                                            {% if farmer[3] == 'VERIFIED' %}
-                                                <span class="badge bg-success bg-opacity-10 text-success" style="font-size: 0.65rem;">{% if session.get('language') == 'en' %}Verified{% else %}যাচাইকৃত{% endif %}</span>
-                                            {% elif farmer[3] == 'PENDING' %}
-                                                <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 0.65rem;">{% if session.get('language') == 'en' %}Pending{% else %}অপেক্ষমাণ{% endif %}</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-size: 0.65rem;">-</span>
-                                            {% endif %}
-                                        </td>
-                                        <td style="font-size: 0.8rem;">
-                                            {% if farmer[4] == 'Paid' %}
-                                                <span class="badge bg-success bg-opacity-10 text-success" style="font-size: 0.65rem;">{% if session.get('language') == 'en' %}Paid{% else %}পরিশোধিত{% endif %}</span>
-                                            {% elif farmer[4] == 'Active Loan' %}
-                                                <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size: 0.65rem;">{% if session.get('language') == 'en' %}Active{% else %}সক্রিয়{% endif %}</span>
-                                            {% elif farmer[4] == 'Loan Pending' %}
-                                                <span class="badge bg-warning bg-opacity-10 text-warning" style="font-size: 0.65rem;">{% if session.get('language') == 'en' %}Pending{% else %}অপেক্ষমাণ{% endif %}</span>
-                                            {% elif farmer[4] == 'No Loan' %}
-                                                <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-size: 0.65rem;">{% if session.get('language') == 'en' %}No Loan{% else %}কোনো ঋণ নেই{% endif %}</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-size: 0.65rem;">{{ farmer[4] or 'N/A' }}</span>
-                                            {% endif %}
-                                        </td>
-                                        <td style="font-size: 0.8rem;">{{ farmer[5] or '-' }}</td>
-                                        <td style="font-size: 0.8rem;">
-                                            {% if farmer[6] == 'Yes' %}
-                                                <span class="badge bg-info bg-opacity-10 text-info" style="font-size: 0.65rem;">{% if session.get('language') == 'en' %}Yes{% else %}হ্যাঁ{% endif %}</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-size: 0.65rem;">{% if session.get('language') == 'en' %}No{% else %}না{% endif %}</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <div class="text-center py-4">
-                                <i class="fas fa-users text-muted fa-3x mb-2"></i>
-                                <p class="text-muted" style="font-size: 0.85rem;">{% if session.get('language') == 'en' %}No farmers assigned yet.{% else %}এখনো কোনো কৃষক বরাদ্দ করা হয়নি।{% endif %}</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Admin Posts - SMALLER HEADER -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light py-2 border-bottom">
-                    <h5 class="mb-0" style="font-size: 0.9rem;">
-                        <i class="fas fa-newspaper me-2" style="font-size: 0.75rem;"></i>
-                        {% if session.get('language') == 'en' %}Admin Posts{% else %}অ্যাডমিনের পোস্ট{% endif %}
-                    </h5>
-                </div>
-                <div class="card-body p-0" style="max-height: 450px; overflow-y: auto;">
-                    {% if posts %}
-                        {# Sort posts by date - newest first #}
-                        {% set sorted_posts = posts|sort(attribute='2', reverse=True) %}
-                        {% for post in sorted_posts %}
-                        <div class="p-3 border-bottom post-item">
-                            <!-- Smaller header -->
-                            <div class="d-flex align-items-center mb-1">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-seedling text-success" style="font-size: 1.2rem;"></i>
-                                </div>
-                                <div class="ms-2 flex-grow-1">
-                                    <span class="fw-bold text-dark" style="font-size: 0.8rem;">KrishiBondhu</span>
-                                    <span class="text-muted ms-2" style="font-size: 0.6rem;"><i class="far fa-clock me-1"></i>{{ post[2] }}</span>
-                                </div>
-                            </div>
-                            
-                            <p class="mb-2" style="font-size: 0.9rem; line-height: 1.6;">{{ post[1] }}</p>
-                            
-                            {% set image_filename = post[3] if post[3] and post[3] != 'None' and post[3] != 'null' and post[3]|trim != '' else '' %}
-                            
-                            {% if image_filename %}
-                                <div class="post-image-container mb-2" style="background: #f8f9fa; border-radius: 8px; overflow: hidden; position: relative; width: 100%; padding-top: 56.25%;">
-                                    <img src="{{ url_for('serve_image', filename=image_filename) }}" 
-                                         class="post-image" 
-                                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; background: #f8f9fa;"
-                                         alt="Post image"
-                                         onerror="this.style.display='none'; this.parentElement.style.display='none';">
-                                </div>
-                            {% endif %}
-                            
-                            <div class="d-flex gap-4 text-muted" style="font-size: 0.7rem; padding-top: 4px; border-top: 1px solid #f0f0f0;">
-                                <span class="like-button" style="cursor: pointer;" onclick="toggleLike(this)">
-                                    <i class="far fa-heart me-1"></i> <span class="like-count">0</span>
-                                </span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-newspaper text-muted fa-4x mb-3"></i>
-                            <p class="text-muted" style="font-size: 0.9rem;">{% if session.get('language') == 'en' %}No posts from admin yet.{% else %}অ্যাডমিনের পক্ষ থেকে এখনো কোনো পোস্ট নেই।{% endif %}</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-        </div>
-
-        <!-- ============================================= -->
-        <!-- RIGHT COLUMN: FOLLOW-UP + RISK + ACTIONS + ABSORPTION -->
-        <!-- ============================================= -->
-        <div class="col-lg-3">
-
-            <!-- ===== FARMERS NEEDING FOLLOW-UP ===== -->
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-header bg-warning text-dark py-2">
-                    <h6 class="mb-0 fw-semibold" style="font-size: 0.85rem;">
-                        <i class="fas fa-clock me-2" style="font-size: 0.75rem;"></i>
-                        {% if session.get('language') == 'en' %}Farmers Needing Follow-up{% else %}অনুসরণ প্রয়োজন কৃষক{% endif %}
+            <!-- Follow-up — STRETCHES to fill bottom of left column -->
+            <div class="card border-0 shadow-sm card-fill">
+                <div class="card-header bg-warning text-dark py-2 d-flex align-items-center gap-2">
+                    <i class="fas fa-clock" style="font-size: 0.75rem;" aria-hidden="true"></i>
+                    <h6 class="mb-0 fw-semibold" style="font-size: 0.8rem;">
+                        {% if is_en %}Needs Follow-up{% else %}অনুসরণ প্রয়োজন{% endif %}
                     </h6>
                 </div>
-                <div class="card-body p-2" style="max-height: 150px; overflow-y: auto;">
+                <div class="card-body p-2 card-fill-body">
                     <table class="table table-sm table-borderless mb-0">
                         <thead>
                             <tr>
-                                <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Farmer{% else %}কৃষক{% endif %}</th>
-                                <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Remaining{% else %}বাকি{% endif %}</th>
-                                <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Days{% else %}দিন{% endif %}</th>
+                                <th style="font-size: 0.7rem;">{% if is_en %}Farmer{% else %}কৃষক{% endif %}</th>
+                                <th style="font-size: 0.7rem;">{% if is_en %}Remaining{% else %}বাকি{% endif %}</th>
+                                <th style="font-size: 0.7rem;">{% if is_en %}Days{% else %}দিন{% endif %}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for row in followup_farmers %}
                             <tr>
-                                <td style="font-size: 0.8rem;">{{ row[1] }}</td>
-                                <td style="font-size: 0.8rem;">৳{{ row[6] }}</td>
-                                <td style="font-size: 0.8rem;">{{ row[7] }}</td>
+                                <td style="font-size: 0.75rem;">{{ row[1] }}</td>
+                                <td style="font-size: 0.75rem;">৳{{ row[6] }}</td>
+                                <td style="font-size: 0.75rem;">{{ row[7] }}</td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="3" class="text-muted text-center" style="font-size: 0.75rem;">
-                                    {% if session.get('language') == 'en' %}No follow-ups needed{% else %}কোনো অনুসরণের প্রয়োজন নেই{% endif %}
+                                <td colspan="3" class="text-muted text-center" style="font-size: 0.7rem;">
+                                    {% if is_en %}None{% else %}কিছু নেই{% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -327,137 +222,343 @@
                 </div>
             </div>
 
-            <!-- Risk Prediction -->
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-header bg-primary text-white py-2">
-                    <h6 class="mb-0 fw-semibold" style="font-size: 0.85rem;"><i class="fas fa-robot me-2" style="font-size: 0.75rem;"></i>{% if session.get('language') == 'en' %}Risk Prediction{% else %}ঝুঁকি পূর্বাভাস{% endif %}</h6>
-                </div>
-                <div class="card-body p-2" style="max-height: 150px; overflow-y: auto;">
-                    {% if risk_prediction %}
-                        <table class="table table-sm table-borderless mb-0">
-                            <thead>
-                                <tr>
-                                    <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Farmer{% else %}কৃষক{% endif %}</th>
-                                    <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Score{% else %}স্কোর{% endif %}</th>
-                                    <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Risk{% else %}ঝুঁকি{% endif %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in risk_prediction %}
-                                <tr>
-                                    <td style="font-size: 0.8rem;">{{ row[1] }}</td>
-                                    <td style="font-size: 0.8rem;">{{ row[2] }}</td>
-                                    <td style="font-size: 0.8rem;">
-                                        <span class="badge bg-{{ 'danger' if row[4]=='HIGH_RISK' else 'warning' if row[4]=='MEDIUM_RISK' else 'success' }}" style="font-size: 0.6rem;">
-                                            {{ row[4] }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <p class="text-muted text-center mb-0" style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}No risk data available.{% else %}কোনো ঝুঁকি তথ্য পাওয়া যায়নি।{% endif %}</p>
-                    {% endif %}
-                </div>
-            </div>
+        </div>
 
-            <!-- Quick Actions - ENLARGED with PROFILE button -->
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-body p-4">
-                    <h6 class="fw-bold mb-3" style="font-size: 0.95rem;">
-                        <i class="fas fa-tasks text-muted me-2" style="font-size: 0.85rem;"></i>
-                        {% if session.get('language') == 'en' %}Quick Actions{% else %}দ্রুত কর্ম{% endif %}
+        <!-- ============ RIGHT AREA — 80% ============ -->
+        <div class="col-right-area">
+
+            <!-- QUICK ACTIONS — spans full 80% width at top -->
+            <div class="card border-0 shadow-sm quick-actions-card">
+                <div class="card-body p-3">
+                    <h6 class="fw-bold mb-2 d-flex align-items-center gap-2" style="font-size: 0.9rem;">
+                        <i class="fas fa-bolt text-warning" aria-hidden="true"></i>
+                        {% if is_en %}Quick Actions{% else %}দ্রুত কর্ম{% endif %}
                     </h6>
-                    <div class="row g-2">
-                        <div class="col-4">
-                            <a href="{{ url_for('agent_kyc_requests') }}" class="text-decoration-none">
-                                <div class="p-2 bg-light rounded-3 text-center hover-card" style="padding: 12px 4px !important;">
-                                    <i class="fas fa-file-signature text-warning" style="font-size: 1.5rem;"></i>
-                                    <p class="mb-0 mt-1" style="font-size: 0.7rem; font-weight: 600;">KYC</p>
-                                    {% if agent_data.pending_kyc > 0 %}
-                                        <span class="badge bg-danger rounded-pill" style="font-size: 0.6rem; padding: 2px 8px;">{{ agent_data.pending_kyc }}</span>
-                                    {% endif %}
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-4">
-                            <a href="{{ url_for('agent_loan_requests') }}" class="text-decoration-none">
-                                <div class="p-2 bg-light rounded-3 text-center hover-card" style="padding: 12px 4px !important;">
-                                    <i class="fas fa-hand-holding-usd text-success" style="font-size: 1.5rem;"></i>
-                                    <p class="mb-0 mt-1" style="font-size: 0.7rem; font-weight: 600;">{% if session.get('language') == 'en' %}Loans{% else %}ঋণ{% endif %}</p>
-                                    {% if agent_data.pending_loans > 0 %}
-                                        <span class="badge bg-danger rounded-pill" style="font-size: 0.6rem; padding: 2px 8px;">{{ agent_data.pending_loans }}</span>
-                                    {% endif %}
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-4">
-                            <a href="{{ url_for('agent_purchases') }}" class="text-decoration-none">
-                                <div class="p-2 bg-light rounded-3 text-center hover-card" style="padding: 12px 4px !important;">
-                                    <i class="fas fa-box text-info" style="font-size: 1.5rem;"></i>
-                                    <p class="mb-0 mt-1" style="font-size: 0.7rem; font-weight: 600;">{% if session.get('language') == 'en' %}Deliver{% else %}সরবরাহ{% endif %}</p>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-4">
-                            <a href="{{ url_for('agent_inventory') }}" class="text-decoration-none">
-                                <div class="p-2 bg-light rounded-3 text-center hover-card" style="padding: 12px 4px !important;">
-                                    <i class="fas fa-warehouse text-secondary" style="font-size: 1.5rem;"></i>
-                                    <p class="mb-0 mt-1" style="font-size: 0.7rem; font-weight: 600;">{% if session.get('language') == 'en' %}Stock{% else %}মজুত{% endif %}</p>
-                                </div>
-                            </a>
-                        </div>
-                        <!-- PROFILE BUTTON - REPLACED FARMERS -->
-                        <div class="col-4">
-                            <a href="{{ url_for('agent_farmer_profile') }}" class="text-decoration-none">
-                                <div class="p-2 bg-light rounded-3 text-center hover-card" style="padding: 12px 4px !important;">
-                                    <i class="fas fa-user-check text-success" style="font-size: 1.5rem;"></i>
-                                    <p class="mb-0 mt-1" style="font-size: 0.7rem; font-weight: 600;">{% if session.get('language') == 'en' %}Profile{% else %}প্রোফাইল{% endif %}</p>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-4">
-                            <a href="{{ url_for('agent_outreach') }}" class="text-decoration-none">
-                                <div class="p-2 bg-light rounded-3 text-center hover-card" style="padding: 12px 4px !important;">
-                                    <i class="fas fa-bullhorn text-danger" style="font-size: 1.5rem;"></i>
-                                    <p class="mb-0 mt-1" style="font-size: 0.7rem; font-weight: 600;">{% if session.get('language') == 'en' %}Promote{% else %}প্রচার{% endif %}</p>
-                                </div>
-                            </a>
-                        </div>
+                    <div class="quick-grid">
+
+                        <a href="{{ url_for('agent_kyc_requests') }}" class="text-decoration-none">
+                            <div class="p-2 bg-light rounded-3 text-center hover-card h-100 d-flex flex-column justify-content-center">
+                                <i class="fas fa-file-signature text-warning" style="font-size: 1.4rem;" aria-hidden="true"></i>
+                                <p class="mb-0 mt-1 fw-bold" style="font-size: 0.8rem;">KYC</p>
+                                <small class="text-muted" style="font-size: 0.62rem;">
+                                    {% if is_en %}Verify farmers{% else %}কৃষক যাচাই{% endif %}
+                                </small>
+                                {% if (agent_data.pending_kyc or 0) > 0 %}
+                                    <div class="mt-1">
+                                        <span class="badge bg-danger rounded-pill" style="font-size: 0.58rem; padding: 2px 8px;">{{ agent_data.pending_kyc }} pending</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </a>
+
+                        <a href="{{ url_for('agent_loan_requests') }}" class="text-decoration-none">
+                            <div class="p-2 bg-light rounded-3 text-center hover-card h-100 d-flex flex-column justify-content-center">
+                                <i class="fas fa-hand-holding-usd text-success" style="font-size: 1.4rem;" aria-hidden="true"></i>
+                                <p class="mb-0 mt-1 fw-bold" style="font-size: 0.8rem;">{% if is_en %}Loans{% else %}ঋণ{% endif %}</p>
+                                <small class="text-muted" style="font-size: 0.62rem;">
+                                    {% if is_en %}Pending approvals{% else %}অনুমোদন বাকি{% endif %}
+                                </small>
+                                {% if (agent_data.pending_loans or 0) > 0 %}
+                                    <div class="mt-1">
+                                        <span class="badge bg-danger rounded-pill" style="font-size: 0.58rem; padding: 2px 8px;">{{ agent_data.pending_loans }} pending</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </a>
+
+                        <a href="{{ url_for('agent_purchases') }}" class="text-decoration-none">
+                            <div class="p-2 bg-light rounded-3 text-center hover-card h-100 d-flex flex-column justify-content-center">
+                                <i class="fas fa-box text-info" style="font-size: 1.4rem;" aria-hidden="true"></i>
+                                <p class="mb-0 mt-1 fw-bold" style="font-size: 0.8rem;">{% if is_en %}Deliver{% else %}সরবরাহ{% endif %}</p>
+                                <small class="text-muted" style="font-size: 0.62rem;">
+                                    {% if is_en %}Orders to deliver{% else %}ডেলিভারি তালিকা{% endif %}
+                                </small>
+                            </div>
+                        </a>
+
+                        <a href="{{ url_for('agent_inventory') }}" class="text-decoration-none">
+                            <div class="p-2 bg-light rounded-3 text-center hover-card h-100 d-flex flex-column justify-content-center">
+                                <i class="fas fa-warehouse text-secondary" style="font-size: 1.4rem;" aria-hidden="true"></i>
+                                <p class="mb-0 mt-1 fw-bold" style="font-size: 0.8rem;">{% if is_en %}Stock{% else %}মজুত{% endif %}</p>
+                                <small class="text-muted" style="font-size: 0.62rem;">
+                                    {% if is_en %}Center inventory{% else %}কেন্দ্রের মজুত{% endif %}
+                                </small>
+                            </div>
+                        </a>
+
+                        <a href="{{ url_for('agent_farmer_profile') }}" class="text-decoration-none">
+                            <div class="p-2 bg-light rounded-3 text-center hover-card h-100 d-flex flex-column justify-content-center">
+                                <i class="fas fa-user-check text-success" style="font-size: 1.4rem;" aria-hidden="true"></i>
+                                <p class="mb-0 mt-1 fw-bold" style="font-size: 0.8rem;">{% if is_en %}Profile{% else %}প্রোফাইল{% endif %}</p>
+                                <small class="text-muted" style="font-size: 0.62rem;">
+                                    {% if is_en %}Search farmer{% else %}কৃষক খুঁজুন{% endif %}
+                                </small>
+                            </div>
+                        </a>
+
+                        <a href="{{ url_for('agent_promote') }}" class="text-decoration-none">
+                            <div class="p-2 bg-light rounded-3 text-center hover-card h-100 d-flex flex-column justify-content-center">
+                                <i class="fas fa-users text-danger" style="font-size: 1.4rem;" aria-hidden="true"></i>
+                                <p class="mb-0 mt-1 fw-bold" style="font-size: 0.8rem;">{% if is_en %}Farmers{% else %}কৃষক{% endif %}</p>
+                                <small class="text-muted" style="font-size: 0.62rem;">
+                                    {% if is_en %}All my farmers{% else %}সব কৃষক{% endif %}
+                                </small>
+                            </div>
+                        </a>
+
                     </div>
                 </div>
             </div>
 
-            <!-- Loan Absorption Rate -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-info text-white py-2">
-                    <h6 class="mb-0 fw-semibold" style="font-size: 0.85rem;"><i class="fas fa-percent me-2" style="font-size: 0.75rem;"></i>{% if session.get('language') == 'en' %}Loan Absorption{% else %}ঋণ শোষণ{% endif %}</h6>
-                </div>
-                <div class="card-body p-2" style="max-height: 130px; overflow-y: auto;">
-                    {% if absorption_rate %}
-                        <table class="table table-sm table-borderless mb-0">
-                            <thead>
-                                <tr>
-                                    <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Farmer{% else %}কৃষক{% endif %}</th>
-                                    <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Abs.{% else %}শোষণ{% endif %}</th>
-                                    <th style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}Rating{% else %}মূল্যায়ন{% endif %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in absorption_rate %}
-                                <tr>
-                                    <td style="font-size: 0.8rem;">{{ row[0] }}</td>
-                                    <td style="font-size: 0.8rem;">{{ row[3] }}%</td>
-                                    <td style="font-size: 0.8rem;"><span class="badge bg-{{ 'success' if row[4]=='GOOD' else 'warning' if row[4]=='MODERATE' else 'danger' }}" style="font-size: 0.6rem;">{{ row[4] }}</span></td>
-                                </tr>
+            <!-- BOTTOM ROW — fills remaining height, split 50/50 -->
+            <div class="bottom-row">
+
+                <!-- ============ MIDDLE COLUMN — 50% of bottom row ============ -->
+                <div class="col-middle">
+
+                    <!-- Admin Posts — STRETCHES to fill -->
+                    <div class="card border-0 shadow-sm card-fill">
+                        <div class="card-header bg-light py-2 border-bottom d-flex align-items-center gap-2">
+                            <i class="fas fa-newspaper text-muted" style="font-size: 0.75rem;" aria-hidden="true"></i>
+                            <h6 class="mb-0 fw-semibold" style="font-size: 0.85rem;">
+                                {% if is_en %}Admin Posts{% else %}অ্যাডমিনের পোস্ট{% endif %}
+                            </h6>
+                        </div>
+                        <div class="card-body p-0 card-fill-body" style="overflow-y: auto;">
+                            {% if posts %}
+                                {% for post in posts|sort(attribute='2', reverse=True) %}
+                                <div class="p-3 border-bottom post-item">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-seedling text-success" style="font-size: 1.1rem;" aria-hidden="true"></i>
+                                        </div>
+                                        <div class="ms-2 flex-grow-1">
+                                            <span class="fw-bold text-dark" style="font-size: 0.8rem;">KrishiBondhu</span>
+                                            <span class="text-muted ms-2" style="font-size: 0.6rem;">
+                                                <i class="far fa-clock me-1" aria-hidden="true"></i>{{ post[2] }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <p class="mb-2" style="font-size: 0.85rem; line-height: 1.55;">{{ post[1] }}</p>
+
+                                    {% set image_filename = post[3] if post[3] and post[3] != 'None' and post[3] != 'null' and post[3]|trim != '' else '' %}
+
+                                    {% if image_filename %}
+                                        <div class="post-image-container mb-2">
+                                            <img src="{{ url_for('serve_image', filename=image_filename) }}"
+                                                 class="post-image"
+                                                 alt="Post image"
+                                                 loading="lazy"
+                                                 decoding="async"
+                                                 onerror="this.closest('.post-image-container').style.display='none';">
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="post-meta text-muted">
+                                        <span><i class="far fa-heart me-1" aria-hidden="true"></i>0</span>
+                                    </div>
+                                </div>
                                 {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <p class="text-muted text-center mb-0" style="font-size: 0.75rem;">{% if session.get('language') == 'en' %}No data available.{% else %}কোনো তথ্য পাওয়া যায়নি।{% endif %}</p>
-                    {% endif %}
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-newspaper text-muted fa-3x mb-3" aria-hidden="true"></i>
+                                    <p class="text-muted" style="font-size: 0.85rem;">
+                                        {% if is_en %}No posts from admin yet.{% else %}অ্যাডমিনের পক্ষ থেকে এখনো কোনো পোস্ট নেই।{% endif %}
+                                    </p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
                 </div>
+
+                <!-- ============ RIGHT COLUMN — 50% of bottom row ============ -->
+                <div class="col-right">
+
+                    <!-- Pending Tasks -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0 d-flex align-items-center gap-2" style="font-size: 0.9rem;">
+                                    <i class="fas fa-tasks text-success" aria-hidden="true"></i>
+                                    {% if is_en %}Pending Tasks{% else %}অপেক্ষমাণ কাজ{% endif %}
+                                </h6>
+                                <span class="badge bg-light text-dark rounded-pill" style="font-size: 0.7rem;">{{ tasks|length }}</span>
+                            </div>
+
+                            {% if tasks %}
+                                {% set kyc_count = tasks | selectattr('0', 'equalto', 'KYC') | list | length %}
+                                {% set delivery_count = tasks | selectattr('0', 'equalto', 'DELIVERY') | list | length %}
+                                {% set due_count = tasks | selectattr('0', 'equalto', 'REPAYMENT') | list | length %}
+
+                                <div class="d-flex gap-1 mb-2 flex-wrap">
+                                    {% if kyc_count > 0 %}
+                                    <span class="badge rounded-pill" style="background:#fff7e6; color:#b45309; border:1px solid #fde68a; font-size:0.6rem; padding:2px 8px;">
+                                        {{ kyc_count }} KYC
+                                    </span>
+                                    {% endif %}
+                                    {% if delivery_count > 0 %}
+                                    <span class="badge rounded-pill" style="background:#e6f6ff; color:#0369a1; border:1px solid #bae6fd; font-size:0.6rem; padding:2px 8px;">
+                                        {{ delivery_count }} Delivery
+                                    </span>
+                                    {% endif %}
+                                    {% if due_count > 0 %}
+                                    <span class="badge rounded-pill" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.6rem; padding:2px 8px;">
+                                        {{ due_count }} Overdue
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                            <div class="scroll-y-md">
+                                {% if tasks %}
+                                    {% for task in tasks %}
+                                        {% set ttype = task[0] %}
+
+                                        {% if ttype == 'KYC' %}
+                                            {% set accent, accent_bg, accent_fg = '#f59e0b', '#fff7e6', '#b45309' %}
+                                            {% set icon, label = 'fa-file-signature', 'KYC' %}
+                                            {% set arrow_link = url_for('agent_kyc_requests') %}
+                                        {% elif ttype == 'DELIVERY' %}
+                                            {% set accent, accent_bg, accent_fg = '#0ea5e9', '#e6f6ff', '#0369a1' %}
+                                            {% set icon, label = 'fa-truck', 'Deliver' %}
+                                            {% set arrow_link = url_for('agent_purchases') %}
+                                        {% else %}
+                                            {% set accent, accent_bg, accent_fg = '#dc2626', '#fef2f2', '#b91c1c' %}
+                                            {% set icon, label = 'fa-exclamation-circle', 'Due' %}
+                                            {% set arrow_link = url_for('agent_farmer_detail', farmer_code=task[1]) %}
+                                        {% endif %}
+
+                                        <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded-3 task-card"
+                                             style="--accent: {{ accent }}; --accent-bg: {{ accent_bg }}; --accent-fg: {{ accent_fg }}; --accent-border: {{ accent }}33;">
+                                            <div class="flex-shrink-0 task-icon">
+                                                <i class="fas {{ icon }}" aria-hidden="true"></i>
+                                            </div>
+                                            <div class="flex-grow-1" style="min-width:0;">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <a href="{{ url_for('agent_farmer_detail', farmer_code=task[1]) }}"
+                                                       class="text-decoration-none fw-bold text-dark text-truncate"
+                                                       style="font-size: 0.75rem;">
+                                                        {{ task[2] }}
+                                                    </a>
+                                                    <span class="badge ms-1 task-badge">{{ label }}</span>
+                                                </div>
+                                                <small class="text-muted text-truncate d-block" style="font-size: 0.68rem;">
+                                                    {{ task[3] }}
+                                                </small>
+                                            </div>
+                                            <a href="{{ arrow_link }}"
+                                               class="btn btn-sm flex-shrink-0 task-link"
+                                               aria-label="{% if is_en %}Go to {{ label }} tasks{% else %}{{ label }} কাজে যান{% endif %}">
+                                                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                                            </a>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-3">
+                                        <i class="fas fa-check-circle text-success fa-2x mb-1" aria-hidden="true"></i>
+                                        <p class="text-muted mb-0" style="font-size: 0.75rem;">
+                                            {% if is_en %}All caught up!{% else %}সব সম্পন্ন!{% endif %}
+                                        </p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Risk Prediction -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary text-white py-2 d-flex align-items-center gap-2">
+                            <i class="fas fa-robot" style="font-size: 0.75rem;" aria-hidden="true"></i>
+                            <h6 class="mb-0 fw-semibold" style="font-size: 0.8rem;">
+                                {% if is_en %}Risk Prediction{% else %}ঝুঁকি পূর্বাভাস{% endif %}
+                            </h6>
+                        </div>
+                        <div class="card-body p-2 scroll-y-sm">
+                            {% if risk_prediction %}
+                                <table class="table table-sm table-borderless mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="font-size: 0.65rem;">Farmer</th>
+                                            <th style="font-size: 0.65rem;">Assets</th>
+                                            <th style="font-size: 0.65rem;">Loan</th>
+                                            <th style="font-size: 0.65rem;">Risk</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in risk_prediction %}
+                                        <tr>
+                                            <td style="font-size: 0.7rem;">{{ row[1] }}</td>
+                                            <td style="font-size: 0.7rem;">
+                                                <span class="text-success fw-bold">৳{{ row[4] }}</span>
+                                            </td>
+                                            <td style="font-size: 0.7rem;">
+                                                {% if row[5] and row[5] > 0 %}
+                                                    <span class="text-danger">৳{{ row[5] }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td style="font-size: 0.7rem;">
+                                                <span class="badge bg-{{ 'danger' if row[6] == 'HIGH_RISK' else 'warning' if row[6] == 'MEDIUM_RISK' else 'success' }}" style="font-size: 0.55rem;">
+                                                    {{ row[6] }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <p class="text-muted text-center mb-0" style="font-size: 0.7rem;">
+                                    {% if is_en %}No data{% else %}কোনো তথ্য নেই{% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Loan Absorption — STRETCHES to fill -->
+                    <div class="card border-0 shadow-sm card-fill">
+                        <div class="card-header bg-info text-white py-2 d-flex align-items-center gap-2">
+                            <i class="fas fa-percent" style="font-size: 0.75rem;" aria-hidden="true"></i>
+                            <h6 class="mb-0 fw-semibold" style="font-size: 0.8rem;">
+                                {% if is_en %}Loan Absorption{% else %}ঋণ শোষণ{% endif %}
+                            </h6>
+                        </div>
+                        <div class="card-body p-2 card-fill-body" style="overflow-y: auto;">
+                            {% if absorption_rate %}
+                                <table class="table table-sm table-borderless mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="font-size: 0.7rem;">Farmer</th>
+                                            <th style="font-size: 0.7rem;">Abs.</th>
+                                            <th style="font-size: 0.7rem;">Rating</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in absorption_rate %}
+                                        <tr>
+                                            <td style="font-size: 0.75rem;">{{ row[0] }}</td>
+                                            <td style="font-size: 0.75rem;">{{ row[3] }}%</td>
+                                            <td style="font-size: 0.75rem;">
+                                                <span class="badge bg-{{ 'success' if row[4] == 'GOOD' else 'warning' if row[4] == 'MODERATE' else 'danger' }}" style="font-size: 0.55rem;">
+                                                    {{ row[4] }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <p class="text-muted text-center mb-0" style="font-size: 0.7rem;">
+                                    {% if is_en %}No data{% else %}কোনো তথ্য নেই{% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
 
         </div>
@@ -467,117 +568,424 @@
 </div>
 
 <style>
-    .hover-card {
-        transition: all 0.2s ease;
-        cursor: pointer;
+    /* =========================================================
+       DASHBOARD LAYOUT — CSS ONLY
+       Better visual hierarchy:
+       - Left side: compact information / monitoring column
+       - Main area: content-first layout
+       - Admin posts receive the largest reading space
+       - No forced stretching that creates hollow empty cards
+       ========================================================= */
+
+    .dashboard-wrap {
+        width: 100%;
+        padding: 18px 22px 24px;
     }
-    .hover-card:hover {
-        background-color: #ffffff !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-        transform: translateY(-2px);
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: minmax(270px, 24%) minmax(0, 1fr);
+        gap: 18px;
+        align-items: stretch;
+        /* Use the available dashboard height instead of leaving a large blank area. */
+        min-height: calc(100vh - 120px);
     }
-    .table td {
-        padding: 4px 4px;
+
+    .col-left,
+    .col-right-area,
+    .col-middle,
+    .col-right {
+        min-width: 0;
+    }
+
+    .col-left,
+    .col-right-area,
+    .col-right {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 0;
+    }
+
+    /* Fill the available dashboard area while keeping inner content scrollable. */
+    .col-right-area { min-height: 0; }
+
+    /* Give the left dashboard a deliberate vertical rhythm instead of leaving a hollow bottom. */
+    .col-left > .card:nth-child(1) { flex: 1.15 1 0; min-height: 155px; }
+    .col-left > .card:nth-child(2) { flex: 0.95 1 0; min-height: 150px; }
+    .col-left > .card:nth-child(3) { flex: 1.05 1 0; min-height: 155px; }
+    .col-left > .card:nth-child(4) { flex: 1.05 1 0; min-height: 145px; }
+    .col-left > .card:nth-child(5) { flex: 1.25 1 0; min-height: 155px; }
+
+    .col-left > .card,
+    .col-right > .card {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .col-left > .card .card-body,
+    .col-right > .card .card-body {
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .quick-actions-card { flex: 0 0 auto; }
+
+    .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    /* Posts are intentionally wider than the utility/status column. */
+    .bottom-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.8fr);
+        gap: 18px;
+        align-items: stretch;
+        min-width: 0;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .col-middle {
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .col-middle > .card { flex: 1 1 auto; min-height: 0; }
+
+    /* Remove the old viewport-filling behavior that caused hollow empty space. */
+    .card-fill {
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-fill-body {
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .col-middle .card-fill-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        overflow-y: auto !important;
+    }
+
+    /* ============ CARD SYSTEM ============ */
+    .card {
+        border-radius: 14px !important;
+        overflow: hidden;
+    }
+
+    .shadow-sm {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.055) !important;
+    }
+
+    .card-header {
+        padding: 9px 14px !important;
+        border-radius: 14px 14px 0 0 !important;
+    }
+
+    .card-body { padding: 13px 14px !important; }
+    .rounded-3 { border-radius: 12px !important; }
+    .bg-opacity-10 { --bs-bg-opacity: 0.1; }
+
+    /* ============ LEFT COLUMN ============ */
+    .col-left .card-body { padding: 13px !important; }
+    .col-left .card + .card { margin-top: 0; }
+
+    /* ============ STAT TILES ============ */
+    .stat-tile {
+        padding: 10px 8px;
+        border-radius: 10px;
+        background: #f8f9fa;
+        text-align: center;
+        border-left: 3px solid transparent;
+        transition: transform 0.15s ease;
+    }
+
+    .stat-tile:hover { transform: translateY(-1px); }
+
+    .stat-label {
+        font-size: 0.62rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        font-weight: 600;
+    }
+
+    .stat-value {
+        font-size: 1.18rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .stat-tile-success { border-left-color: #198754; background: #f0fbf5; }
+    .stat-tile-success .stat-value { color: #198754; }
+    .stat-tile-primary { border-left-color: #0d6efd; background: #f0f6ff; }
+    .stat-tile-primary .stat-value { color: #0d6efd; }
+    .stat-tile-warning { border-left-color: #ffc107; background: #fffbf0; }
+    .stat-tile-warning .stat-value { color: #b8860b; }
+    .stat-tile-danger { border-left-color: #dc3545; background: #fff5f6; }
+    .stat-tile-danger .stat-value { color: #dc3545; }
+
+    /* ============ TABLES / SCROLL ============ */
+    .table td,
+    .table th {
+        padding: 5px 4px;
         vertical-align: middle;
     }
+
     .table th {
         font-weight: 600;
         color: #6c757d;
-        padding: 4px 4px;
     }
-    .container {
-        max-width: 1400px;
+
+    .scroll-y-sm,
+    .scroll-y-md {
+        max-height: none;
+        overflow-y: auto;
     }
-    .bg-opacity-10 {
-        --bs-bg-opacity: 0.1;
+
+    /* Keep the smaller status cards substantial and let each section scroll independently. */
+    .col-right > .card:nth-child(1) { flex: 1.25 1 0; min-height: 250px; }
+    .col-right > .card:nth-child(2) { flex: 0.9 1 0; min-height: 190px; }
+    .col-right > .card:nth-child(3) { flex: 1.1 1 0; min-height: 200px; }
+
+    /* ============ QUICK ACTIONS ============ */
+    .quick-grid > a { min-width: 0; }
+
+    .hover-card {
+        min-height: 102px;
+        padding: 10px 7px !important;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
     }
-    .shadow-sm {
-        box-shadow: 0 2px 6px rgba(0,0,0,0.04) !important;
+
+    .hover-card:hover {
+        background-color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+        transform: translateY(-2px);
+        border-color: rgba(0, 0, 0, 0.05);
     }
-    .rounded-3 {
-        border-radius: 12px !important;
+
+    /* ============ PENDING TASKS ============ */
+    .task-card {
+        border-left: 3px solid var(--accent);
+        background: var(--accent-bg);
+        transition: all 0.2s ease;
     }
-    ::-webkit-scrollbar {
-        width: 3px;
+
+    .task-card:hover {
+        transform: translateX(3px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
     }
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
+
+    .task-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
-    ::-webkit-scrollbar-thumb {
-        background: #d0d0d0;
-        border-radius: 10px;
+
+    .task-icon i { color: var(--accent-fg); font-size: 0.8rem; }
+
+    .task-badge {
+        background: #fff;
+        color: var(--accent-fg);
+        border: 1px solid var(--accent-border);
+        font-size: 0.55rem;
+        padding: 1px 6px;
     }
-    ::-webkit-scrollbar-thumb:hover {
-        background: #b0b0b0;
+
+    .task-link {
+        background: #fff;
+        border: 1px solid var(--accent);
+        color: var(--accent-fg);
+        padding: 2px 7px;
+        font-size: 0.65rem;
+        border-radius: 6px;
     }
-    .post-item:hover {
-        background-color: #fafafa;
+
+    .task-link:hover { background: var(--accent); color: #fff; }
+
+    /* ============ ADMIN POSTS — MAIN CONTENT AREA ============ */
+    .post-item {
+        padding: 18px 20px !important;
+        transition: background-color 0.15s ease;
     }
-    .card-header {
-        padding: 6px 12px !important;
-    }
-    .card-body {
-        padding: 8px 10px !important;
-    }
-    .col-lg-3 .card {
+
+    .post-item:hover { background-color: #fcfcfc; }
+
+    .post-item p {
+        font-size: 0.92rem !important;
+        line-height: 1.65 !important;
         margin-bottom: 12px !important;
     }
-    .col-lg-3 .card:last-child {
-        margin-bottom: 0 !important;
-    }
-    
-    /* Post image container */
+
     .post-image-container {
         background: #f8f9fa;
-        border-radius: 8px;
+        border-radius: 10px;
         overflow: hidden;
-        position: relative;
         width: 100%;
-        padding-top: 56.25%;
+        max-height: 520px;
+        aspect-ratio: 16 / 9;
+        padding-top: 0;
     }
-    
+
     .post-image {
-        position: absolute;
-        top: 0;
-        left: 0;
+        position: static;
+        display: block;
         width: 100%;
         height: 100%;
         object-fit: contain;
         background: #f8f9fa;
     }
 
-    /* Like button */
-    .like-button.liked i {
-        color: #e74c3c !important;
+    .post-meta {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding-top: 9px;
+        margin-top: 2px;
+        border-top: 1px solid #f0f0f0;
+        font-size: 0.72rem;
     }
-    .like-button.liked .far {
-        font-weight: 900;
-    }
-    .like-button:hover i {
-        color: #e74c3c;
-        transform: scale(1.1);
-    }
-    .like-button i {
-        transition: all 0.2s ease;
-    }
-</style>
 
-<script>
-    function toggleLike(element) {
-        element.classList.toggle('liked');
-        var countSpan = element.querySelector('.like-count');
-        var currentCount = parseInt(countSpan.textContent);
-        if (element.classList.contains('liked')) {
-            countSpan.textContent = currentCount + 1;
-            var icon = element.querySelector('i');
-            icon.className = 'fas fa-heart me-1';
-        } else {
-            countSpan.textContent = currentCount - 1;
-            var icon = element.querySelector('i');
-            icon.className = 'far fa-heart me-1';
+    /* ============ UTIL ============ */
+    .min-w-0 { min-width: 0; }
+
+    /* ============ SCROLLBAR ============ */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #b0b0b0; }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 1399.98px) {
+        .dashboard-grid { grid-template-columns: minmax(255px, 26%) minmax(0, 1fr); }
+        .bottom-row { grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.9fr); }
+        .quick-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 991.98px) {
+        .dashboard-grid { grid-template-columns: 1fr; }
+        .bottom-row { grid-template-columns: 1fr; }
+        .quick-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .col-middle .card-fill-body { max-height: none; }
+    }
+
+    @media (max-width: 575.98px) {
+        .dashboard-wrap { padding: 12px; }
+        .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .post-item { padding: 14px !important; }
+    }
+
+    /* ============ COMPACT BALANCED LAYOUT ============
+       Keep the dashboard dense. Cards are deliberately sized,
+       not stretched across the whole viewport. Overflow scrolls inside. */
+    .dashboard-grid {
+        min-height: 0;
+        align-items: start;
+    }
+
+    .col-left,
+    .col-right-area,
+    .col-right {
+        gap: 12px;
+    }
+
+    /* Left column: slightly larger than the original, but compact. */
+    .col-left > .card:nth-child(1) { flex: 0 0 170px; min-height: 170px; }
+    .col-left > .card:nth-child(2) { flex: 0 0 165px; min-height: 165px; }
+    .col-left > .card:nth-child(3) { flex: 0 0 165px; min-height: 165px; }
+    .col-left > .card:nth-child(4) { flex: 0 0 150px; min-height: 150px; }
+    .col-left > .card:nth-child(5) { flex: 0 0 205px; min-height: 205px; }
+
+    .col-left > .card .card-body,
+    .col-right > .card .card-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+    }
+
+    /* Do not make every right-side card grow equally. */
+    .col-right > .card:nth-child(1) { flex: 0 0 285px; min-height: 285px; }
+    .col-right > .card:nth-child(2) { flex: 0 0 205px; min-height: 205px; }
+    .col-right > .card:nth-child(3) { flex: 0 0 205px; min-height: 205px; }
+
+    .bottom-row {
+        flex: 0 0 auto;
+        align-items: start;
+    }
+
+    /* The post area stays dominant without becoming a huge hollow box. */
+    .col-middle > .card {
+        flex: 0 0 auto;
+        min-height: 640px;
+        max-height: 760px;
+    }
+
+    .col-middle .card-fill-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto !important;
+    }
+
+    .quick-actions-card {
+        margin-bottom: 0;
+    }
+
+    .hover-card {
+        min-height: 92px;
+        padding: 8px 6px !important;
+    }
+
+    .card-header {
+        padding: 8px 14px !important;
+    }
+
+    .card-body {
+        padding: 11px 13px !important;
+    }
+
+    .post-item {
+        padding: 14px 18px !important;
+    }
+
+    .post-item p {
+        line-height: 1.55 !important;
+        margin-bottom: 10px !important;
+    }
+
+    .post-image-container {
+        max-height: 460px;
+    }
+
+    @media (max-width: 991.98px) {
+        .col-left > .card,
+        .col-right > .card {
+            flex: 0 0 auto !important;
+            min-height: 180px !important;
+        }
+        .col-middle > .card {
+            min-height: 520px;
+            max-height: none;
         }
     }
-</script>
+
+</style>
+
+
 
 {% endblock %}

@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}
+    {% if session.get('language') == 'en' %}Promote - KrishiBondhu{% else %}প্রচার - কৃষিবন্ধু{% endif %}
+{% endblock %}
+{% block content %}
+<div class="container py-4">
+
+    <h4 class="fw-bold mb-4">
+        <i class="fas fa-bullhorn text-success me-2"></i>
+        {% if session.get('language') == 'en' %}Promote Farmers{% else %}কৃষক প্রচার{% endif %}
+    </h4>
+
+    <!-- Tabs -->
+    <ul class="nav nav-pills mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="my-tab" data-bs-toggle="pill" data-bs-target="#my-pane" type="button">
+                <i class="fas fa-users me-1"></i>
+                {% if session.get('language') == 'en' %}My Farmers{% else %}আমার কৃষকরা{% endif %}
+                <span class="badge bg-light text-dark ms-1">{{ my_farmers|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="noagent-tab" data-bs-toggle="pill" data-bs-target="#noagent-pane" type="button">
+                <i class="fas fa-user-slash me-1"></i>
+                {% if session.get('language') == 'en' %}Farmers with No Agent{% else %}এজেন্টবিহীন কৃষক{% endif %}
+                <span class="badge bg-light text-dark ms-1">{{ outreach|length }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <!-- My Farmers Tab -->
+        <div class="tab-pane fade show active" id="my-pane">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    {% if my_farmers %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>KYC</th>
+                                    <th>Loan</th>
+                                    <th>Next Due</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for farmer in my_farmers %}
+                                <tr>
+                                    <td><strong>{{ farmer[0] }}</strong></td>
+                                    <td>{{ farmer[1] }}</td>
+                                    <td>{{ farmer[2] }}</td>
+                                    <td>
+                                        {% if farmer[3] == 'VERIFIED' %}
+                                            <span class="badge bg-success">Verified</span>
+                                        {% elif farmer[3] == 'PENDING' %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if farmer[4] == 'Paid' %}
+                                            <span class="badge bg-success">Paid</span>
+                                        {% elif farmer[4] == 'Active Loan' %}
+                                            <span class="badge bg-primary">Active</span>
+                                        {% elif farmer[4] == 'Loan Pending' %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif farmer[4] == 'No Loan' %}
+                                            <span class="badge bg-secondary">No Loan</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ farmer[4] }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ farmer[5] or '—' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('agent_farmer_detail', farmer_code=farmer[0]) }}"
+                                           class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-eye me-1"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users text-muted fa-3x mb-3"></i>
+                        <p class="text-muted">No farmers assigned to you yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- No Agent Tab -->
+        <div class="tab-pane fade" id="noagent-pane">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    {% if outreach %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Village</th>
+                                    <th>Days Since Registration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for farmer in outreach %}
+                                <tr>
+                                    <td><strong>{{ farmer[0] }}</strong></td>
+                                    <td>{{ farmer[1] }}</td>
+                                    <td>{{ farmer[2] }}</td>
+                                    <td>{{ farmer[3] }}</td>
+                                    <td>{{ farmer[4] }} days</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                        <p class="text-muted">All farmers in your center have an agent assigned.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

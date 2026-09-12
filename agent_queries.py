@@ -1,26 +1,45 @@
+# ============================================
+# AGENT QUERIES - ASCII ONLY
+# ============================================
 
 
 def get_agent_dashboard_data(cursor, person_id):
     cursor.execute("""
-        SELECT 
-            a.agent_code,
-            c.center_name,
-            p.upazila,
-            p.district,
-            a.is_active AS working_status,
-            p.login_phone,
-            a.join_date,
-            (SELECT COUNT(*) FROM FARMER f WHERE f.agent_code = a.agent_code) AS total_farmers,
-            (SELECT COUNT(*) FROM KYC k WHERE k.agent_code = a.agent_code AND k.identity_verified = 'VERIFIED') AS kyc_done,
-            (SELECT COUNT(*) FROM LOAN l JOIN FARMER f ON l.farmer_code = f.farmer_code WHERE f.agent_code = a.agent_code AND l.loan_state IN ('ACTIVE', 'CLOSED')) AS loans_approved,
-            (SELECT COUNT(*) FROM LOAN l JOIN FARMER f ON l.farmer_code = f.farmer_code WHERE f.agent_code = a.agent_code AND l.loan_state = 'PENDING') AS pending_loans,
-            (SELECT COUNT(*) FROM PURCHASE p WHERE p.agent_code = a.agent_code AND p.payment_status = 'CONFIRMED') AS pending_deliveries
+        SELECT a.agent_code, c.center_name, p.upazila, p.district,
+               a.is_active, p.login_phone, a.join_date
         FROM FIELD_AGENT a
         LEFT JOIN IFARMER_CENTER c ON a.center_code = c.center_code
         JOIN PERSON p ON a.person_id = p.person_id
         WHERE a.person_id = :1
     """, (person_id,))
-    return cursor.fetchone()
+    personal = cursor.fetchone()
+    if not personal:
+        return None
+
+    agent_code = personal[0]
+
+    cursor.execute("""
+        SELECT total_farmers, kyc_verified, pending_loans, pending_deliveries, performance_score
+        FROM V_AGENT_DASHBOARD_SUMMARY WHERE agent_code = :1
+    """, (agent_code,))
+    stats = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT COUNT(*) FROM LOAN l JOIN FARMER f ON l.farmer_code = f.farmer_code
+        WHERE f.agent_code = :1 AND l.loan_state IN ('ACTIVE', 'CLOSED')
+    """, (agent_code,))
+    loans_approved = cursor.fetchone()[0]
+
+    return (
+        personal[0], personal[1], personal[2], personal[3], personal[4],
+        personal[5], personal[6],
+        stats[0] if stats else 0,
+        stats[1] if stats else 0,
+        loans_approved,
+        stats[2] if stats else 0,
+        stats[3] if stats else 0,
+        stats[4] if stats else 0,
+    )
 
 
 def get_agent_code(cursor, person_id):
@@ -30,9 +49,15 @@ def get_agent_code(cursor, person_id):
 
 
 def get_center_code(cursor, person_id):
-    cursor.execute("SELECT center_code FROM FIELD_AGENT WHERE person_id = :1", (person_id,))
+    cursor.execute("SELECT TRIM(center_code) FROM FIELD_AGENT WHERE person_id = :1", (person_id,))
     row = cursor.fetchone()
     return row[0] if row else None
+
+
+def get_agent_verification_status(cursor, person_id):
+    cursor.execute("SELECT verification_status FROM FIELD_AGENT WHERE person_id = :1", (person_id,))
+    row = cursor.fetchone()
+    return row[0] if row and row[0] else 'PENDING'
 
 
 def get_my_farmers(cursor, person_id):
@@ -77,7 +102,7 @@ def get_pending_kyc_count(cursor, center_code):
     cursor.execute("""
         SELECT COUNT(*) FROM FARMER f
         LEFT JOIN KYC k ON f.farmer_code = k.farmer_code
-        WHERE f.center_code = :1
+        WHERE TRIM(f.center_code) = TRIM(:1)
         AND (k.identity_verified = 'PENDING' OR k.identity_verified IS NULL)
     """, (center_code,))
     return cursor.fetchone()[0]
@@ -94,31 +119,60 @@ def get_pending_kyc(cursor, center_code):
         FROM FARMER f
         JOIN PERSON p ON f.person_id = p.person_id
         LEFT JOIN KYC k ON f.farmer_code = k.farmer_code
-        WHERE f.center_code = :1
+        WHERE TRIM(f.center_code) = TRIM(:1)
         AND (k.identity_verified = 'PENDING' OR k.identity_verified IS NULL)
-        AND EXISTS (SELECT 1 FROM LOAN l WHERE l.farmer_code = f.farmer_code)
         ORDER BY f.registration_date ASC
     """, (center_code,))
     return cursor.fetchall()
 
-
-def get_pending_loans(cursor, center_code):
+def get_pending_loans(cursor, center_code, current_agent_code):
+    # Step 1: Get basic loan rows (the exact query that works)
     cursor.execute("""
         SELECT 
-            l.loan_no AS loan_id,
-            f.farmer_code AS code,
-            INITCAP(p.first_name) || ' ' || INITCAP(p.last_name) AS name,
-            TO_CHAR(l.amount, 'FM999,999,999') AS amount,
-            INITCAP(l.purpose) AS purpose,
-            TO_CHAR(l.application_date, 'DD-Mon-YYYY') AS applied
+            l.loan_no,
+            f.farmer_code,
+            INITCAP(p.first_name) || ' ' || INITCAP(p.last_name),
+            TO_CHAR(l.amount, 'FM999,999,999'),
+            INITCAP(l.purpose),
+            TO_CHAR(l.application_date, 'DD-Mon-YYYY'),
+            NVL(f.agent_code, 'N/A'),
+            NVL((SELECT p2.first_name || ' ' || p2.last_name
+                 FROM FIELD_AGENT fa2
+                 JOIN PERSON p2 ON fa2.person_id = p2.person_id
+                 WHERE fa2.agent_code = f.agent_code), 'N/A')
         FROM LOAN l
         JOIN FARMER f ON l.farmer_code = f.farmer_code
         JOIN PERSON p ON f.person_id = p.person_id
         WHERE f.center_code = :1
-        AND l.loan_state = 'PENDING'
+          AND l.loan_state = 'PENDING'
         ORDER BY l.application_date ASC
     """, (center_code,))
-    return cursor.fetchall()
+
+    rows = cursor.fetchall()
+
+    # Step 2: Compute ownership in Python (no SQL CASE statement)
+    result = []
+    for r in rows:
+        loan_id = r[0]
+        code = r[1]
+        name = r[2]
+        amount = r[3]
+        purpose = r[4]
+        applied = r[5]
+        agent_code = r[6]
+        agent_name = r[7]
+
+        if agent_code == current_agent_code:
+            ownership = 'MINE'
+        elif agent_code == 'N/A':
+            ownership = 'UNASSIGNED'
+        else:
+            ownership = 'OTHER'
+
+        result.append((loan_id, code, name, amount, purpose, applied,
+                       ownership, agent_name, agent_code))
+
+    return result
 
 
 def get_agent_inventory(cursor, center_code):
@@ -133,7 +187,7 @@ def get_agent_inventory(cursor, center_code):
                 ELSE 'In Stock'
             END AS status
         FROM INVENTORY
-        WHERE center_code = :1
+        WHERE TRIM(center_code) = TRIM(:1)
         ORDER BY name
     """, (center_code,))
     return cursor.fetchall()
@@ -151,7 +205,8 @@ def get_outreach_farmers(cursor, center_code):
         JOIN PERSON p ON f.person_id = p.person_id
         LEFT JOIN KYC k ON f.farmer_code = k.farmer_code
         LEFT JOIN LOAN l ON f.farmer_code = l.farmer_code
-        WHERE f.center_code = :1
+        WHERE TRIM(f.center_code) = TRIM(:1)
+        AND f.agent_code IS NULL
         AND (k.identity_verified IS NULL OR k.identity_verified = 'PENDING')
         AND l.loan_no IS NULL
         ORDER BY days_since_reg DESC
@@ -159,22 +214,65 @@ def get_outreach_farmers(cursor, center_code):
     return cursor.fetchall()
 
 
-def get_pending_purchases(cursor, center_code):
+def get_pending_purchases(cursor, person_id):
     cursor.execute("""
         SELECT 
-            p.purchase_id AS order_id,
-            f.farmer_code AS code,
-            INITCAP(pe.first_name) || ' ' || INITCAP(pe.last_name) AS name,
+            v.purchase_id,
+            v.farmer_code,
+            v.farmer_name,
+            v.login_phone,
+            v.address,
+            TO_CHAR(v.purchase_date, 'DD-Mon-YYYY') AS ordered,
+            v.payment_method,
+            v.payment_status,
+            v.item_count,
+            v.total_amount
+        FROM V_AGENT_PENDING_DELIVERIES v
+        WHERE v.agent_code = (SELECT agent_code FROM FIELD_AGENT WHERE person_id = :1)
+        ORDER BY 
+            CASE v.payment_status WHEN 'CONFIRMED' THEN 1 WHEN 'SHIPPED' THEN 2 ELSE 3 END,
+            v.purchase_date ASC
+    """, (person_id,))
+    return cursor.fetchall()
+
+
+def get_order_detail(cursor, purchase_id, agent_person_id):
+    cursor.execute("""
+        SELECT 
+            p.purchase_id,
+            f.farmer_code,
+            INITCAP(pe.first_name) || ' ' || INITCAP(pe.last_name) AS farmer_name,
+            pe.login_phone,
+            INITCAP(pe.village) AS village,
+            INITCAP(pe.upazila) AS upazila,
+            INITCAP(pe.district) AS district,
             TO_CHAR(p.purchase_date, 'DD-Mon-YYYY') AS ordered,
-            TO_CHAR((SELECT NVL(SUM(total_cost), 0) FROM ORDERED_ITEM oi WHERE oi.purchase_id = p.purchase_id), 'FM999,999,999') AS total_amount,
-            NVL(p.payment_method, 'Not Specified') AS payment
+            NVL(p.payment_method, 'CASH') AS payment_method,
+            p.payment_status,
+            NVL(p.transaction_reference, 'N/A') AS txn_ref
         FROM PURCHASE p
         JOIN FARMER f ON p.farmer_code = f.farmer_code
         JOIN PERSON pe ON f.person_id = pe.person_id
-        WHERE f.center_code = :1
-        AND p.payment_status = 'CONFIRMED'
-        ORDER BY p.purchase_date ASC
-    """, (center_code,))
+        WHERE p.purchase_id = :1
+          AND p.agent_code = (SELECT agent_code FROM FIELD_AGENT WHERE person_id = :2)
+    """, (purchase_id, agent_person_id))
+    return cursor.fetchone()
+
+
+def get_order_items(cursor, purchase_id):
+    cursor.execute("""
+        SELECT 
+            oi.item_id,
+            i.name AS product_name,
+            oi.quantity,
+            NVL(i.unit, 'unit') AS unit,
+            oi.unit_price,
+            oi.total_cost
+        FROM ORDERED_ITEM oi
+        JOIN INVENTORY i ON oi.inventory_id = i.inventory_id
+        WHERE oi.purchase_id = :1
+        ORDER BY i.name
+    """, (purchase_id,))
     return cursor.fetchall()
 
 
@@ -283,8 +381,6 @@ def get_farmer_purchases(cursor, farmer_code):
     return cursor.fetchall()
 
 
-
-
 def get_monthly_performance(cursor, person_id):
     cursor.execute("""
         SELECT 
@@ -375,6 +471,8 @@ def get_risk_prediction(cursor, person_id):
             farmer_name,
             credit_score,
             repayment_reliability,
+            total_asset_value,
+            outstanding_loan,
             risk_category
         FROM V_RISK_PREDICTION
         WHERE farmer_code IN (
@@ -383,5 +481,70 @@ def get_risk_prediction(cursor, person_id):
             )
         )
         ORDER BY risk_category, credit_score
+    """, (person_id,))
+    return cursor.fetchall()
+
+
+def get_farmer_kyc_summary(cursor, farmer_code):
+    cursor.execute("""
+        SELECT 
+            GET_KYC_SUMMARY(:1)       AS summary,
+            IS_KYC_COMPLETE(:1)       AS complete,
+            IS_KYC_LOAN_ELIGIBLE(:1)  AS eligible
+        FROM DUAL
+    """, (farmer_code,))
+    return cursor.fetchone()
+
+
+def get_agent_tasks(cursor, person_id):
+    cursor.execute("""
+        SELECT * FROM (
+            SELECT 
+                'KYC' AS task_type,
+                f.farmer_code AS farmer_code,
+                INITCAP(p.first_name) || ' ' || INITCAP(p.last_name) AS farmer_name,
+                'Verify KYC documents' AS description,
+                TO_CHAR(f.registration_date, 'DD-Mon-YYYY') AS task_date,
+                1 AS priority_order
+            FROM FARMER f
+            JOIN PERSON p ON f.person_id = p.person_id
+            LEFT JOIN KYC k ON f.farmer_code = k.farmer_code
+            WHERE f.agent_code = (SELECT agent_code FROM FIELD_AGENT WHERE person_id = :1)
+              AND (k.identity_verified = 'PENDING' OR k.identity_verified IS NULL)
+            
+            UNION ALL
+            
+            SELECT 
+                'DELIVERY' AS task_type,
+                f.farmer_code AS farmer_code,
+                INITCAP(p.first_name) || ' ' || INITCAP(p.last_name) AS farmer_name,
+                'Deliver: ' || i.name || ' x ' || TO_CHAR(oi.quantity) AS description,
+                TO_CHAR(pu.purchase_date, 'DD-Mon-YYYY') AS task_date,
+                2 AS priority_order
+            FROM PURCHASE pu
+            JOIN FARMER f ON pu.farmer_code = f.farmer_code
+            JOIN PERSON p ON f.person_id = p.person_id
+            JOIN ORDERED_ITEM oi ON pu.purchase_id = oi.purchase_id
+            JOIN INVENTORY i ON oi.inventory_id = i.inventory_id
+            WHERE pu.agent_code = (SELECT agent_code FROM FIELD_AGENT WHERE person_id = :1)
+              AND pu.payment_status IN ('CONFIRMED', 'SHIPPED')
+            
+            UNION ALL
+            
+            SELECT 
+                'REPAYMENT' AS task_type,
+                f.farmer_code AS farmer_code,
+                INITCAP(p.first_name) || ' ' || INITCAP(p.last_name) AS farmer_name,
+                'Overdue: ' || l.loan_no AS description,
+                TO_CHAR(r.payment_date, 'DD-Mon-YYYY') AS task_date,
+                1 AS priority_order
+            FROM REPAYMENT r
+            JOIN LOAN l ON r.loan_no = l.loan_no
+            JOIN FARMER f ON l.farmer_code = f.farmer_code
+            JOIN PERSON p ON f.person_id = p.person_id
+            WHERE f.agent_code = (SELECT agent_code FROM FIELD_AGENT WHERE person_id = :1)
+              AND r.payment_state = 'OVERDUE'
+        )
+        ORDER BY priority_order ASC, task_date ASC
     """, (person_id,))
     return cursor.fetchall()

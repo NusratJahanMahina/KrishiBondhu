@@ -12,30 +12,71 @@
                 <i class="fas fa-hand-holding-usd me-2"></i>
                 {% if session.get('language') == 'en' %}Pending Loan Requests{% else %}বিবেচনাধীন ঋণ অনুরোধ{% endif %}
             </h5>
+            <small class="text-white-50">
+                {% if session.get('language') == 'en' %}Loans assigned to you, or waiting for an agent to claim.{% else %}আপনার বা অ্যাসাইন করার অপেক্ষায় থাকা ঋণ।{% endif %}
+            </small>
         </div>
         <div class="card-body">
             {% if pending_loans %}
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover align-middle">
                         <thead>
                             <tr>
-                                <th>{% if session.get('language') == 'en' %}Loan ID{% else %}ঋণ আইডি{% endif %}</th>
-                                <th>{% if session.get('language') == 'en' %}Code{% else %}কোড{% endif %}</th>
-                                <th>{% if session.get('language') == 'en' %}Name{% else %}নাম{% endif %}</th>
-                                <th>{% if session.get('language') == 'en' %}Amount{% else %}পরিমাণ{% endif %}</th>
-                                <th>{% if session.get('language') == 'en' %}Purpose{% else %}উদ্দেশ্য{% endif %}</th>
-                                <th>{% if session.get('language') == 'en' %}Applied{% else %}আবেদনের তারিখ{% endif %}</th>
+                                <th style="font-size: 0.8rem;">Loan ID</th>
+                                <th style="font-size: 0.8rem;">Farmer</th>
+                                <th style="font-size: 0.8rem;">Amount</th>
+                                <th style="font-size: 0.8rem;">Purpose</th>
+                                <th style="font-size: 0.8rem;">Applied</th>
+                                <th style="font-size: 0.8rem;">Responsibility</th>
+                                <th style="font-size: 0.8rem;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for loan in pending_loans %}
                             <tr>
-                                <td>{{ loan[0] }}</td>
-                                <td>{{ loan[1] }}</td>
-                                <td>{{ loan[2] }}</td>
-                                <td>{{ loan[3] }}</td>
+                                <td><strong>{{ loan[0] }}</strong></td>
+                                <td>
+                                    <strong>{{ loan[2] }}</strong>
+                                    <br><small class="text-muted">{{ loan[1] }}</small>
+                                </td>
+                                <td>৳{{ loan[3] }}</td>
                                 <td>{{ loan[4] }}</td>
                                 <td>{{ loan[5] }}</td>
+                                <td>
+                                    {% if loan[6] == 'MINE' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-user-check me-1"></i>Assigned to You
+                                        </span>
+                                    {% elif loan[6] == 'UNASSIGNED' %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-user-plus me-1"></i>Unassigned
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-user me-1"></i>{{ loan[7] }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if loan[6] == 'MINE' %}
+                                        <a href="{{ url_for('agent_kyc_requests') }}"
+                                           class="btn btn-sm btn-success">
+                                            <i class="fas fa-file-signature me-1"></i>Verify KYC
+                                        </a>
+                                    {% elif loan[6] == 'UNASSIGNED' %}
+                                        <form method="POST"
+                                              action="{{ url_for('agent_claim_loan', loan_no=loan[0]) }}"
+                                              style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-hand-paper me-1"></i>Claim
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span class="text-muted small">
+                                            {% if session.get('language') == 'en' %}Handled by other agent{% else %}অন্য এজেন্ট দেখছেন{% endif %}
+                                        </span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>

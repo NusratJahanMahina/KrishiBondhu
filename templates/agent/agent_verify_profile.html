@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Update Profile - KrishiBondhu{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white text-center py-4">
+                    <h3 class="mb-0 fw-bold">Update Your Agent Profile</h3>
+                    <p class="mb-0 text-white-50 small">Confirm your agent code to verify your identity.</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('agent_verify_profile') }}">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                Agent Code <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" name="agent_code" required
+                                   placeholder="e.g., AG-001"
+                                   value="{{ profile[5] if profile else '' }}">
+                            <small class="text-muted">Enter the agent code given to you at the center.</small>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h6 class="fw-bold text-success mb-3">
+                            <i class="fas fa-id-card me-1"></i> Personal Information
+                        </h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">NID Number</label>
+                                <input type="text" class="form-control" value="{{ profile[0] or 'Not set by Admin' }}" disabled>
+                                <small class="text-muted">Set by Admin. Contact the center to update.</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Phone <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" name="phone" required
+                                       value="{{ profile[1] or '' }}">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Village</label>
+                                <input type="text" class="form-control" name="village"
+                                       value="{{ profile[2] or '' }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Upazila</label>
+                                <input type="text" class="form-control" name="upazila"
+                                       value="{{ profile[3] or '' }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">District</label>
+                                <input type="text" class="form-control" name="district"
+                                       value="{{ profile[4] or '' }}">
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="{{ url_for('agent_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success px-5">Save & Verify</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
