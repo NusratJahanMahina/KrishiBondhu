@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}{{ advisor[1] }} {{ advisor[2] }} - Profile - KrishiBondhu{% else %}{{ advisor[1] }} {{ advisor[2] }} - প্রোফাইল - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <!-- Advisor Profile Card -->
+        <div class="col-lg-8">
+            <div class="card mb-4 shadow-sm border-0" style="border-radius: 16px; border-top: 4px solid var(--accent-green) !important;">
+                <div class="card-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 65px; height: 65px; font-size: 1.6rem;">
+                                    <i class="fas fa-user-md"></i>
+                                </div>
+                                <div>
+                                    <h2 class="card-title fw-bold mb-1" style="color: var(--primary-green);">
+                                        {{ advisor[1] }} {{ advisor[2] }}
+                                    </h2>
+                                    <span class="badge px-3 py-2" style="background: linear-gradient(135deg, var(--secondary-green), var(--accent-green)); font-size: 0.9rem;">{{ advisor[4] }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Rating -->
+                            <div class="mb-3 p-3 bg-light rounded border d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Farmer Feedback & Rating:{% else %}কৃষকদের রেটিং ও মতামত:{% endif %}</span>
+                                    <div class="d-flex align-items-center mt-1">
+                                        {% for i in range(5) %}
+                                            {% if i < advisor[8]|int %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% elif i < advisor[8] %}
+                                                <i class="fas fa-star-half-alt text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="ms-2 fs-5 fw-bold text-dark">
+                                            {{ advisor[8]|round(1) }} <small class="text-muted fs-6">/ 5.0</small>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="badge bg-white text-dark border px-3 py-2">
+                                        <i class="fas fa-check-circle text-success me-1"></i> {{ advisor[9] }} {% if session.get('language') == 'en' %}completed sessions{% else %}সফল পরামর্শ সেশন{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Information -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-dark"><i class="fas fa-phone text-success me-2"></i>{% if session.get('language') == 'en' %}Contact Information{% else %}যোগাযোগ নম্বর{% endif %}</h6>
+                        <p class="mb-0 text-muted">
+                            <strong>{% if session.get('language') == 'en' %}Official Helpline / Phone:{% else %}অফিসিয়াল ফোন নম্বর:{% endif %}</strong> {{ advisor[3] }}
+                        </p>
+                    </div>
+                    
+                    <hr>
+
+                    <!-- Experience & Qualification -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-dark"><i class="fas fa-briefcase text-success me-2"></i>{% if session.get('language') == 'en' %}Professional Background & Qualifications{% else %}পেশাগত অভিজ্ঞতা ও শিক্ষাগত যোগ্যতা{% endif %}</h6>
+                        <p class="mb-1 text-muted">
+                            <strong>{% if session.get('language') == 'en' %}Field Experience:{% else %}মাঠ পর্যায়ে অভিজ্ঞতা:{% endif %}</strong> {{ advisor[6] or 5 }} {% if session.get('language') == 'en' %}years{% else %}বছর{% endif %}
+                        </p>
+                        <p class="mb-0 text-muted">
+                            <strong>{% if session.get('language') == 'en' %}Academic Degrees / Qualifications:{% else %}শিক্ষাগত যোগ্যতা ও সনদ:{% endif %}</strong> {{ advisor[7] or 'বিএসসি ইন এগ্রিকালচার' }}
+                        </p>
+                    </div>
+                    
+                    <hr>
+
+                    <!-- Bio -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-dark"><i class="fas fa-align-left text-success me-2"></i>{% if session.get('language') == 'en' %}About the Specialist{% else %}পরামর্শক পরিচিতি ও বিশেষজ্ঞতা{% endif %}</h6>
+                        <p class="text-muted" style="line-height: 1.6;">{{ advisor[5] or 'অভিজ্ঞ কৃষি বিজ্ঞানী ও পরামর্শক। ফসলের যেকোনো রোগবালাই এবং উৎপাদন বৃদ্ধিতে পরামর্শ প্রদান করেন।' }}</p>
+                    </div>
+                    
+                    <!-- Availability Status -->
+                    <div class="mb-2">
+                        <h6 class="fw-bold text-dark"><i class="fas fa-calendar-alt text-success me-2"></i>{% if session.get('language') == 'en' %}Current Availability{% else %}পরামর্শের বর্তমান অবস্থা{% endif %}</h6>
+                        {% if advisor[10] == 'YES' %}
+                            <span class="badge bg-success px-3 py-2"><i class="fas fa-check-circle me-1"></i> {% if session.get('language') == 'en' %}Currently Accepting Farmers{% else %}বর্তমানে পরামর্শ প্রদান সক্রিয় রয়েছে{% endif %}</span>
+                        {% else %}
+                            <span class="badge bg-danger px-3 py-2"><i class="fas fa-times-circle me-1"></i> {% if session.get('language') == 'en' %}Currently Unavailable{% else %}সাময়িকভাবে অনুপলব্ধ{% endif %}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pricing Card -->
+            <div class="card mb-4 shadow-sm border-0" style="border-radius: 16px;">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-dark mb-3"><i class="fas fa-tag text-success me-2"></i>{% if session.get('language') == 'en' %}Consultation Fee Structure{% else %}পরামর্শ ফি নির্ধারণ তালিকা{% endif %}</h6>
+                    
+                    <div class="row g-3">
+                        {% for rate_type, amount, currency in rates %}
+                        <div class="col-md-6">
+                            <div class="card bg-light border p-3" style="border-radius: 12px;">
+                                <div class="card-body p-0">
+                                    <h6 class="card-title fw-bold text-dark mb-1">
+                                        {% if rate_type == 'HOURLY' %}
+                                            <i class="fas fa-hourglass-half text-success me-1"></i> {% if session.get('language') == 'en' %}Hourly Consultation{% else %}ঘণ্টাপ্রতি ফি{% endif %}
+                                        {% else %}
+                                            <i class="fas fa-calendar-day text-primary me-1"></i> {% if session.get('language') == 'en' %}Full Day Guidance (8 hrs){% else %}সারাদিন মাঠ পরিদর্শন ফি{% endif %}
+                                        {% endif %}
+                                    </h6>
+                                    <p class="card-text display-6 fw-bold text-success mb-0">
+                                        ৳{{ amount }}
+                                        <small class="text-muted fs-6">
+                                            {% if rate_type == 'HOURLY' %}/{% if session.get('language') == 'en' %}hour{% else %}ঘণ্টা{% endif %}{% else %}/{% if session.get('language') == 'en' %}day{% else %}দিন{% endif %}{% endif %}
+                                        </small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Weekly Schedule -->
+            <div class="card mb-4 shadow-sm border-0" style="border-radius: 16px;">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-dark mb-3"><i class="fas fa-clock text-success me-2"></i>{% if session.get('language') == 'en' %}Weekly Available Hours{% else %}সাপ্তাহিক কর্মঘণ্টা ও সময়সূচী{% endif %}</h6>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{% if session.get('language') == 'en' %}Day{% else %}বার / দিন{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Start Time{% else %}শুরুর সময়{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}End Time{% else %}শেষের সময়{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Status{% else %}অবস্থা{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if session.get('language') == 'en' %}
+                                    {% set days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                {% else %}
+                                    {% set days = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'] %}
+                                {% endif %}
+                                {% for availability in availability %}
+                                {% set day_idx = (availability[0]|string)|int %}
+                                <tr>
+                                    <td><strong>{{ days[day_idx] if day_idx < days|length else 'সকল কার্যদিবস' }}</strong></td>
+                                    <td>{{ availability[1] }}</td>
+                                    <td>{{ availability[2] }}</td>
+                                    <td>
+                                        {% if availability[3] == 'YES' %}
+                                            <span class="badge bg-success">{% if session.get('language') == 'en' %}Available{% else %}খোলা রয়েছে{% endif %}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{% if session.get('language') == 'en' %}Not Available{% else %}বন্ধ{% endif %}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Booking Sidebar -->
+        <div class="col-lg-4">
+            <div class="card sticky-top shadow-sm border-0" style="top: 20px; border-radius: 16px; border-top: 4px solid var(--accent-green) !important;">
+                <div class="card-header text-white p-3" style="background: linear-gradient(135deg, var(--secondary-green), var(--accent-green)); border: none;">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-calendar-check me-2"></i>{% if session.get('language') == 'en' %}Book Consultation{% else %}পরামর্শ বুকিং নিন{% endif %}</h5>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted small mb-3">
+                        {% if session.get('language') == 'en' %}
+                            Select a suitable date and time to receive tailored agricultural prescriptions.
+                        {% else %}
+                            আপনার সুবিধাজনক তারিখ ও সময় নির্বাচন করে সরাসরি বিশেষজ্ঞের প্রেসক্রিপশন ও দিকনির্দেশনা গ্রহণ করুন।
+                        {% endif %}
+                    </p>
+                    
+                    <a href="{{ url_for('book_advisor', advisor_id=advisor[0]) }}" 
+                       class="btn btn-lg w-100 mb-3 text-white fw-bold shadow-sm" style="background: linear-gradient(135deg, var(--secondary-green), var(--accent-green)); border: none; border-radius: 10px;">
+                        <i class="fas fa-calendar-plus me-1"></i> {% if session.get('language') == 'en' %}Book Now{% else %}এখনই বুকিং করুন{% endif %}
+                    </a>
+                    
+                    <div class="alert alert-info small border-0 mb-0" style="border-radius: 10px; background: #e3f2fd;">
+                        <strong><i class="fas fa-info-circle me-1"></i>{% if session.get('language') == 'en' %}How it works:{% else %}সহজ ৪টি ধাপ:{% endif %}</strong>
+                        <ol class="mb-0 ms-2 mt-2" style="line-height: 1.6;">
+                            <li>{% if session.get('language') == 'en' %}Click "Book Now"{% else %}"এখনই বুকিং করুন" বাটনে চাপুন{% endif %}</li>
+                            <li>{% if session.get('language') == 'en' %}Select your preferred date & time{% else %}তারিখ ও সময় নির্বাচন করুন{% endif %}</li>
+                            <li>{% if session.get('language') == 'en' %}Describe your crop disease or issue{% else %}ফসলের সমস্যা বা রোগের লক্ষণ লিখুন{% endif %}</li>
+                            <li>{% if session.get('language') == 'en' %}Confirm booking and receive expert guidance{% else %}বুকিং নিশ্চিত করে সমাধান প্রেসক্রিপশন পান{% endif %}</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Reviews Section -->
+    {% if ratings %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm border-0" style="border-radius: 16px;">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-dark mb-3"><i class="fas fa-comments text-success me-2"></i>{% if session.get('language') == 'en' %}Recent Farmer Reviews ({{ ratings|length }}){% else %}কৃষকদের সাম্প্রতিক মতামত ও রিভিউ ({{ ratings|length }}){% endif %}</h6>
+                    
+                    <div class="reviews-list">
+                        {% for rating in ratings %}
+                        <div class="review-item mb-3 pb-3 border-bottom">
+                            <div class="d-flex align-items-start">
+                                <div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        {% for i in range(5) %}
+                                            {% if i < rating[0]|int %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="ms-2 small text-muted">
+                                            <strong>{{ rating[3] }} {{ rating[4] }}</strong> • {{ rating[2] }}
+                                        </span>
+                                    </div>
+                                    <p class="mb-0 text-dark">{{ rating[1] }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .review-item:last-child {
+        border-bottom: none !important;
+    }
+</style>
+{% endblock %}

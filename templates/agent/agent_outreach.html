@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Untouched Farmers - KrishiBondhu{% else %}নিষ্ক্রিয় কৃষক - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-bullhorn me-2"></i>
+                {% if session.get('language') == 'en' %}Untouched Farmers{% else %}নিষ্ক্রিয় কৃষক{% endif %}
+            </h5>
+            <small class="text-white-50">
+                {% if session.get('language') == 'en' %}Farmers with no KYC and no loan{% else %}কৃষক যাদের কোনো KYC বা ঋণ নেই{% endif %}
+            </small>
+        </div>
+        <div class="card-body">
+            {% if outreach %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% if session.get('language') == 'en' %}Code{% else %}কোড{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Name{% else %}নাম{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Phone{% else %}ফোন{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Village{% else %}গ্রাম{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Days Since Reg{% else %}নিবন্ধনের পর দিন{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for farmer in outreach %}
+                            <tr>
+                                <td>{{ farmer[0] }}</td>
+                                <td>{{ farmer[1] }}</td>
+                                <td>{{ farmer[2] }}</td>
+                                <td>{{ farmer[3] }}</td>
+                                <td>{{ farmer[4] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                    <h5>{% if session.get('language') == 'en' %}No untouched farmers{% else %}কোনো নিষ্ক্রিয় কৃষক নেই{% endif %}</h5>
+                    <p class="text-muted">
+                        {% if session.get('language') == 'en' %}All farmers in your center have KYC or loans.{% else %}আপনার সেন্টারের সব কৃষকের KYC বা ঋণ রয়েছে।{% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

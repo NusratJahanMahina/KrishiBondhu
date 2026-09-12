@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Purchases - KrishiBondhu{% else %}ক্রয় - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-box me-2"></i>
+                {% if session.get('language') == 'en' %}Pending Deliveries{% else %}বিবেচনাধীন ডেলিভারি{% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if purchases %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% if session.get('language') == 'en' %}Order ID{% else %}অর্ডার আইডি{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Code{% else %}কোড{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Name{% else %}নাম{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Ordered{% else %}অর্ডারের তারিখ{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Total{% else %}মোট{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Payment{% else %}পেমেন্ট{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in purchases %}
+                            <tr>
+                                <td>{{ purchase[0] }}</td>
+                                <td>{{ purchase[1] }}</td>
+                                <td>{{ purchase[2] }}</td>
+                                <td>{{ purchase[3] }}</td>
+                                <td>{{ purchase[4] }}</td>
+                                <td>{{ purchase[5] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                    <h5>{% if session.get('language') == 'en' %}No pending deliveries{% else %}কোনো বিবেচনাধীন ডেলিভারি নেই{% endif %}</h5>
+                    <p class="text-muted">{% if session.get('language') == 'en' %}All orders have been delivered.{% else %}সব অর্ডার ডেলিভারি করা হয়েছে।{% endif %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

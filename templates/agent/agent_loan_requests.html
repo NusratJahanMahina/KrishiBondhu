@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Loan Requests - KrishiBondhu{% else %}ঋণ অনুরোধ - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-hand-holding-usd me-2"></i>
+                {% if session.get('language') == 'en' %}Pending Loan Requests{% else %}বিবেচনাধীন ঋণ অনুরোধ{% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if pending_loans %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% if session.get('language') == 'en' %}Loan ID{% else %}ঋণ আইডি{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Code{% else %}কোড{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Name{% else %}নাম{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Amount{% else %}পরিমাণ{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Purpose{% else %}উদ্দেশ্য{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Applied{% else %}আবেদনের তারিখ{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Action{% else %}পদক্ষেপ{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in pending_loans %}
+                            <tr>
+                                <td><strong>#{{ loan[0] }}</strong></td>
+                                <td>{{ loan[1] }}</td>
+                                <td>{{ loan[2] }}</td>
+                                <td><span class="badge bg-light text-success border fw-bold">{{ loan[3] }}</span></td>
+                                <td>{{ loan[4] }}</td>
+                                <td>{{ loan[5] }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-success fw-semibold" onclick="approveLoan('{{ loan[0] }}')">
+                                        <i class="fas fa-check me-1"></i> {% if session.get('language') == 'en' %}Approve{% else %}অনুমোদন{% endif %}
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger fw-semibold" onclick="rejectLoan('{{ loan[0] }}')">
+                                        <i class="fas fa-times me-1"></i> {% if session.get('language') == 'en' %}Reject{% else %}বাতিল{% endif %}
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                    <h5>{% if session.get('language') == 'en' %}No pending loans{% else %}কোনো বিবেচনাধীন ঋণ নেই{% endif %}</h5>
+                    <p class="text-muted">{% if session.get('language') == 'en' %}All loans have been processed.{% else %}সব ঋণ প্রক্রিয়াকরণ করা হয়েছে।{% endif %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function approveLoan(loanNo) {
+        if (confirm('Are you sure you want to approve Loan #' + loanNo + '?')) {
+            fetch('{{ url_for("agent_approve_loan") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'loan_no=' + encodeURIComponent(loanNo)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Loan approved successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => alert('Error: ' + err));
+        }
+    }
+
+    function rejectLoan(loanNo) {
+        if (confirm('Are you sure you want to reject Loan #' + loanNo + '?')) {
+            fetch('{{ url_for("agent_reject_loan") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'loan_no=' + encodeURIComponent(loanNo)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Loan rejected successfully.');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => alert('Error: ' + err));
+        }
+    }
+</script>
+{% endblock %}

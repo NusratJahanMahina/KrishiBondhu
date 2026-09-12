@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Farmers - KrishiBondhu{% else %}কৃষক - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-users me-2"></i>
+                {% if session.get('language') == 'en' %}All My Farmers{% else %}আমার সব কৃষক{% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if farmers %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% if session.get('language') == 'en' %}Code{% else %}কোড{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Name{% else %}নাম{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Phone{% else %}ফোন{% endif %}</th>
+                                <th>KYC</th>
+                                <th>{% if session.get('language') == 'en' %}Loan{% else %}ঋণ{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Due{% else %}বকেয়া{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Order{% else %}অর্ডার{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Action{% else %}কর্ম{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for farmer in farmers %}
+                            <tr>
+                                <td><strong>{{ farmer[0] or 'N/A' }}</strong></td>
+                                <td>{{ farmer[1] or 'N/A' }}</td>
+                                <td>{{ farmer[2] or 'N/A' }}</td>
+                                <td>
+                                    {% if farmer[3] == 'VERIFIED' %}
+                                        <span class="badge bg-success">{% if session.get('language') == 'en' %}Verified{% else %}যাচাইকৃত{% endif %}</span>
+                                    {% elif farmer[3] == 'PENDING' %}
+                                        <span class="badge bg-warning">{% if session.get('language') == 'en' %}Pending{% else %}অপেক্ষমাণ{% endif %}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if farmer[4] == 'Paid' %}
+                                        <span class="badge bg-success">{% if session.get('language') == 'en' %}Paid{% else %}পরিশোধিত{% endif %}</span>
+                                    {% elif farmer[4] == 'Active Loan' %}
+                                        <span class="badge bg-primary">{% if session.get('language') == 'en' %}Active{% else %}সক্রিয়{% endif %}</span>
+                                    {% elif farmer[4] == 'Loan Pending' %}
+                                        <span class="badge bg-warning">{% if session.get('language') == 'en' %}Pending{% else %}অপেক্ষমাণ{% endif %}</span>
+                                    {% elif farmer[4] == 'No Loan' %}
+                                        <span class="badge bg-secondary">{% if session.get('language') == 'en' %}No Loan{% else %}কোনো ঋণ নেই{% endif %}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ farmer[4] or 'N/A' }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ farmer[5] or '-' }}</td>
+                                <td>
+                                    {% if farmer[6] == 'Yes' %}
+                                        <span class="badge bg-info">{% if session.get('language') == 'en' %}Yes{% else %}হ্যাঁ{% endif %}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{% if session.get('language') == 'en' %}No{% else %}না{% endif %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('agent_farmer_detail', farmer_code=farmer[0]) }}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-eye me-1"></i> {% if session.get('language') == 'en' %}View{% else %}দেখুন{% endif %}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users text-muted fa-4x mb-3"></i>
+                    <h5>{% if session.get('language') == 'en' %}No farmers assigned{% else %}কোনো কৃষক নির্ধারিত নেই{% endif %}</h5>
+                    <p class="text-muted">{% if session.get('language') == 'en' %}You have no farmers assigned yet.{% else %}আপনার এখনো কোনো কৃষক নির্ধারিত নেই।{% endif %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

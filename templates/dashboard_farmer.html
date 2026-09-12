@@ -1,0 +1,1650 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Farmer Portal - KrishiBondhu{% else %}কৃষক ড্যাশবোর্ড ও সেবা পোর্টাল - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Top Farmer Profile & Location Banner -->
+    <div class="card shadow-sm border-0 mb-4" style="background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%); border-radius: var(--radius); color: white;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white text-success rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 75px; height: 75px; font-size: 2.2rem;">
+                            <i class="fas fa-tractor"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <h3 class="fw-bold mb-0 text-white">{{ user.first_name }} {{ user.last_name }}</h3>
+                                <span class="badge bg-warning text-dark fw-bold">
+                                    <i class="fas fa-id-badge me-1"></i>#{{ farmer.farmer_code }}
+                                </span>
+                                {% if farmer.kyc_status == 'VERIFIED' %}
+                                    <span class="badge bg-success border border-white">
+                                        <i class="fas fa-check-circle me-1"></i>{% if session.get('language') == 'en' %}KYC Verified{% else %}যাচাইকৃত কৃষক{% endif %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-hourglass-half me-1"></i>{% if session.get('language') == 'en' %}KYC Pending{% else %}যাচাই অপেক্ষমাণ{% endif %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <p class="mb-1 text-white-50 mt-1">
+                                <i class="fas fa-map-marker-alt me-1 text-warning"></i>{{ farmer.center_name }} | {{ farmer.upazila }}, {{ farmer.district }}
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-vector-square me-1 text-warning"></i>{{ farmer.land_area }} {% if session.get('language') == 'en' %}Acres Farmland{% else %}একর আবাদি জমি{% endif %}
+                            </p>
+                            <small class="text-white-50"><i class="fas fa-phone-alt me-1"></i>{{ user.login_phone or user.username }}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                        <button type="button" class="btn btn-warning btn-sm fw-bold px-3 shadow-sm text-dark" data-bs-toggle="modal" data-bs-target="#applyLoanModal">
+                            <i class="fas fa-hand-holding-usd me-1"></i> {% if session.get('language') == 'en' %}Apply for Loan{% else %}কৃষি ঋণ আবেদন{% endif %}
+                        </button>
+                        <a href="{{ url_for('advisor_listing') }}" class="btn btn-light btn-sm fw-bold px-3 shadow-sm text-success">
+                            <i class="fas fa-user-md me-1"></i> {% if session.get('language') == 'en' %}Hire Advisor{% else %}পরামর্শক বুক করুন{% endif %}
+                        </a>
+                        <a href="{{ url_for('my_bookings') }}" class="btn btn-outline-light btn-sm fw-semibold px-3">
+                            <i class="fas fa-calendar-check me-1"></i> {% if session.get('language') == 'en' %}My Bookings{% else %}আমার পরামর্শ{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Agri-Weather & Farming Advisory Card (Clickable -> Weather Modal) -->
+    <div class="card shadow-sm border-0 mb-4 kpi-clickable" data-bs-toggle="modal" data-bs-target="#weatherDetailModal" style="border-radius: var(--radius); background: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%); border-left: 5px solid var(--accent-green) !important; cursor: pointer;">
+        <div class="card-body p-3 p-md-4">
+            <div class="row align-items-center">
+                <div class="col-md-5 border-end-md">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="text-warning display-5">
+                            <i class="fas fa-cloud-sun"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <h2 class="fw-bold mb-0 text-dark">{{ farmer.weather.temp }}</h2>
+                                <span class="fw-semibold text-muted">{{ farmer.weather.condition }}</span>
+                            </div>
+                            <div class="d-flex gap-3 text-muted small mt-1">
+                                <span><i class="fas fa-tint text-primary me-1"></i>{% if session.get('language') == 'en' %}Humidity:{% else %}আর্দ্রতা:{% endif %} {{ farmer.weather.humidity }}</span>
+                                <span><i class="fas fa-cloud-rain text-info me-1"></i>{% if session.get('language') == 'en' %}Rain:{% else %}বৃষ্টির সম্ভাবনা:{% endif %} {{ farmer.weather.rain_prob }}</span>
+                                <span><i class="fas fa-wind text-secondary me-1"></i>{{ farmer.weather.wind }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7 mt-3 mt-md-0 ps-md-4">
+                    <div class="d-flex align-items-start gap-2">
+                        <span class="badge bg-success p-2 rounded-circle mt-1"><i class="fas fa-leaf"></i></span>
+                        <div class="w-100">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold text-success mb-0">
+                                    {% if session.get('language') == 'en' %}Today's Crop & Farm Advisory:{% else %}আজকের কৃষি ও ফসল সুরক্ষা পরামর্শ:{% endif %}
+                                </h6>
+                                <span class="badge bg-white text-success border small"><i class="fas fa-info-circle me-1"></i>{% if session.get('language') == 'en' %}Full Forecast →{% else %}বিস্তারিত পূর্বাভাস →{% endif %}</span>
+                            </div>
+                            <p class="mb-0 text-dark small" style="line-height: 1.4;">{{ farmer.weather.advisory }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Operational KPIs (Interactive Cards Opening Rich Detail Modals) -->
+    <div class="row g-3 mb-4">
+        <!-- 1. Advisor Consultations (Clickable -> Consultation Detail Modal) -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100 feature-card p-3 kpi-clickable" data-bs-toggle="modal" data-bs-target="#consultationDetailModal" style="border-radius: var(--radius); border-left: 4px solid var(--accent-green) !important; cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Advisor Consultations{% else %}পরামর্শ সেশন{% endif %}</span>
+                        <h3 class="fw-bold text-success mt-2 mb-0">{{ farmer.consultations|length }}</h3>
+                        <small class="text-success fw-semibold d-block mt-1">
+                            <i class="fas fa-info-circle me-1"></i>{% if session.get('language') == 'en' %}View Details & Notes →{% else %}পরামর্শ ও প্রেসক্রিপশন বিস্তারিত →{% endif %}
+                        </small>
+                    </div>
+                    <div class="p-3 bg-light rounded-circle text-success shadow-sm">
+                        <i class="fas fa-user-md fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 2. Krishi Loans (Clickable -> Loan Detail Modal) -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100 feature-card p-3 kpi-clickable" data-bs-toggle="modal" data-bs-target="#loanDetailModal" style="border-radius: var(--radius); border-left: 4px solid #1976d2 !important; cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Krishi Loans{% else %}কৃষি ঋণ স্থিতি{% endif %}</span>
+                        <h3 class="fw-bold text-primary mt-2 mb-0">{{ farmer.active_loans_count }} <span style="font-size: 1rem;">{% if session.get('language') == 'en' %}Active{% else %}টি সক্রিয়{% endif %}</span></h3>
+                        <small class="text-primary fw-semibold d-block mt-1">
+                            <i class="fas fa-info-circle me-1"></i>{% if session.get('language') == 'en' %}View Balance & EMIs →{% else %}ঋণের স্থিতি ও কিস্তি হিসাব →{% endif %}
+                        </small>
+                    </div>
+                    <div class="p-3 bg-light rounded-circle text-primary shadow-sm">
+                        <i class="fas fa-hand-holding-usd fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 3. Farmland Size (Clickable -> Farmland Details Modal) -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100 feature-card p-3 kpi-clickable" data-bs-toggle="modal" data-bs-target="#farmlandDetailModal" style="border-radius: var(--radius); border-left: 4px solid #ff9800 !important; cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Farmland Area{% else %}আবাদি জমি{% endif %}</span>
+                        <h3 class="fw-bold text-warning mt-2 mb-0">{{ farmer.land_area }} <span style="font-size: 1rem;">{% if session.get('language') == 'en' %}Acres{% else %}একর{% endif %}</span></h3>
+                        <small class="text-warning fw-semibold d-block mt-1">
+                            <i class="fas fa-info-circle me-1"></i>{% if session.get('language') == 'en' %}Land & Soil Profile →{% else %}জমি, মাটি ও ফসল বিবরণী →{% endif %}
+                        </small>
+                    </div>
+                    <div class="p-3 bg-light rounded-circle text-warning shadow-sm">
+                        <i class="fas fa-seedling fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 4. Center Seeds & Fertilizers (Clickable -> Inventory Detail Modal) -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100 feature-card p-3 kpi-clickable" data-bs-toggle="modal" data-bs-target="#inventoryDetailModal" style="border-radius: var(--radius); border-left: 4px solid #7b1fa2 !important; cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Center Stock{% else %}উপকরণ মজুদ{% endif %}</span>
+                        <h3 class="fw-bold mt-2 mb-0" style="color: #7b1fa2;">{{ farmer.inventory|length }} <span style="font-size: 1rem;">{% if session.get('language') == 'en' %}Items{% else %}টি আইটেম{% endif %}</span></h3>
+                        <small class="fw-semibold d-block mt-1" style="color: #7b1fa2;">
+                            <i class="fas fa-info-circle me-1"></i>{% if session.get('language') == 'en' %}View Stock & Prices →{% else %}বীজ, সার ও দামের তালিকা →{% endif %}
+                        </small>
+                    </div>
+                    <div class="p-3 bg-light rounded-circle shadow-sm" style="color: #7b1fa2;">
+                        <i class="fas fa-shopping-basket fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace: Tabs & Content -->
+    <div class="row g-4">
+        <!-- Left 8 Cols: Main Service Tabs -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4" style="border-radius: var(--radius);">
+                <div class="card-header bg-white border-0 pt-3 px-4">
+                    <ul class="nav nav-pills card-header-pills" id="farmerDashboardTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-semibold" id="advisors-tab" data-bs-toggle="tab" data-bs-target="#advisors-tab-pane" type="button" role="tab">
+                                <i class="fas fa-user-md me-1"></i> {% if session.get('language') == 'en' %}Expert Advisors{% else %}কৃষি পরামর্শক{% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" id="prescriptions-tab" data-bs-toggle="tab" data-bs-target="#prescriptions-tab-pane" type="button" role="tab">
+                                <i class="fas fa-clipboard-check me-1"></i> {% if session.get('language') == 'en' %}Prescriptions & Notes{% else %}পরামর্শ প্রেসক্রিপশন{% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" id="market-tab" data-bs-toggle="tab" data-bs-target="#market-tab-pane" type="button" role="tab">
+                                <i class="fas fa-chart-line me-1"></i> {% if session.get('language') == 'en' %}Krishi Bazar Prices{% else %}বাজার দর{% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory-tab-pane" type="button" role="tab">
+                                <i class="fas fa-boxes me-1"></i> {% if session.get('language') == 'en' %}Center Seeds & Inputs{% else %}বীজ ও সার ভাণ্ডার{% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" id="loans-tab" data-bs-toggle="tab" data-bs-target="#loans-tab-pane" type="button" role="tab">
+                                <i class="fas fa-money-check-alt me-1"></i> {% if session.get('language') == 'en' %}Loans{% else %}কৃষি ঋণ{% endif %}
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="tab-content" id="farmerDashboardTabsContent">
+
+                        <!-- TAB 1: EXPERT ADVISORS -->
+                        <div class="tab-pane fade show active" id="advisors-tab-pane" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold mb-0" style="color: var(--primary-green);">
+                                    <i class="fas fa-user-graduate text-success me-2"></i>{% if session.get('language') == 'en' %}Featured Agricultural Advisors{% else %}শীর্ষস্থানীয় কৃষি বিশেষজ্ঞ পরামর্শকগণ{% endif %}
+                                </h5>
+                                <a href="{{ url_for('advisor_listing') }}" class="btn btn-outline-success btn-sm fw-semibold">
+                                    {% if session.get('language') == 'en' %}Browse All Advisors{% else %}সকল পরামর্শক দেখুন{% endif %} <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+
+                            <!-- Advisor Cards Grid -->
+                            <div class="row g-3 mb-4">
+                                {% for adv in farmer.top_advisors %}
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card border h-100 p-3 shadow-none text-center" style="border-radius: 12px; background: #fafafa;">
+                                        <div class="mb-2">
+                                            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 55px; height: 55px; font-size: 1.5rem;">
+                                                <i class="fas fa-user-tie"></i>
+                                            </div>
+                                        </div>
+                                        <h6 class="fw-bold mb-1" style="color: var(--primary-green);">{{ adv[1] }} {{ adv[2] }}</h6>
+                                        <small class="text-muted d-block mb-2" style="font-size: 0.8rem;">{{ adv[3] }}</small>
+                                        <div class="text-warning small mb-2">
+                                            <i class="fas fa-star"></i> <strong class="text-dark">{{ adv[4] }}</strong> / 5.0
+                                        </div>
+                                        <div class="p-2 bg-light rounded small mb-3">
+                                            <span class="text-muted">{% if session.get('language') == 'en' %}Rate:{% else %}ফি:{% endif %}</span>
+                                            <strong class="text-success">৳{{ adv[5] }}</strong> / {% if session.get('language') == 'en' %}hr{% else %}ঘণ্টা{% endif %}
+                                        </div>
+                                        <a href="{{ url_for('book_advisor', advisor_id=adv[0]) }}" class="btn btn-success btn-sm w-100 fw-semibold mt-auto">
+                                            <i class="fas fa-calendar-plus me-1"></i> {% if session.get('language') == 'en' %}Book Consultation{% else %}পরামর্শ নিন{% endif %}
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Recent Consultations Quick Table -->
+                            <h6 class="fw-bold mb-3" style="color: var(--primary-green);">
+                                <i class="fas fa-history text-secondary me-2"></i>{% if session.get('language') == 'en' %}My Recent Consultation Requests{% else %}আমার সাম্প্রতিক পরামর্শের অনুরোধসমূহ{% endif %}
+                            </h6>
+                            {% if farmer.consultations %}
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>{% if session.get('language') == 'en' %}Advisor{% else %}উপদেষ্টা{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Date & Topic{% else %}তারিখ ও বিষয়{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Fee{% else %}ফি{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Status{% else %}অবস্থা{% endif %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for c in farmer.consultations[:4] %}
+                                        <tr>
+                                            <td><span class="badge bg-light text-dark border">#{{ c[0] }}</span></td>
+                                            <td>
+                                                <strong>{{ c[9] }} {{ c[10] }}</strong><br>
+                                                <small class="text-muted">{{ c[11] }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="fw-semibold d-block">{{ c[1] }} ({{ c[2] }} - {{ c[3] }})</span>
+                                                <small class="text-muted">{{ c[8] }}</small>
+                                            </td>
+                                            <td><strong class="text-success">৳{{ c[5] }}</strong></td>
+                                            <td>
+                                                {% if c[7] == 'CONFIRMED' %}
+                                                    <span class="badge bg-success">Confirmed</span>
+                                                {% elif c[7] == 'PENDING' %}
+                                                    <span class="badge bg-warning text-dark">Pending Review</span>
+                                                {% elif c[7] == 'COMPLETED' %}
+                                                    <span class="badge bg-primary">Completed</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ c[7] }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted small">{% if session.get('language') == 'en' %}No consultations booked yet. Browse advisors above to get started.{% else %}এখনো কোনো পরামর্শ বুক করা হয়নি। উপরে তালিকা থেকে পরামর্শক নির্বাচন করুন।{% endif %}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- TAB 2: PRESCRIPTIONS & ADVISORY NOTES -->
+                        <div class="tab-pane fade" id="prescriptions-tab-pane" role="tabpanel">
+                            <h5 class="fw-bold mb-3" style="color: var(--primary-green);">
+                                <i class="fas fa-file-medical text-success me-2"></i>{% if session.get('language') == 'en' %}Advisor Prescriptions & Recommendations{% else %}উপদেষ্টার প্রেসক্রিপশন ও দিকনির্দেশনা নোট{% endif %}
+                            </h5>
+                            {% set noted_consultations = [] %}
+                            {% for c in farmer.consultations %}
+                                {% if c[13] %}
+                                    {% set _ = noted_consultations.append(c) %}
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if noted_consultations %}
+                                <div class="d-flex flex-column gap-3">
+                                    {% for c in noted_consultations %}
+                                    <div class="card border shadow-none p-3" style="border-radius: 12px; border-left: 5px solid var(--accent-green) !important; background: #fbfdfb;">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="fw-bold mb-0 text-success">
+                                                    <i class="fas fa-user-md me-1"></i>{{ c[9] }} {{ c[10] }} ({{ c[11] }})
+                                                </h6>
+                                                <small class="text-muted"><i class="far fa-calendar-alt me-1"></i>{{ c[1] }} | <strong>Topic:</strong> {{ c[8] }}</small>
+                                            </div>
+                                            <span class="badge bg-success">Prescription #{{ c[0] }}</span>
+                                        </div>
+                                        <div class="p-3 bg-white rounded border mt-2">
+                                            <h6 class="small fw-bold text-muted mb-1 text-uppercase">{% if session.get('language') == 'en' %}Advisor Instructions & Prescription:{% else %}পরামর্শ ও দিকনির্দেশনা নোট:{% endif %}</h6>
+                                            <p class="mb-0 text-dark">{{ c[13] }}</p>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5 text-muted">
+                                    <i class="fas fa-clipboard fa-3x text-secondary mb-3"></i>
+                                    <h5>{% if session.get('language') == 'en' %}No Prescriptions Available Yet{% else %}এখনো কোনো প্রেসক্রিপশন নোট নেই{% endif %}</h5>
+                                    <p class="small text-muted">{% if session.get('language') == 'en' %}When advisors complete consultations and attach recommendations, they will be stored here permanently.{% else %}উপদেষ্টাগণ পরামর্শ সম্পন্ন করে দিকনির্দেশনা লিখলে তা এখানে সংরক্ষিত থাকবে।{% endif %}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- TAB 3: KRISHI BAZAR (MARKET PRICES) -->
+                        <div class="tab-pane fade" id="market-tab-pane" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold mb-0" style="color: var(--primary-green);">
+                                    <i class="fas fa-chart-line text-success me-2"></i>{% if session.get('language') == 'en' %}Daily Krishi Market Prices (Market Rates){% else %}দৈনিক কৃষিপণ্য পাইকারি বাজার দর{% endif %}
+                                </h5>
+                                <span class="badge bg-light text-muted border"><i class="fas fa-sync-alt me-1"></i>Live Today</span>
+                            </div>
+                            <div class="row g-3">
+                                {% for m in farmer.market_prices %}
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card border p-3 shadow-none h-100" style="border-radius: 12px; background: #fff;">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="fw-bold mb-0 text-dark">{{ m.crop }}</h6>
+                                            {% if m.trend == 'up' %}
+                                                <span class="badge bg-success bg-opacity-10 text-success"><i class="fas fa-arrow-up me-1"></i>{{ m.change }}</span>
+                                            {% elif m.trend == 'down' %}
+                                                <span class="badge bg-danger bg-opacity-10 text-danger"><i class="fas fa-arrow-down me-1"></i>{{ m.change }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary">স্থির</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex align-items-baseline gap-2 mt-auto">
+                                            <h4 class="fw-bold text-success mb-0">{{ m.price }}</h4>
+                                            <small class="text-muted">/ {{ m.unit }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: CENTER SEEDS & INPUTS INVENTORY -->
+                        <div class="tab-pane fade" id="inventory-tab-pane" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold mb-0" style="color: var(--primary-green);">
+                                    <i class="fas fa-boxes text-success me-2"></i>{% if session.get('language') == 'en' %}Available Seeds & Fertilizers at Your Center{% else %}স্থানীয় সেবা কেন্দ্রে উপলভ্য বীজ ও সার সামগ্রী{% endif %}
+                                </h5>
+                                <span class="badge bg-light text-dark border">{{ farmer.center_name }}</span>
+                            </div>
+                            {% if farmer.inventory %}
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>{% if session.get('language') == 'en' %}Item Name{% else %}উপকরণের নাম{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Available Stock{% else %}মজুদ পরিমাণ{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Unit Price (৳){% else %}একক মূল্য (৳){% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Action{% else %}পদক্ষেপ{% endif %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in farmer.inventory %}
+                                        <tr>
+                                            <td>
+                                                <strong><i class="fas fa-cube text-success me-1"></i>{{ item[1] }}</strong>
+                                            </td>
+                                            <td><span class="badge bg-light text-dark border">{{ item[2] }} {{ item[3] }}</span></td>
+                                            <td><strong class="text-success">৳{{ item[4] }} / {{ item[3] }}</strong></td>
+                                            <td>
+                                                <a href="tel:{{ farmer.agent.phone }}" class="btn btn-outline-success btn-sm">
+                                                    <i class="fas fa-phone-alt me-1"></i> {% if session.get('language') == 'en' %}Order via Agent{% else %}অর্ডার করতে কল দিন{% endif %}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted small">{% if session.get('language') == 'en' %}No stock inventory found for this center.{% else %}কোনো উপকরণ তালিকা পাওয়া যায়নি।{% endif %}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- TAB 5: LOANS & REPAYMENTS LEDGER -->
+                        <div class="tab-pane fade" id="loans-tab-pane" role="tabpanel">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                                <div>
+                                    <h5 class="fw-bold mb-0" style="color: var(--primary-green);">
+                                        <i class="fas fa-hand-holding-usd text-success me-2"></i>{% if session.get('language') == 'en' %}Krishi Loans & Repayment Ledger{% else %}কৃষি ঋণ ও মাসভিত্তিক কিস্তি পরিশোধের খতিয়ান{% endif %}
+                                    </h5>
+                                    <small class="text-muted">{% if session.get('language') == 'en' %}Subsidized agricultural loans at 4% interest rate with flexible monthly repayment{% else %}সরকার ও ব্যাংক নির্ধারিত ৪% প্রণোদনা সুদে কৃষি ঋণ এবং সহজ মাসিক কিস্তি পরিশোধের তথ্য{% endif %}</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#payEmiModal">
+                                        <i class="fas fa-credit-card me-1"></i> {% if session.get('language') == 'en' %}Pay Installment (EMI){% else %}কিস্তি পরিশোধ করুন{% endif %}
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-sm fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#applyLoanModal">
+                                        <i class="fas fa-plus-circle me-1"></i> {% if session.get('language') == 'en' %}Apply for New Loan{% else %}নতুন ঋণ আবেদন করুন{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Financial KPI Summary Cards -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-6 col-md-3">
+                                    <div class="p-3 bg-light rounded text-center border">
+                                        <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Total Capital Borrowed{% else %}মোট গৃহীত মূলধন{% endif %}</span>
+                                        <h4 class="fw-bold text-dark mb-0">৳{{ "{:,.0f}".format(farmer.total_borrowed_amount or 0) }}</h4>
+                                        <small class="text-muted">{% if session.get('language') == 'en' %}Principal Amount{% else %}অনুমোদিত ঋণ{% endif %}</small>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="p-3 bg-light rounded text-center border">
+                                        <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Total Repaid so far{% else %}মোট পরিশোধিত কিস্তি{% endif %}</span>
+                                        <h4 class="fw-bold text-success mb-0">৳{{ "{:,.0f}".format(farmer.total_repaid_amount or 0) }}</h4>
+                                        <small class="text-success"><i class="fas fa-check-circle me-1"></i>{% if session.get('language') == 'en' %}Paid Installments{% else %}জমা হয়েছে{% endif %}</small>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="p-3 bg-light rounded text-center border">
+                                        <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Remaining Outstanding Due{% else %}মোট অবশিষ্ট দেনা{% endif %}</span>
+                                        <h4 class="fw-bold text-danger mb-0">৳{{ "{:,.0f}".format(farmer.total_remaining_due or 0) }}</h4>
+                                        <small class="text-danger"><i class="fas fa-clock me-1"></i>{% if session.get('language') == 'en' %}Due Balance{% else %}বাকি রয়েছে{% endif %}</small>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="p-3 bg-light rounded text-center border">
+                                        <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Interest Rate{% else %}প্রণোদনা সুদের হার{% endif %}</span>
+                                        <h4 class="fw-bold text-primary mb-0">৪.০%</h4>
+                                        <small class="text-primary">{% if session.get('language') == 'en' %}Subsidized Rate{% else %}সরকারি ভর্তুকিপ্রাপ্ত{% endif %}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if farmer.loans_detailed %}
+                            <!-- Active Loans Breakdown -->
+                            <h6 class="fw-bold text-dark mb-3">
+                                <i class="fas fa-list-alt text-success me-2"></i>{% if session.get('language') == 'en' %}My Loan Accounts & Repayment Progress{% else %}আমার ঋণ হিসাব ও পরিশোধের অগ্রগতি{% endif %}
+                            </h6>
+                            <div class="row g-3 mb-4">
+                                {% for l in farmer.loans_detailed %}
+                                <div class="col-md-6">
+                                    <div class="card border p-3 h-100 shadow-sm" style="border-radius: 12px; border-left: 5px solid {% if l.state == 'ACTIVE' %}#2e7d32{% elif l.state == 'PENDING' %}#f57c00{% else %}#757575{% endif %} !important;">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="fw-bold text-dark mb-0">
+                                                    <i class="fas fa-file-invoice-dollar text-success me-1"></i> ঋণ #{{ l.loan_no }}
+                                                </h6>
+                                                <small class="text-muted">{{ l.purpose }}</small>
+                                            </div>
+                                            {% if l.state == 'ACTIVE' %}
+                                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>সক্রিয় ঋণ</span>
+                                            {% elif l.state == 'PENDING' %}
+                                                <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>অনুমোদন অপেক্ষমাণ</span>
+                                            {% elif l.state == 'CLOSED' %}
+                                                <span class="badge bg-secondary"><i class="fas fa-check-double me-1"></i>পরিশোধ সম্পন্ন</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ l.state }}</span>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Financial Summary -->
+                                        <div class="p-2 bg-light rounded mb-2 small">
+                                            <div class="row g-1 text-center">
+                                                <div class="col-4 border-end">
+                                                    <span class="text-muted d-block" style="font-size: 0.75rem;">মূল ঋণ</span>
+                                                    <strong class="text-dark">৳{{ "{:,.0f}".format(l.principal) }}</strong>
+                                                </div>
+                                                <div class="col-4 border-end">
+                                                    <span class="text-muted d-block" style="font-size: 0.75rem;">পরিশোধিত</span>
+                                                    <strong class="text-success">৳{{ "{:,.0f}".format(l.total_paid) }}</strong>
+                                                </div>
+                                                <div class="col-4">
+                                                    <span class="text-muted d-block" style="font-size: 0.75rem;">অবশিষ্ট দেনা</span>
+                                                    <strong class="text-danger">৳{{ "{:,.0f}".format(l.remaining_due) }}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Progress Bar -->
+                                        <div class="mb-2">
+                                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                                <span>পরিশোধের অগ্রগতি: <strong>{{ l.paid_count }}টি কিস্তি সম্পন্ন</strong></span>
+                                                <span class="fw-bold text-success">{{ l.progress_pct }}%</span>
+                                            </div>
+                                            <div class="progress" style="height: 7px;">
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ l.progress_pct }}%;" aria-valuenow="{{ l.progress_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar-alt me-1"></i>মাসিক কিস্তি: <strong class="text-primary">৳{{ "{:,.0f}".format(l.monthly_emi) }}</strong> ({{ l.tenure_months }} মাস)
+                                            </small>
+                                            {% if l.state == 'ACTIVE' and l.remaining_due > 0 %}
+                                            <button type="button" class="btn btn-sm btn-outline-success fw-bold" data-bs-toggle="modal" data-bs-target="#payEmiModal" onclick="preparePayEmi('{{ l.loan_no }}', '{{ l.monthly_emi }}', '{{ l.remaining_due }}')">
+                                                <i class="fas fa-credit-card me-1"></i> কিস্তি দিন
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Monthly Repayments History Table -->
+                            <h6 class="fw-bold text-dark mb-3">
+                                <i class="fas fa-history text-primary me-2"></i>{% if session.get('language') == 'en' %}Monthly Repayment Ledger (All Installments Paid){% else %}মাসভিত্তিক কিস্তি পরিশোধের বিস্তারিত ইতিহাস ও খতিয়ান{% endif %}
+                            </h6>
+                            {% if farmer.all_repayments %}
+                            <div class="table-responsive mb-3">
+                                <table class="table table-hover align-middle border mb-0" style="border-radius: 8px; overflow: hidden;">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>{% if session.get('language') == 'en' %}Loan #{% else %}ঋণ নং{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Month{% else %}পরিশোধের মাস{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Installment #{% else %}কিস্তি নং{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Amount Paid{% else %}পরিশোধিত টাকা{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Remaining Balance{% else %}অবশিষ্ট ঋণ স্থিতি{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Payment Date{% else %}তারিখ{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Method & TXN{% else %}মাধ্যম ও ট্রানজেকশন{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Status{% else %}অবস্থা{% endif %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for r in farmer.all_repayments %}
+                                        <tr>
+                                            <td><strong class="text-primary">#{{ r[1] }}</strong></td>
+                                            <td><strong class="text-dark">{{ r[3] }}</strong></td>
+                                            <td><span class="badge bg-light text-dark border">কিস্তি {{ r[2] }}</span></td>
+                                            <td><strong class="text-success">৳{{ "{:,.0f}".format(r[5]) }}</strong></td>
+                                            <td><strong class="text-danger">৳{{ "{:,.0f}".format(r[6]) }}</strong></td>
+                                            <td><small class="text-muted">{{ r[4] }}</small></td>
+                                            <td>
+                                                <span class="badge bg-info bg-opacity-10 text-dark border">{{ r[7] }}</span>
+                                                <small class="text-muted d-block" style="font-size: 0.75rem;">{{ r[8] }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>{% if session.get('language') == 'en' %}Paid{% else %}পরিশোধিত{% endif %}</span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-light border text-center py-3">
+                                <i class="fas fa-info-circle text-muted me-1"></i> {% if session.get('language') == 'en' %}No monthly installments recorded yet.{% else %}এখনও কোনো কিস্তি পরিশোধের রেকর্ড পাওয়া যায়নি।{% endif %}
+                            </div>
+                            {% endif %}
+
+                            {% else %}
+                            <div class="text-center py-4 text-muted bg-light rounded border">
+                                <i class="fas fa-hand-holding-usd fa-3x mb-2 text-success"></i>
+                                <h6 class="fw-bold text-dark mb-1">{% if session.get('language') == 'en' %}No Active Loans{% else %}আপনার কোনো চলমান ঋণ আবেদন নেই{% endif %}</h6>
+                                <p class="small text-muted mb-3">{% if session.get('language') == 'en' %}Need financial assistance for crop seeds, fertilizers, or irrigation? Apply now.{% else %}সার, বীজ বা আধুনিক সেচ প্রযুক্তির জন্য দ্রুত সহজ শর্তে কৃষি ঋণের আবেদন করুন।{% endif %}</p>
+                                <button type="button" class="btn btn-success btn-sm fw-bold px-4" data-bs-toggle="modal" data-bs-target="#applyLoanModal">
+                                    <i class="fas fa-plus-circle me-1"></i> {% if session.get('language') == 'en' %}Apply for Krishi Loan{% else %}কৃষি ঋণ আবেদন করুন{% endif %}
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right 4 Cols: Agent Card, Seasonal Crop Guide, & Helpline -->
+        <div class="col-lg-4">
+            
+            <!-- Assigned Field Agent Support Card (Clickable -> Agent Profile Modal) -->
+            <div class="card shadow-sm border-0 mb-4 kpi-clickable" data-bs-toggle="modal" data-bs-target="#agentProfileModal" style="border-radius: var(--radius); border-top: 4px solid var(--accent-green); cursor: pointer;">
+                <div class="card-header bg-white border-0 pt-3 px-4 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0" style="color: var(--primary-green);">
+                        <i class="fas fa-user-shield text-success me-2"></i>{% if session.get('language') == 'en' %}Assigned Field Agent{% else %}আপনার দায়িত্বপ্রাপ্ত ফিল্ড এজেন্ট{% endif %}
+                    </h6>
+                    <span class="badge bg-light text-success border small">{% if session.get('language') == 'en' %}Details →{% else %}বিস্তারিত →{% endif %}</span>
+                </div>
+                <div class="card-body p-4 text-center">
+                    <div class="d-inline-flex p-3 bg-light rounded-circle text-success mb-3 shadow-sm">
+                        <i class="fas fa-user-tie fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1" style="color: var(--primary-green);">{{ farmer.agent.name }}</h5>
+                    <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt me-1 text-danger"></i>{{ farmer.agent.center_name }}</p>
+                    <div class="p-3 bg-light rounded mb-3">
+                        <small class="text-muted d-block mb-1">{% if session.get('language') == 'en' %}Need seed delivery, loan assistance, or KYC help?{% else %}সার, বীজ বা ঋণ সহায়তার জন্য সরাসরি যোগাযোগ করুন:{% endif %}</small>
+                        <strong class="text-dark"><i class="fas fa-phone-alt text-success me-1"></i>{{ farmer.agent.phone }}</strong>
+                    </div>
+                    <button type="button" class="btn btn-success btn-sm w-100 fw-bold py-2">
+                        <i class="fas fa-id-badge me-2"></i> {% if session.get('language') == 'en' %}View Agent Profile & Services{% else %}এজেন্টের বিস্তারিত তথ্য ও সেবা{% endif %}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Seasonal Crop Calendar Guide -->
+            <div class="card shadow-sm border-0 mb-4" style="border-radius: var(--radius); border-top: 4px solid #1976d2;">
+                <div class="card-header bg-white border-0 pt-3 px-4">
+                    <h6 class="fw-bold mb-0" style="color: var(--primary-green);">
+                        <i class="fas fa-calendar-alt text-primary me-2"></i>{% if session.get('language') == 'en' %}Seasonal Crop Guide (Rabi/Kharif){% else %}মৌসুমি ফসল চাষের নির্দেশিকা{% endif %}
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="list-group list-group-flush small">
+                        <div class="list-group-item px-0 py-2 border-bottom">
+                            <strong class="d-block text-dark">🌾 বোরো ধান (Boro Rice)</strong>
+                            <span class="text-muted">চারা রোপণের সময়: পৌষ-মাঘ। সময়মতো সেচ ও ইউরিয়ার সঠিক মাত্রা বজায় রাখুন।</span>
+                        </div>
+                        <div class="list-group-item px-0 py-2 border-bottom">
+                            <strong class="d-block text-dark">🥔 আলু ও সরিষা (Potato & Mustard)</strong>
+                            <span class="text-muted">নাবী ধসা রোগ থেকে বাঁচতে সময়মতো ছত্রাকনাশক স্প্রে করুন।</span>
+                        </div>
+                        <div class="list-group-item px-0 py-2">
+                            <strong class="d-block text-dark">🌽 ভুট্টা ও রবি সবজি (Maize & Vegetables)</strong>
+                            <span class="text-muted">ফলন বৃদ্ধির জন্য জৈব সার ও পরিমিত পানির ড্রেনেজ নিশ্চিত করুন।</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- National Helpline Banner -->
+            <div class="card shadow-sm border-0" style="border-radius: var(--radius); background: linear-gradient(135deg, #fff3e0, #ffe0b2); border: 1px solid #ffb74d !important;">
+                <div class="card-body p-3 text-center">
+                    <h6 class="fw-bold text-dark mb-1">
+                        <i class="fas fa-phone-volume text-warning me-1"></i>
+                        {% if session.get('language') == 'en' %}National Krishi Call Center{% else %}জাতীয় কৃষি তথ্য কল সেন্টার{% endif %}
+                    </h6>
+                    <p class="text-muted small mb-2">{% if session.get('language') == 'en' %}Free agricultural advisory from Government specialists{% else %}সরকারী কৃষি কর্মকর্তাদের সরাসরি ফ্রি পরামর্শ পেতে ডায়াল করুন{% endif %}</p>
+                    <a href="tel:16123" class="btn btn-warning btn-sm fw-bold px-4 text-dark rounded-pill shadow-sm">
+                        <i class="fas fa-phone-alt me-1"></i> ১৬১২৩ (Toll Free)
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MODAL: APPLY FOR KRISHI LOAN
+     ============================================ -->
+<div class="modal fade" id="applyLoanModal" tabindex="-1" aria-labelledby="applyLoanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);">
+                <h5 class="modal-title fw-bold" id="applyLoanModalLabel">
+                    <i class="fas fa-hand-holding-usd me-2"></i>{% if session.get('language') == 'en' %}Apply for Krishi Loan{% else %}সহজ শর্তে কৃষি ঋণের আবেদন{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('farmer_apply_loan') }}" id="loanApplicationForm">
+                <div class="modal-body p-4">
+                    
+                    <!-- Farmer Info Summary -->
+                    <div class="p-3 bg-light rounded mb-3 border">
+                        <div class="row g-2 small">
+                            <div class="col-6">
+                                <span class="text-muted d-block">{% if session.get('language') == 'en' %}Farmer Name:{% else %}কৃষকের নাম:{% endif %}</span>
+                                <strong>{{ user.first_name }} {{ user.last_name }}</strong> (#{{ farmer.farmer_code }})
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block">{% if session.get('language') == 'en' %}Assigned Center:{% else %}দায়িত্বপ্রাপ্ত সেন্টার:{% endif %}</span>
+                                <strong>{{ farmer.center_name }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block">{% if session.get('language') == 'en' %}Farmland Area:{% else %}আবাদি জমি:{% endif %}</span>
+                                <span class="badge bg-success">{{ farmer.land_area }} {% if session.get('language') == 'en' %}Acres{% else %}একর{% endif %}</span>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block">{% if session.get('language') == 'en' %}Verifying Agent:{% else %}যাচাইকারী এজেন্ট:{% endif %}</span>
+                                <strong class="text-primary">{{ farmer.agent.name }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loan Purpose -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">
+                            <i class="fas fa-seedling text-success me-1"></i>{% if session.get('language') == 'en' %}Loan Purpose / Cultivation Plan{% else %}ঋণের উদ্দেশ্য ও ফসলের পরিকল্পনা{% endif %}
+                        </label>
+                        <select class="form-select" name="purpose" required>
+                            <option value="বোরো ও আমন ধান চাষাবাদ">🌾 বোরো ও আমন ধান চাষাবাদ (Paddy Cultivation)</option>
+                            <option value="উন্নত আলু ও রবি শস্য উৎপাদন">🥔 উন্নত আলু ও রবি শস্য উৎপাদন (Potato & Rabi Crops)</option>
+                            <option value="সৌরচালিত সেচ পাম্প ও ড্রিপ প্রযুক্তি">💧 সৌরচালিত সেচ পাম্প ও ড্রিপ প্রযুক্তি (Irrigation Setup)</option>
+                            <option value="উচ্চ ফলনশীল বীজ ও সুষম সার ক্রয়">📦 উচ্চ ফলনশীল বীজ ও সুষম সার ক্রয় (Seeds & Fertilizer)</option>
+                            <option value="ফলবাগান ও ড্রাগন চাষ সম্প্রসারণ">🍎 ফলবাগান ও ড্রাগন চাষ সম্প্রসারণ (Orchard & Fruit)</option>
+                            <option value="আধুনিক কৃষি যন্ত্রপাতি ও পাওয়ার টিলার">🚜 আধুনিক কৃষি যন্ত্রপাতি ও পাওয়ার টিলার (Farm Machinery)</option>
+                        </select>
+                    </div>
+
+                    <!-- Loan Amount -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">
+                            <i class="fas fa-coins text-warning me-1"></i>{% if session.get('language') == 'en' %}Requested Loan Amount (BDT){% else %}কাঙ্ক্ষিত ঋণের পরিমাণ (টাকা){% endif %}
+                        </label>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text bg-light fw-bold text-success">৳</span>
+                            <input type="number" class="form-control form-control-lg fw-bold text-success" name="amount" id="loanAmountInput" min="10000" max="500000" step="5000" value="50000" required>
+                        </div>
+                        <!-- Quick Amount Chips -->
+                        <div class="d-flex flex-wrap gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 small" onclick="setLoanAmount(25000)">৳ ২৫,০০০</button>
+                            <button type="button" class="btn btn-sm btn-outline-success py-0 px-2 small" onclick="setLoanAmount(50000)">৳ ৫০,০০০</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 small" onclick="setLoanAmount(75000)">৳ ৭৫,০০০</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 small" onclick="setLoanAmount(100000)">৳ ১,০০,০০০</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 small" onclick="setLoanAmount(150000)">৳ ১,৫০,০০০</button>
+                        </div>
+                    </div>
+
+                    <!-- Repayment Tenure -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">
+                            <i class="fas fa-calendar-alt text-primary me-1"></i>{% if session.get('language') == 'en' %}Repayment Tenure (Months){% else %}পরিশোধের মেয়াদকাল{% endif %}
+                        </label>
+                        <select class="form-select" name="tenure_months" id="loanTenureSelect" required>
+                            <option value="6">৬ মাস (6 Months - শস্য কর্তন শেষে পরিশোধ)</option>
+                            <option value="12" selected>১২ মাস (1 Year - মাসিক / এককালীন কিস্তি)</option>
+                            <option value="18">১৮ মাস (1.5 Years)</option>
+                            <option value="24">২৪ মাস (2 Years - দীর্ঘমেয়াদী প্রকল্প)</option>
+                            <option value="36">৩৬ মাস (3 Years - যন্ত্রপাতি ও খামার)</option>
+                        </select>
+                    </div>
+
+                    <!-- Estimated Installment Preview -->
+                    <div class="p-3 bg-success bg-opacity-10 rounded border border-success mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted d-block">{% if session.get('language') == 'en' %}Estimated Monthly Installment:{% else %}আনুমানিক মাসিক কিস্তি (৪% প্রণোদনা হারে):{% endif %}</small>
+                                <h5 class="fw-bold text-success mb-0" id="estimatedInstallmentText">৳ ৪,৩৩৪ / মাস</h5>
+                            </div>
+                            <span class="badge bg-success">৪% স্বল্প সুদ</span>
+                        </div>
+                    </div>
+
+                    <!-- Verification Terms -->
+                    <div class="form-check small text-muted">
+                        <input class="form-check-input" type="checkbox" id="loanAgreeCheck" required checked>
+                        <label class="form-check-label" for="loanAgreeCheck">
+                            {% if session.get('language') == 'en' %}
+                                I confirm that the provided information is true and understand that loan disbursement requires field agent verification.
+                            {% else %}
+                                আমি নিশ্চিত করছি যে প্রদত্ত তথ্য সত্য এবং ফিল্ড এজেন্টের সরেজমিন জমি পরিদর্শনের পর ঋণ ছাড় প্রক্রিয়া সম্পন্ন হবে।
+                            {% endif %}
+                        </label>
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language') == 'en' %}Cancel{% else %}বাতিল{% endif %}</button>
+                    <button type="submit" class="btn btn-success fw-bold px-4">
+                        <i class="fas fa-paper-plane me-1"></i> {% if session.get('language') == 'en' %}Submit Application{% else %}আবেদন জমা দিন{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MODAL: FARMLAND & CROP PROFILE DETAILS
+     ============================================ -->
+<div class="modal fade" id="farmlandDetailModal" tabindex="-1" aria-labelledby="farmlandDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">
+                <h5 class="modal-title fw-bold" id="farmlandDetailModalLabel">
+                    <i class="fas fa-seedling me-2"></i>{% if session.get('language') == 'en' %}Farmland & Cultivation Profile{% else %}আমার আবাদি জমি ও ফসল বিবরণী{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Total Farmland{% else %}মোট আবাদি জমি{% endif %}</span>
+                            <h3 class="fw-bold text-warning mb-0">{{ farmer.land_area }} <span class="fs-6">{% if session.get('language') == 'en' %}Acres{% else %}একর{% endif %}</span></h3>
+                            <small class="text-muted">{% if session.get('language') == 'en' %}Active Cultivation{% else %}সক্রিয় চাষাবাদ{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Assigned Center{% else %}কৃষি সেবা কেন্দ্র{% endif %}</span>
+                            <h5 class="fw-bold text-success mb-0 text-truncate">{{ farmer.center_name }}</h5>
+                            <small class="text-muted">{{ farmer.upazila }}, {{ farmer.district }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Field Officer{% else %}দায়িত্বপ্রাপ্ত এজেন্ট{% endif %}</span>
+                            <h5 class="fw-bold text-primary mb-0">{{ farmer.agent.name }}</h5>
+                            <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>{{ farmer.agent.phone }}</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Land & Crop Breakdown -->
+                <h6 class="fw-bold text-dark mb-2">
+                    <i class="fas fa-chart-pie text-success me-2"></i>{% if session.get('language') == 'en' %}Crop Cultivation Distribution{% else %}জমির ফসল বণ্টন ও মৌসুমি শস্য বিবরণী{% endif %}
+                </h6>
+                <div class="list-group mb-4">
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="text-success"><i class="fas fa-seedling me-2"></i>বোরো ও আমন ধান (Paddy Cultivation)</strong>
+                            <div class="text-muted small">উন্নত ব্রি ধান-৮৯ ও ব্রি ধান-২৮ জাত</div>
+                        </div>
+                        <span class="badge bg-success rounded-pill px-3 py-2">৭০% আবাদি জমি</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="text-warning"><i class="fas fa-cubes me-2"></i>আলু ও সরিষা রবি ফসল (Potato & Mustard)</strong>
+                            <div class="text-muted small">বিএডিসি উন্নত ডায়মন্ড আলু ও বারি-১৪ সরিষা</div>
+                        </div>
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">২০% আবাদি জমি</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="text-info"><i class="fas fa-apple-alt me-2"></i>সবজি ও ফলবাগান (Vegetables & Orchards)</strong>
+                            <div class="text-muted small">উচ্চমূল্যের গ্রীষ্মকালীন ও শীতকালীন শাকসবজি</div>
+                        </div>
+                        <span class="badge bg-info text-dark rounded-pill px-3 py-2">১০% আবাদি জমি</span>
+                    </div>
+                </div>
+
+                <!-- Soil & Irrigation Features -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="fw-bold small text-muted text-uppercase mb-2"><i class="fas fa-water text-primary me-1"></i> সেচ ও পানি নিষ্কাশন ব্যবস্থা</h6>
+                            <p class="small mb-0 text-dark">ভূগর্ভস্থ গভীর নলকূপ ও সৌরচালিত আধুনিক ড্রিপ সেচ সুবিধাযুক্ত। বর্ষা মৌসুমে পানি নিষ্কাশনের ড্রেনেজ ব্যবস্থা সচল।</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="fw-bold small text-muted text-uppercase mb-2"><i class="fas fa-vial text-success me-1"></i> মাটির গুণাগুণ ও পুষ্টিমান</h6>
+                            <p class="small mb-0 text-dark">উর্বর পলি দোআঁশ মাটি। পিএইচ মাত্রা ৬.২ - ৬.৮ (ফসল চাষের জন্য অত্যন্ত উপযোগী)। পর্যাপ্ত জৈব পদার্থের উপস্থিতি।</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language') == 'en' %}Close{% else %}বন্ধ করুন{% endif %}</button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-warning fw-bold text-dark" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#applyLoanModal">
+                        <i class="fas fa-hand-holding-usd me-1"></i> {% if session.get('language') == 'en' %}Apply for Loan{% else %}কৃষি ঋণ আবেদন{% endif %}
+                    </button>
+                    <a href="{{ url_for('advisor_listing') }}" class="btn btn-success fw-bold">
+                        <i class="fas fa-user-md me-1"></i> {% if session.get('language') == 'en' %}Get Expert Advice{% else %}বিশেষজ্ঞ পরামর্শ নিন{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MODAL 1: CONSULTATION SESSIONS DETAILS
+     ============================================ -->
+<div class="modal fade" id="consultationDetailModal" tabindex="-1" aria-labelledby="consultationDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--primary-green), var(--accent-green));">
+                <h5 class="modal-title fw-bold" id="consultationDetailModalLabel">
+                    <i class="fas fa-user-md me-2"></i>{% if session.get('language') == 'en' %}Advisor Consultations & Prescriptions Overview{% else %}পরামর্শ সেশন ও বিশেষজ্ঞ প্রেসক্রিপশন বিবরণী{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Summary Metrics -->
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Total Consultations{% else %}মোট পরামর্শ সেশন{% endif %}</span>
+                            <h3 class="fw-bold text-success mb-0">{{ farmer.consultations|length }}</h3>
+                            <small class="text-muted">{% if session.get('language') == 'en' %}All Time{% else %}সর্বমোট বুকিং{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Upcoming / Active{% else %}চলমান / আসন্ন সেশন{% endif %}</span>
+                            <h3 class="fw-bold text-primary mb-0">{{ farmer.upcoming_consultations|length }}</h3>
+                            <small class="text-primary">{% if session.get('language') == 'en' %}Pending or Confirmed{% else %}অপেক্ষমাণ ও নিশ্চিতকৃত{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Completed Sessions{% else %}সম্পন্ন পরামর্শ{% endif %}</span>
+                            <h3 class="fw-bold text-success mb-0">{{ farmer.completed_consultations|length }}</h3>
+                            <small class="text-success">{% if session.get('language') == 'en' %}Advice Given{% else %}প্রেসক্রিপশন প্রাপ্ত{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Quick Action{% else %}জরুরি পরামর্শ{% endif %}</span>
+                            <a href="{{ url_for('advisor_listing') }}" class="btn btn-sm btn-success fw-bold mt-1 w-100">
+                                <i class="fas fa-plus-circle me-1"></i>{% if session.get('language') == 'en' %}Book Advisor{% else %}পরামর্শক বুক করুন{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Consultations Table -->
+                <h6 class="fw-bold text-dark mb-3">
+                    <i class="fas fa-list-alt text-success me-2"></i>{% if session.get('language') == 'en' %}Recent Consultation Sessions{% else %}সাম্প্রতিক পরামর্শ সেশন তালিকা{% endif %}
+                </h6>
+                {% if farmer.consultations %}
+                <div class="table-responsive mb-3">
+                    <table class="table table-hover align-middle border mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{% if session.get('language') == 'en' %}ID{% else %}আইডি{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Advisor Name{% else %}পরামর্শকের নাম{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Specialization{% else %}বিশেষজ্ঞতা{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Schedule{% else %}সময়সূচী{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Fee{% else %}ফি{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Status{% else %}অবস্থা{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Prescription / Note{% else %}প্রেসক্রিপশন নোট{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in farmer.consultations %}
+                            <tr>
+                                <td><strong>#{{ c[0] }}</strong></td>
+                                <td>
+                                    <strong class="text-success">{{ c[9] }} {{ c[10] }}</strong>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{ c[11] }}</span></td>
+                                <td>
+                                    <span class="text-dark fw-semibold">{{ c[1] }}</span><br>
+                                    <small class="text-muted">{{ c[2] }} - {{ c[3] }}</small>
+                                </td>
+                                <td><strong class="text-success">৳{{ c[5] }}</strong></td>
+                                <td>
+                                    {% if c[7] == 'COMPLETED' %}
+                                        <span class="badge bg-success">{% if session.get('language') == 'en' %}Completed{% else %}সম্পন্ন{% endif %}</span>
+                                    {% elif c[7] == 'CONFIRMED' %}
+                                        <span class="badge bg-primary">{% if session.get('language') == 'en' %}Confirmed{% else %}নিশ্চিতকৃত{% endif %}</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">{% if session.get('language') == 'en' %}Pending{% else %}অপেক্ষমাণ{% endif %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if c[13] %}
+                                        <div class="p-2 bg-light rounded small border text-dark" style="max-width: 250px;">
+                                            <i class="fas fa-notes-medical text-success me-1"></i> {{ c[13][:60] }}...
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted small">{% if session.get('language') == 'en' %}Awaiting session{% else %}পরামর্শ সেশন অপেক্ষায়{% endif %}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 bg-light rounded border mb-3">
+                    <i class="fas fa-user-md text-muted fa-3x mb-2"></i>
+                    <p class="text-muted mb-0">{% if session.get('language') == 'en' %}No consultations booked yet. Schedule your first session with an agricultural scientist!{% else %}এখনও কোনো পরামর্শ সেশন নেওয়া হয়নি। বিশেষজ্ঞ কৃষি বিজ্ঞানীর পরামর্শ নিতে এখনই বুকিং করুন!{% endif %}</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language') == 'en' %}Close{% else %}বন্ধ করুন{% endif %}</button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-success" data-bs-dismiss="modal" onclick="activateFarmerTab('prescriptions-tab')">
+                        <i class="fas fa-clipboard-check me-1"></i> {% if session.get('language') == 'en' %}View Prescriptions Tab{% else %}প্রেসক্রিপশন ট্যাব দেখুন{% endif %}
+                    </button>
+                    <a href="{{ url_for('my_bookings') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-calendar-check me-1"></i> {% if session.get('language') == 'en' %}Full Booking History{% else %}সকল বুকিং ও রেটিং{% endif %}
+                    </a>
+                    <a href="{{ url_for('advisor_listing') }}" class="btn btn-success fw-bold">
+                        <i class="fas fa-plus-circle me-1"></i> {% if session.get('language') == 'en' %}Book New Advisor{% else %}নতুন পরামর্শক বুক করুন{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MODAL 2: KRISHI LOAN DETAILS & EMI BREAKDOWN
+     ============================================ -->
+<div class="modal fade" id="loanDetailModal" tabindex="-1" aria-labelledby="loanDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);">
+                <h5 class="modal-title fw-bold" id="loanDetailModalLabel">
+                    <i class="fas fa-hand-holding-usd me-2"></i>{% if session.get('language') == 'en' %}Agricultural Loan Status & Repayment Schedule{% else %}কৃষি ঋণ স্থিতি ও মাসভিত্তিক কিস্তি পরিশোধ বিবরণী{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Loan KPI Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Total Capital Borrowed{% else %}মোট গৃহীত মূলধন{% endif %}</span>
+                            <h4 class="fw-bold text-dark mb-0">৳{{ "{:,.0f}".format(farmer.total_borrowed_amount or 0) }}</h4>
+                            <small class="text-primary">{% if session.get('language') == 'en' %}Principal Approved{% else %}অনুমোদিত মূলধন{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Total Repaid so far{% else %}মোট পরিশোধিত কিস্তি{% endif %}</span>
+                            <h4 class="fw-bold text-success mb-0">৳{{ "{:,.0f}".format(farmer.total_repaid_amount or 0) }}</h4>
+                            <small class="text-success"><i class="fas fa-check-circle me-1"></i>{% if session.get('language') == 'en' %}Collected EMI{% else %}জমা হয়েছে{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Remaining Balance Due{% else %}মোট অবশিষ্ট দেনা{% endif %}</span>
+                            <h4 class="fw-bold text-danger mb-0">৳{{ "{:,.0f}".format(farmer.total_remaining_due or 0) }}</h4>
+                            <small class="text-danger"><i class="fas fa-clock me-1"></i>{% if session.get('language') == 'en' %}Due Outstanding{% else %}বাকি রয়েছে{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Subsidized Interest{% else %}প্রণোদনা সুদের হার{% endif %}</span>
+                            <h4 class="fw-bold text-warning mb-0">৪.০%</h4>
+                            <small class="text-success">{% if session.get('language') == 'en' %}Govt. Subsidized{% else %}সরকারি প্রণোদনা{% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loan Accounts Breakdown -->
+                <h6 class="fw-bold text-dark mb-3">
+                    <i class="fas fa-file-invoice-dollar text-primary me-2"></i>{% if session.get('language') == 'en' %}Detailed Loan Accounts Ledger{% else %}ঋণ হিসাবের বিস্তারিত খতিয়ান ও স্থিতি{% endif %}
+                </h6>
+                {% if farmer.loans_detailed %}
+                <div class="table-responsive mb-4">
+                    <table class="table table-hover align-middle border mb-0" style="border-radius: 8px; overflow: hidden;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{% if session.get('language') == 'en' %}Loan #{% else %}ঋণ নং{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Purpose / Crop{% else %}ঋণের উদ্দেশ্য{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Principal{% else %}মূল ঋণ (৳){% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Monthly EMI{% else %}মাসিক কিস্তি (৳){% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Repaid Amount{% else %}পরিশোধিত (৳){% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Remaining Due{% else %}অবশিষ্ট দেনা (৳){% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Status{% else %}অবস্থা{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Action{% else %}পদক্ষেপ{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for l in farmer.loans_detailed %}
+                            <tr>
+                                <td><strong class="text-primary">#{{ l.loan_no }}</strong></td>
+                                <td>
+                                    <strong class="text-dark">{{ l.purpose }}</strong>
+                                    <small class="text-muted d-block">{{ l.tenure_months }} মাস মেয়াদ</small>
+                                </td>
+                                <td><strong class="text-dark">৳{{ "{:,.0f}".format(l.principal) }}</strong></td>
+                                <td><strong class="text-primary">৳{{ "{:,.0f}".format(l.monthly_emi) }}</strong></td>
+                                <td>
+                                    <strong class="text-success">৳{{ "{:,.0f}".format(l.total_paid) }}</strong>
+                                    <div class="progress mt-1" style="height: 5px; width: 80px;">
+                                        <div class="progress-bar bg-success" style="width: {{ l.progress_pct }}%;"></div>
+                                    </div>
+                                </td>
+                                <td><strong class="text-danger">৳{{ "{:,.0f}".format(l.remaining_due) }}</strong></td>
+                                <td>
+                                    {% if l.state == 'ACTIVE' %}
+                                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>সক্রিয়</span>
+                                    {% elif l.state == 'PENDING' %}
+                                        <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>অপেক্ষমাণ</span>
+                                    {% elif l.state == 'CLOSED' %}
+                                        <span class="badge bg-secondary"><i class="fas fa-check-double me-1"></i>পরিশোধিত</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ l.state }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if l.state == 'ACTIVE' and l.remaining_due > 0 %}
+                                    <button type="button" class="btn btn-sm btn-outline-success fw-bold" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#payEmiModal" onclick="preparePayEmi('{{ l.loan_no }}', '{{ l.monthly_emi }}', '{{ l.remaining_due }}')">
+                                        <i class="fas fa-credit-card me-1"></i> কিস্তি দিন
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted small">—</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Monthly Repayments History -->
+                <h6 class="fw-bold text-dark mb-3">
+                    <i class="fas fa-history text-primary me-2"></i>{% if session.get('language') == 'en' %}Monthly Repayment History (Transaction Ledger){% else %}মাসভিত্তিক কিস্তি পরিশোধের বিবরণী (ট্রানজেকশন হিস্ট্রি){% endif %}
+                </h6>
+                {% if farmer.all_repayments %}
+                <div class="table-responsive mb-3">
+                    <table class="table table-hover align-middle border mb-0" style="border-radius: 8px; overflow: hidden;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{% if session.get('language') == 'en' %}Loan #{% else %}ঋণ নং{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Month{% else %}পরিশোধের মাস{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Installment #{% else %}কিস্তি নং{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Amount Paid{% else %}পরিশোধিত টাকা{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Remaining Balance{% else %}অবশিষ্ট ঋণ স্থিতি{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Payment Date{% else %}তারিখ{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Method & TXN{% else %}মাধ্যম ও ট্রানজেকশন{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Status{% else %}অবস্থা{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in farmer.all_repayments %}
+                            <tr>
+                                <td><strong class="text-primary">#{{ r[1] }}</strong></td>
+                                <td><strong class="text-dark">{{ r[3] }}</strong></td>
+                                <td><span class="badge bg-light text-dark border">কিস্তি {{ r[2] }}</span></td>
+                                <td><strong class="text-success">৳{{ "{:,.0f}".format(r[5]) }}</strong></td>
+                                <td><strong class="text-danger">৳{{ "{:,.0f}".format(r[6]) }}</strong></td>
+                                <td><small class="text-muted">{{ r[4] }}</small></td>
+                                <td>
+                                    <span class="badge bg-info bg-opacity-10 text-dark border">{{ r[7] }}</span>
+                                    <small class="text-muted d-block" style="font-size: 0.75rem;">{{ r[8] }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>{% if session.get('language') == 'en' %}Paid{% else %}পরিশোধিত{% endif %}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-light border text-center py-3">
+                    <i class="fas fa-info-circle text-muted me-1"></i> {% if session.get('language') == 'en' %}No repayment history found.{% else %}কোনো কিস্তি পরিশোধের রেকর্ড পাওয়া যায়নি।{% endif %}
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="text-center py-4 bg-light rounded border mb-3">
+                    <i class="fas fa-money-check-alt text-muted fa-3x mb-2"></i>
+                    <p class="text-muted mb-0">{% if session.get('language') == 'en' %}No loans found. Apply for low-interest subsidized agri credit today!{% else %}এখনও কোনো ঋণ গ্রহণ করা হয়নি। সহজ শর্তে ৪% প্রণোদনা সুদের কৃষি ঋণের জন্য এখনই আবেদন করুন!{% endif %}</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language') == 'en' %}Close{% else %}বন্ধ করুন{% endif %}</button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary fw-bold" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#payEmiModal">
+                        <i class="fas fa-credit-card me-1"></i> {% if session.get('language') == 'en' %}Pay Installment{% else %}কিস্তি পরিশোধ করুন{% endif %}
+                    </button>
+                    <button type="button" class="btn btn-success fw-bold" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#applyLoanModal">
+                        <i class="fas fa-plus-circle me-1"></i> {% if session.get('language') == 'en' %}Apply for New Loan{% else %}নতুন ঋণ আবেদন করুন{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MODAL: PAY LOAN INSTALLMENT / EMI MODAL
+     ============================================ -->
+<div class="modal fade" id="payEmiModal" tabindex="-1" aria-labelledby="payEmiModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);">
+                <h5 class="modal-title fw-bold" id="payEmiModalLabel">
+                    <i class="fas fa-credit-card me-2"></i>{% if session.get('language') == 'en' %}Pay Loan Installment (EMI){% else %}ঋণের কিস্তি পরিশোধ করুন{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('farmer_repay_loan') }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="alert alert-success border-0 p-3 mb-3 rounded-3">
+                        <small class="d-block text-dark fw-bold mb-1">
+                            <i class="fas fa-shield-alt text-success me-1"></i> নিরাপদ ও তাৎক্ষণিক কিস্তি পরিশোধ
+                        </small>
+                        <span class="small text-muted">
+                            বিকাশ, নগদ বা মাঠ এজেন্টের মাধ্যমে কিস্তি পরিশোধ করলে সাথে সাথেই ব্যালেন্স আপডেট হবে ও রশিদ তৈরি হবে।
+                        </span>
+                    </div>
+
+                    <!-- Select Loan -->
+                    <div class="mb-3">
+                        <label for="pay_loan_no" class="form-label small fw-semibold">{% if session.get('language') == 'en' %}Select Loan Account{% else %}ঋণ হিসাব নির্বাচন করুন{% endif %} *</label>
+                        <select class="form-select" id="pay_loan_no" name="loan_no" required onchange="onLoanSelectChange(this)">
+                            {% for l in farmer.loans_detailed %}
+                                {% if l.state == 'ACTIVE' and l.remaining_due > 0 %}
+                                <option value="{{ l.loan_no }}" data-emi="{{ l.monthly_emi }}" data-remaining="{{ l.remaining_due }}">
+                                    ঋণ #{{ l.loan_no }} - {{ l.purpose }} (মাসিক কিস্তি: ৳{{ "{:,.0f}".format(l.monthly_emi) }}, বাকি: ৳{{ "{:,.0f}".format(l.remaining_due) }})
+                                </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Repayment Month -->
+                    <div class="mb-3">
+                        <label for="repayment_month" class="form-label small fw-semibold">{% if session.get('language') == 'en' %}Repayment Month{% else %}পরিশোধের মাস{% endif %} *</label>
+                        <select class="form-select" id="repayment_month" name="repayment_month" required>
+                            <option value="সেপ্টেম্বর ২০২৪" selected>সেপ্টেম্বর ২০২৪</option>
+                            <option value="অক্টোবর ২০২৪">অক্টোবর ২০২৪</option>
+                            <option value="নভেম্বর ২০২৪">নভেম্বর ২০২৪</option>
+                            <option value="ডিসেম্বর ২০২৪">ডিসেম্বর ২০২৪</option>
+                            <option value="আগস্ট ২০২৪">আগস্ট ২০২৪ (বকেয়া)</option>
+                            <option value="জুলাই ২০২৪">জুলাই ২০২৪ (বকেয়া)</option>
+                        </select>
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="mb-3">
+                        <label for="pay_amount" class="form-label small fw-semibold">{% if session.get('language') == 'en' %}Installment Amount (BDT){% else %}কিস্তির পরিমাণ (টাকা){% endif %} *</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light fw-bold">৳</span>
+                            <input type="number" class="form-control" id="pay_amount" name="amount_paid" value="2166" min="100" step="1" required>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{% if session.get('language') == 'en' %}Payment Gateway / Method{% else %}পরিশোধের মাধ্যম{% endif %} *</label>
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <label class="border rounded p-2 text-center w-100 d-block cursor-pointer" style="background: #fff; cursor: pointer;">
+                                    <input type="radio" name="payment_method" value="bKash" checked class="me-1">
+                                    <strong class="d-block text-danger small"><i class="fas fa-mobile-alt me-1"></i>বিকাশ</strong>
+                                </label>
+                            </div>
+                            <div class="col-4">
+                                <label class="border rounded p-2 text-center w-100 d-block cursor-pointer" style="background: #fff; cursor: pointer;">
+                                    <input type="radio" name="payment_method" value="Nagad" class="me-1">
+                                    <strong class="d-block text-warning small"><i class="fas fa-wallet me-1"></i>নগদ</strong>
+                                </label>
+                            </div>
+                            <div class="col-4">
+                                <label class="border rounded p-2 text-center w-100 d-block cursor-pointer" style="background: #fff; cursor: pointer;">
+                                    <input type="radio" name="payment_method" value="এজেন্ট পয়েন্ট" class="me-1">
+                                    <strong class="d-block text-success small"><i class="fas fa-store me-1"></i>এজেন্ট</strong>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction Ref (Optional) -->
+                    <div class="mb-3">
+                        <label for="txn_ref" class="form-label small fw-semibold">{% if session.get('language') == 'en' %}Transaction ID (Optional){% else %}ট্রানজেকশন আইডি (ঐচ্ছিক / স্বয়ংক্রিয় তৈরি হবে){% endif %}</label>
+                        <input type="text" class="form-control" id="txn_ref" name="transaction_ref" placeholder="যেমন: TXN-BK-89123">
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="mb-2">
+                        <label for="remarks" class="form-label small fw-semibold">{% if session.get('language') == 'en' %}Remarks / Note{% else %}মন্তব্য (ঐচ্ছিক){% endif %}</label>
+                        <input type="text" class="form-control" id="remarks" name="remarks" value="অনলাইন কিস্তি পরিশোধ সম্পন্ন">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language') == 'en' %}Cancel{% else %}বাতিল{% endif %}</button>
+                    <button type="submit" class="btn btn-success fw-bold px-4 shadow-sm">
+                        <i class="fas fa-check-circle me-1"></i> {% if session.get('language') == 'en' %}Confirm & Pay EMI{% else %}নিশ্চিত করুন ও কিস্তি জমা দিন{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MODAL 3: CENTER INPUTS & INVENTORY DETAILS
+     ============================================ -->
+<div class="modal fade" id="inventoryDetailModal" tabindex="-1" aria-labelledby="inventoryDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%);">
+                <h5 class="modal-title fw-bold" id="inventoryDetailModalLabel">
+                    <i class="fas fa-boxes me-2"></i>{% if session.get('language') == 'en' %}Center Seeds, Fertilizers & Agricultural Stock{% else %}কৃষি সেবা কেন্দ্রের বীজ, সার ও উপকরণ মজুদের বিবরণী{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Center Info Header -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Service Center{% else %}কৃষি সেবা কেন্দ্র{% endif %}</span>
+                            <h5 class="fw-bold text-dark mb-0 text-truncate">{{ farmer.center_name }}</h5>
+                            <small class="text-muted">{{ farmer.upazila }}, {{ farmer.district }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Available Stock Types{% else %}মোট মজুত পণ্যের প্রকার{% endif %}</span>
+                            <h3 class="fw-bold mb-0" style="color: #7b1fa2;">{{ farmer.inventory|length }} <span class="fs-6">{% if session.get('language') == 'en' %}Products{% else %}টি পণ্য{% endif %}</span></h3>
+                            <small class="text-success">{% if session.get('language') == 'en' %}Certified Seeds & Fertilizers{% else %}বিএডিসি ও অনুমোদিত উপকরণ{% endif %}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Distributing Agent{% else %}বিতরণকারী ফিল্ড এজেন্ট{% endif %}</span>
+                            <h5 class="fw-bold text-primary mb-0">{{ farmer.agent.name }}</h5>
+                            <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>{{ farmer.agent.phone }}</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock List Table -->
+                <h6 class="fw-bold text-dark mb-3">
+                    <i class="fas fa-clipboard-list text-success me-2"></i>{% if session.get('language') == 'en' %}Available Agricultural Inputs & Pricing{% else %}বর্তমান মজুত ও সরকারি নির্ধারিত মূল্য তালিকা{% endif %}
+                </h6>
+                {% if farmer.inventory %}
+                <div class="table-responsive mb-3">
+                    <table class="table table-hover align-middle border mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{% if session.get('language') == 'en' %}Item #{% else %}আইডি{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Product Name{% else %}উপকরণের নাম ও জাত{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Available Quantity{% else %}মজুত পরিমাণ{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Subsidized Rate{% else %}ভর্তুকিপ্রাপ্ত মূল্য{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Stock Status{% else %}স্টক স্থিতি{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Action{% else %}অর্ডার বা সংগ্রহ{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in farmer.inventory %}
+                            <tr>
+                                <td><strong>#{{ item[0] }}</strong></td>
+                                <td>
+                                    <strong class="text-dark">{{ item[1] }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border fs-6">{{ item[2] }} {{ item[3] or 'কেজি' }}</span>
+                                </td>
+                                <td>
+                                    <strong class="text-success fs-6">৳{{ item[4] }} / {{ item[3] or 'একক' }}</strong>
+                                </td>
+                                <td>
+                                    {% if item[2] > 20 %}
+                                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>{% if session.get('language') == 'en' %}In Stock{% else %}পর্যাপ্ত মজুত আছে{% endif %}</span>
+                                    {% elif item[2] > 0 %}
+                                        <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-circle me-1"></i>{% if session.get('language') == 'en' %}Low Stock{% else %}সীমিত স্টক{% endif %}</span>
+                                    {% else %}
+                                        <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>{% if session.get('language') == 'en' %}Out of Stock{% else %}স্টক শেষ{% endif %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="tel:{{ farmer.agent.phone }}" class="btn btn-sm btn-outline-success fw-bold">
+                                        <i class="fas fa-phone-alt me-1"></i>{% if session.get('language') == 'en' %}Order via Agent{% else %}অর্ডার দিন{% endif %}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 bg-light rounded border mb-3">
+                    <i class="fas fa-boxes text-muted fa-3x mb-2"></i>
+                    <p class="text-muted mb-0">{% if session.get('language') == 'en' %}No inventory items available in center currently.{% else %}বর্তমানে সেন্টারে কোনো মজুত পণ্য তালিকাভুক্ত নেই।{% endif %}</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language') == 'en' %}Close{% else %}বন্ধ করুন{% endif %}</button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal" onclick="activateFarmerTab('inventory-tab')">
+                        <i class="fas fa-store me-1"></i> {% if session.get('language') == 'en' %}Go to Inventory Tab{% else %}উপকরণ ভাণ্ডার ট্যাব দেখুন{% endif %}
+                    </button>
+                    <a href="tel:{{ farmer.agent.phone }}" class="btn btn-success fw-bold">
+                        <i class="fas fa-phone-alt me-1"></i> {% if session.get('language') == 'en' %}Call Agent for Delivery{% else %}হোম ডেলিভারির জন্য কল করুন{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MODAL 4: FULL WEATHER FORECAST & ADVISORY
+     ============================================ -->
+<div class="modal fade" id="weatherDetailModal" tabindex="-1" aria-labelledby="weatherDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #0288d1 0%, #01579b 100%);">
+                <h5 class="modal-title fw-bold" id="weatherDetailModalLabel">
+                    <i class="fas fa-cloud-sun-rain me-2"></i>{% if session.get('language') == 'en' %}Detailed Weather Forecast & Farm Advisory{% else %}আবহাওয়া পূর্বাভাস ও কৃষি দিকনির্দেশনা{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Today's Weather Card -->
+                <div class="card bg-light border mb-4 p-3 rounded-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center border-end">
+                            <i class="fas fa-cloud-sun fa-4x text-warning mb-2"></i>
+                            <h2 class="fw-bold mb-0 text-dark">{{ farmer.weather.temp }}</h2>
+                            <span class="badge bg-primary fs-6">{{ farmer.weather.condition }}</span>
+                        </div>
+                        <div class="col-md-8 ps-md-4">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="p-2 bg-white rounded border">
+                                        <small class="text-muted d-block">{% if session.get('language') == 'en' %}Humidity{% else %}বাতাসের আর্দ্রতা{% endif %}</small>
+                                        <strong class="text-primary">{{ farmer.weather.humidity }}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2 bg-white rounded border">
+                                        <small class="text-muted d-block">{% if session.get('language') == 'en' %}Rain Probability{% else %}বৃষ্টির সম্ভাবনা{% endif %}</small>
+                                        <strong class="text-info">{{ farmer.weather.rain_prob }}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2 bg-white rounded border">
+                                        <small class="text-muted d-block">{% if session.get('language') == 'en' %}Wind Speed{% else %}বাতাসের গতি{% endif %}</small>
+                                        <strong class="text-secondary">{{ farmer.weather.wind }}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2 bg-white rounded border">
+                                        <small class="text-muted d-block">{% if session.get('language') == 'en' %}Location{% else %}এলাকা{% endif %}</small>
+                                        <strong class="text-success">{{ farmer.upazila }}, {{ farmer.district }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3-Day Outlook -->
+                <h6 class="fw-bold text-dark mb-2">
+                    <i class="fas fa-calendar-week text-primary me-2"></i>{% if session.get('language') == 'en' %}3-Day Agricultural Outlook{% else %}আগামী ৩ দিনের আবহাওয়া পূর্বাভাস{% endif %}
+                </h6>
+                <div class="row g-2 mb-4">
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Today{% else %}আজ{% endif %}</span>
+                            <i class="fas fa-sun text-warning fa-2x my-2"></i>
+                            <h6 class="fw-bold mb-0">২৮° / ২১° সে</h6>
+                            <small class="text-muted">পরিষ্কার রোদ</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Tomorrow{% else %}আগামীকাল{% endif %}</span>
+                            <i class="fas fa-cloud-sun text-primary fa-2x my-2"></i>
+                            <h6 class="fw-bold mb-0">২৭° / ২০° সে</h6>
+                            <small class="text-muted">আংশিক মেঘলা</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded text-center border">
+                            <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Day After{% else %}পরশু{% endif %}</span>
+                            <i class="fas fa-cloud-showers-heavy text-info fa-2x my-2"></i>
+                            <h6 class="fw-bold mb-0">২৫° / ১৯° সে</h6>
+                            <small class="text-info">হালকা বৃষ্টির সম্ভাবনা</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actionable Advisory Guidelines -->
+                <div class="alert alert-success border-0 p-3 mb-0 rounded-3">
+                    <h6 class="fw-bold text-success mb-2">
+                        <i class="fas fa-check-circle me-2"></i>{% if session.get('language') == 'en' %}Farmer Action Guidelines for Today:{% else %}আজকের মাঠের করণীয় দিকনির্দেশনা:{% endif %}
+                    </h6>
+                    <ul class="mb-0 small text-dark" style="line-height: 1.8;">
+                        <li><strong>বালাইনাশক স্প্রে:</strong> রোদযুক্ত পরিষ্কার আবহাওয়ায় সকালে বা বিকেলে ফসলে ছত্রাকনাশক স্প্রে করার উপযুক্ত সময়।</li>
+                        <li><strong>সেচ ব্যবস্থাপনা:</strong> মাটিতে পর্যাপ্ত আর্দ্রতা থাকায় আজ অতিরিক্ত সেচ দেওয়া থেকে বিরত থাকুন।</li>
+                        <li><strong>পরবর্তী বৃষ্টির প্রস্তুতি:</strong> পরশু বৃষ্টির সম্ভাবনা থাকায় পাকা ফসল কর্তন ও মাড়াইয়ের কাজ দ্রুত শেষ করুন।</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language') == 'en' %}Close{% else %}বন্ধ করুন{% endif %}</button>
+                <a href="{{ url_for('advisor_listing') }}" class="btn btn-success fw-bold">
+                    <i class="fas fa-user-md me-1"></i> {% if session.get('language') == 'en' %}Consult Crop Doctor{% else %}ফসলের ডাক্তারের পরামর্শ নিন{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MODAL 5: ASSIGNED FIELD AGENT PROFILE
+     ============================================ -->
+<div class="modal fade" id="agentProfileModal" tabindex="-1" aria-labelledby="agentProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--secondary-green), var(--primary-green));">
+                <h5 class="modal-title fw-bold" id="agentProfileModalLabel">
+                    <i class="fas fa-user-shield me-2"></i>{% if session.get('language') == 'en' %}Field Agent Officer Profile{% else %}দায়িত্বপ্রাপ্ত ফিল্ড এজেন্ট কর্মকর্তা{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="d-inline-flex p-3 bg-light rounded-circle text-success mb-3 shadow-sm" style="width: 80px; height: 80px; align-items: center; justify-content: center;">
+                    <i class="fas fa-user-tie fa-3x"></i>
+                </div>
+                <h4 class="fw-bold mb-1" style="color: var(--primary-green);">{{ farmer.agent.name }}</h4>
+                <p class="text-muted small mb-3">
+                    <span class="badge bg-light text-dark border me-1">কোড #{{ farmer.agent.code }}</span>
+                    <i class="fas fa-map-marker-alt text-danger me-1"></i>{{ farmer.agent.center_name }}
+                </p>
+
+                <div class="p-3 bg-light rounded text-start mb-3 border">
+                    <h6 class="fw-bold text-dark mb-2"><i class="fas fa-handshake text-success me-2"></i>প্রদত্ত সেবাসমূহ:</h6>
+                    <ul class="mb-0 small text-muted ps-3" style="line-height: 1.7;">
+                        <li>বিনামূল্যে কৃষক কেওয়াইসি (KYC) যাচাই ও ডিজিটাল পরিচয়পত্র</li>
+                        <li>কৃষি ঋণ আবেদনের জন্য সরেজমিন জমি পরিদর্শন ও সুপারিশ</li>
+                        <li>অনুমোদিত বিএডিসি বীজ ও সরকারি ভর্তুকির সার সরাসরি সরবরাহ</li>
+                        <li>জরুরি কৃষি সমস্যায় মাঠ পর্যায়ে সরাসরি সহায়তা</li>
+                    </ul>
+                </div>
+
+                <div class="p-3 bg-success bg-opacity-10 rounded text-center border border-success mb-3">
+                    <small class="text-muted d-block mb-1">সরাসরি যোগাযোগের মোবাইল নম্বর:</small>
+                    <h4 class="fw-bold text-success mb-0"><i class="fas fa-phone-alt me-2"></i>{{ farmer.agent.phone }}</h4>
+                </div>
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language') == 'en' %}Close{% else %}বন্ধ করুন{% endif %}</button>
+                <a href="tel:{{ farmer.agent.phone }}" class="btn btn-success fw-bold px-4">
+                    <i class="fas fa-phone-alt me-1"></i> {% if session.get('language') == 'en' %}Call Field Agent{% else %}সরাসরি কল দিন{% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-pills .nav-link {
+        color: var(--dark-text);
+        border-radius: 8px;
+        padding: 8px 16px;
+    }
+    .nav-pills .nav-link.active {
+        background-color: var(--primary-green);
+        color: white;
+    }
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .kpi-clickable:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
+    }
+    @media (min-width: 768px) {
+        .border-end-md {
+            border-right: 1px solid rgba(0,0,0,0.1);
+        }
+    }
+</style>
+
+<script>
+    function activateFarmerTab(tabId) {
+        const tabEl = document.getElementById(tabId);
+        if (tabEl) {
+            const tab = new bootstrap.Tab(tabEl);
+            tab.show();
+            tabEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function setLoanAmount(val) {
+        const input = document.getElementById('loanAmountInput');
+        if (input) {
+            input.value = val;
+            calculateInstallment();
+        }
+    }
+
+    function calculateInstallment() {
+        const amountInput = document.getElementById('loanAmountInput');
+        const tenureSelect = document.getElementById('loanTenureSelect');
+        const preview = document.getElementById('estimatedInstallmentText');
+        
+        if (!amountInput || !tenureSelect || !preview) return;
+
+        const amount = parseFloat(amountInput.value) || 50000;
+        const tenure = parseInt(tenureSelect.value) || 12;
+        const annualRate = 0.04; // 4% subsidized agri rate
+        const totalPayable = amount * (1 + (annualRate * (tenure / 12)));
+        const monthly = Math.round(totalPayable / tenure);
+
+        preview.innerText = '৳ ' + monthly.toLocaleString('bn-BD') + ' / মাস';
+    }
+
+    function preparePayEmi(loanNo, emi, remaining) {
+        const loanSelect = document.getElementById('pay_loan_no');
+        const amountInput = document.getElementById('pay_amount');
+        if (loanSelect) {
+            loanSelect.value = loanNo;
+        }
+        if (amountInput) {
+            const emiVal = parseFloat(emi) || 2166;
+            const remVal = parseFloat(remaining) || 50000;
+            amountInput.value = Math.min(Math.round(emiVal), Math.round(remVal));
+            amountInput.max = Math.round(remVal);
+        }
+    }
+
+    function onLoanSelectChange(selectEl) {
+        const selectedOpt = selectEl.options[selectEl.selectedIndex];
+        if (selectedOpt) {
+            const emi = parseFloat(selectedOpt.getAttribute('data-emi')) || 2000;
+            const remaining = parseFloat(selectedOpt.getAttribute('data-remaining')) || 50000;
+            const amountInput = document.getElementById('pay_amount');
+            if (amountInput) {
+                amountInput.value = Math.min(Math.round(emi), Math.round(remaining));
+                amountInput.max = Math.round(remaining);
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const amountInput = document.getElementById('loanAmountInput');
+        const tenureSelect = document.getElementById('loanTenureSelect');
+        if (amountInput) amountInput.addEventListener('input', calculateInstallment);
+        if (tenureSelect) tenureSelect.addEventListener('change', calculateInstallment);
+        calculateInstallment();
+        
+        const payLoanSelect = document.getElementById('pay_loan_no');
+        if (payLoanSelect) onLoanSelectChange(payLoanSelect);
+    });
+</script>
+{% endblock %}

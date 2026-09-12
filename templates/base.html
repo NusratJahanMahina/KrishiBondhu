@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}কৃষিবন্ধু - KrishiBondhu{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- ============================================
+         NAVBAR - NO LOGO IMAGE
+         ============================================ -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary-green sticky-top">
+        <div class="container">
+            <!-- Back Button (if logged in AND not on dashboard/profile pages) -->
+            {% set pages_without_back = ['index', 'login', 'dashboard', 'agent_dashboard', 'advisor_listing'] %}
+            {% if session.get('user') and request.endpoint not in pages_without_back %}
+                <button class="btn btn-outline-light btn-sm me-2" id="backBtn" title="Go Back">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            {% endif %}
+            
+            <!-- Brand: Text Only (Translates) -->
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <span class="brand-text" style="font-size: 1.5rem; font-weight: 700;">
+                    {% if session.get('language') == 'en' %}
+                        KrishiBondhu
+                    {% else %}
+                        কৃষিবন্ধু
+                    {% endif %}
+                </span>
+            </a>
+            
+            <!-- Language Toggle & User Menu -->
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <!-- Notification Icon (if logged in) -->
+                {% if session.get('user') %}
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm rounded-circle position-relative" type="button" 
+                                data-bs-toggle="dropdown" aria-expanded="false" id="notificationBtn" 
+                                title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                  id="notificationBadge" style="display: none;">
+                                0
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" id="notificationMenu" style="min-width: 300px;">
+                            <li class="dropdown-header">
+                                {% if session.get('language') == 'en' %}
+                                    Notifications
+                                {% else %}
+                                    বিজ্ঞপ্তি
+                                {% endif %}
+                            </li>
+                            <li>
+                                <a class="dropdown-item text-muted text-center py-3" href="#">
+                                    {% if session.get('language') == 'en' %}
+                                        No new notifications
+                                    {% else %}
+                                        নতুন বিজ্ঞপ্তি নেই
+                                    {% endif %}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                {% endif %}
+                
+                <!-- Language Toggle -->
+                {% if session.get('language') == 'en' %}
+                    <a href="{{ url_for('set_language', lang='bn') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                        <i class="fas fa-globe me-1"></i> বাংলা
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('set_language', lang='en') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                        <i class="fas fa-globe me-1"></i> English
+                    </a>
+                {% endif %}
+                
+                <!-- User Menu (if logged in) -->
+                {% if session.get('user') %}
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm rounded-pill px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i>
+                            {{ session['user'].first_name }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('dashboard') }}">
+                                    <i class="fas fa-tachometer-alt me-2"></i>
+                                    {% if session.get('language') == 'en' %}
+                                        Dashboard
+                                    {% else %}
+                                        ড্যাশবোর্ড
+                                    {% endif %}
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>
+                                    {% if session.get('language') == 'en' %}
+                                        Logout
+                                    {% else %}
+                                        লগআউট
+                                    {% endif %}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- ============================================
+         FLASH MESSAGES (AUTO-DISMISSED)
+         ============================================ -->
+    <div class="container mt-3" id="flashMessagesContainer">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show auto-dismiss-alert shadow-sm border-0 d-flex align-items-center" role="alert" style="border-radius: 10px; transition: opacity 0.6s ease, transform 0.6s ease;">
+                        <i class="fas {% if category == 'success' %}fa-check-circle text-success{% elif category == 'danger' %}fa-exclamation-triangle text-danger{% elif category == 'warning' %}fa-exclamation-circle text-warning{% else %}fa-info-circle text-info{% endif %} me-2 fs-5"></i>
+                        <div class="flex-grow-1">{{ message }}</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- ============================================
+         MAIN CONTENT
+         ============================================ -->
+    {% block content %}{% endblock %}
+
+    <!-- ============================================
+         BOOTSTRAP JS
+         ============================================ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- ============================================
+         BACK BUTTON & NOTIFICATION HANDLER
+         ============================================ -->
+    <script>
+        // Back Button Handler
+        const backBtn = document.getElementById('backBtn');
+        if (backBtn) {
+            backBtn.addEventListener('click', function() {
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    // If no history, go to dashboard
+                    window.location.href = '{{ url_for("dashboard") if session.get("user") else url_for("index") }}';
+                }
+            });
+        }
+        
+        // Dynamic Notification Handler
+        async function updateNotifications() {
+            const notificationBadge = document.getElementById('notificationBadge');
+            const notificationMenu = document.getElementById('notificationMenu');
+            if (!notificationBadge || !notificationMenu) return;
+            
+            try {
+                const response = await fetch('/api/notifications');
+                if (!response.ok) return;
+                const data = await response.json();
+                
+                const unreadCount = data.unread_count || 0;
+                const notifications = data.notifications || [];
+                
+                // Update Badge
+                if (unreadCount > 0) {
+                    notificationBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                    notificationBadge.style.display = 'inline-block';
+                } else {
+                    notificationBadge.style.display = 'none';
+                }
+                
+                // Render Menu Items
+                const isEn = '{{ session.get("language") }}' === 'en';
+                let headerHtml = `
+                    <li class="dropdown-header d-flex justify-content-between align-items-center py-2 px-3 border-bottom">
+                        <span class="fw-bold text-dark">${isEn ? 'Notifications' : 'বিজ্ঞপ্তি'}</span>
+                        ${unreadCount > 0 ? `<button onclick="markAllNotificationsRead(event)" class="btn btn-link btn-sm text-decoration-none p-0 text-success small" style="font-size: 0.75rem;">${isEn ? 'Mark all as read' : 'সব পঠিত করুন'}</button>` : ''}
+                    </li>
+                `;
+                
+                if (notifications.length === 0) {
+                    headerHtml += `
+                        <li>
+                            <div class="dropdown-item text-muted text-center py-3">
+                                <i class="fas fa-bell-slash d-block mb-1 text-secondary"></i>
+                                <small>${isEn ? 'No notifications yet' : 'নতুন কোনো বিজ্ঞপ্তি নেই'}</small>
+                            </div>
+                        </li>
+                    `;
+                } else {
+                    notifications.slice(0, 8).forEach(n => {
+                        headerHtml += `
+                            <li>
+                                <a class="dropdown-item py-2 px-3 border-bottom text-wrap ${!n.is_read ? 'bg-light fw-semibold' : ''}" 
+                                   href="${n.link || '#'}" 
+                                   onclick="handleNotificationClick(event, ${n.id}, '${n.link || ''}')"
+                                   style="font-size: 0.85rem;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong class="${!n.is_read ? 'text-success' : 'text-dark'}">${n.title}</strong>
+                                        ${!n.is_read ? '<span class="badge bg-danger rounded-pill" style="font-size: 0.6rem;">New</span>' : ''}
+                                    </div>
+                                    <p class="mb-1 text-muted text-truncate" style="max-width: 260px; font-size: 0.8rem;">${n.message}</p>
+                                    <small class="text-muted d-block" style="font-size: 0.7rem;"><i class="far fa-clock me-1"></i>${n.created_at}</small>
+                                </a>
+                            </li>
+                        `;
+                    });
+                }
+                
+                notificationMenu.innerHTML = headerHtml;
+            } catch (err) {
+                console.error('Error updating notifications:', err);
+            }
+        }
+        
+        async function markAllNotificationsRead(e) {
+            if (e) e.stopPropagation();
+            try {
+                await fetch('/api/notifications/read-all', { method: 'POST' });
+                updateNotifications();
+            } catch (err) {
+                console.error('Error marking all notifications as read:', err);
+            }
+        }
+        
+        async function handleNotificationClick(e, notificationId, link) {
+            try {
+                await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
+            } catch (err) {
+                console.error('Error marking notification as read:', err);
+            }
+            if (link && link !== '#') {
+                window.location.href = link;
+            }
+        }
+        
+        // Initialize notifications and auto-dismiss alerts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateNotifications();
+            // Poll for notifications every 10 seconds
+            setInterval(updateNotifications, 10000);
+
+            // Auto-dismiss welcome and flash alerts after 3.5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.auto-dismiss-alert');
+                alerts.forEach(function(alert) {
+                    alert.style.opacity = '0';
+                    alert.style.transform = 'translateY(-10px)';
+                    setTimeout(function() {
+                        try {
+                            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                            bsAlert.close();
+                        } catch (e) {
+                            alert.remove();
+                        }
+                    }, 600);
+                });
+            }, 3500);
+        });
+    </script>
+    
+    <!-- ============================================
+         CUSTOM STYLES FOR BACK BUTTON
+         ============================================ -->
+    <style>
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        #backBtn {
+            transition: all 0.2s ease;
+        }
+        
+        #backBtn:hover {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            transform: translateX(-2px);
+        }
+        
+        #notificationBtn {
+            transition: all 0.2s ease;
+        }
+        
+        #notificationBtn:hover {
+            background-color: #e0e0e0 !important;
+            transform: scale(1.1);
+        }
+        
+        .navbar .badge {
+            font-size: 0.65rem;
+            padding: 0.35rem 0.45rem;
+        }
+    </style>
+</body>
+</html>

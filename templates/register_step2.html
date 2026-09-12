@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Registration - Step 2{% else %}নিবন্ধন - ধাপ ২{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary-green text-white text-center py-4">
+                    <h2 class="mb-0 fw-bold">
+                        {% if session.get('language') == 'en' %}Basic Information{% else %}প্রাথমিক তথ্য{% endif %}
+                    </h2>
+                    <p class="mb-0 text-white-50 small">
+                        {% if session.get('language') == 'en' %}Step 2 / 3{% else %}২ / ৩{% endif %}
+                    </p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="progress mb-4" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: 66%;"></div>
+                    </div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" action="{{ url_for('register_step2') }}" autocomplete="off">
+                        <div class="row justify-content-center">
+                            <div class="col-12">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            {% if session.get('language') == 'en' %}First Name{% else %}নাম (প্রথম){% endif %}
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" name="first_name" 
+                                               placeholder="{% if session.get('language') == 'en' %}Rahim{% else %}রহিম{% endif %}" 
+                                               value="{{ session.get('temp_first_name', '') }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-muted">
+                                            {% if session.get('language') == 'en' %}Last Name{% else %}নাম (শেষ){% endif %}
+                                        </label>
+                                        <input type="text" class="form-control" name="last_name" 
+                                               placeholder="{% if session.get('language') == 'en' %}Mia{% else %}মিয়া{% endif %}" 
+                                               value="{{ session.get('temp_last_name', '') }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-3 mt-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            {% if session.get('language') == 'en' %}Phone Number{% else %}ফোন নম্বর{% endif %}
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="tel" class="form-control" name="phone" 
+                                               placeholder="01XXXXXXXXX" 
+                                               value="{{ session.get('temp_phone', '') }}" required>
+                                        <small class="text-muted">বৈধ বাংলাদেশি ফোন নম্বর (01XXXXXXXXX)</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            {% if session.get('language') == 'en' %}Username{% else %}ইউজারনেম{% endif %}
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" name="username" 
+                                               placeholder="{% if session.get('language') == 'en' %}Choose a username{% else %}ইউজারনেম নির্বাচন করুন{% endif %}" 
+                                               value="{{ session.get('temp_username', '') }}" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-3 mt-2">
+                                    <div class="col-md-8 mx-auto">
+                                        <label class="form-label fw-semibold">
+                                            {% if session.get('language') == 'en' %}Password{% else %}পাসওয়ার্ড{% endif %}
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="password" class="form-control" name="password" 
+                                               placeholder="{% if session.get('language') == 'en' %}Min 4 characters{% else %}কমপক্ষে ৪ অক্ষর{% endif %}" required>
+                                        <small class="text-muted">কমপক্ষে ৪ অক্ষর</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-3 mt-2">
+                                    <div class="col-md-8 mx-auto">
+                                        <label class="form-label fw-semibold">
+                                            {% if session.get('language') == 'en' %}Confirm Password{% else %}পাসওয়ার্ড নিশ্চিত করুন{% endif %}
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="password" class="form-control" name="confirm_password" 
+                                               placeholder="{% if session.get('language') == 'en' %}Re-enter password{% else %}পাসওয়ার্ড পুনরায় দিন{% endif %}" required>
+                                    </div>
+                                </div>
+                                
+                                <input type="hidden" name="role" value="{{ session.get('temp_role', '') }}">
+                                
+                                <div class="row mt-3">
+                                    <div class="col-12 text-center">
+                                        <p class="text-muted small mb-0">
+                                            <span class="text-danger">*</span> 
+                                            {% if session.get('language') == 'en' %}Required fields{% else %}আবশ্যক ফিল্ড{% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4 d-flex justify-content-center gap-3">
+                            <a href="{{ url_for('register_step1') }}" class="btn btn-outline-secondary px-4 py-2">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                {% if session.get('language') == 'en' %}Back{% else %}পিছনে যান{% endif %}
+                            </a>
+                            <button type="submit" class="btn btn-success px-5 py-2">
+                                {% if session.get('language') == 'en' %}Next Step{% else %}পরবর্তী ধাপ{% endif %}
+                                <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-primary-green {
+        background: linear-gradient(135deg, #1B5E20, #2E7D32);
+    }
+</style>
+{% endblock %}

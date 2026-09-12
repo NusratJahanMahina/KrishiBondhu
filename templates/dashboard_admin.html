@@ -1,0 +1,1056 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Executive Admin Command Center - KrishiBondhu{% else %}কেন্দ্রীয় প্রশাসনিক নিয়ন্ত্রণ কেন্দ্র - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-lg-5">
+
+    <!-- Executive Header Banner -->
+    <div class="card shadow-sm border-0 mb-4" style="background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%); border-radius: var(--radius); color: white;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 75px; height: 75px; font-size: 2.2rem;">
+                            <i class="fas fa-shield-alt text-primary"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <h3 class="fw-bold mb-0 text-white">{{ user.first_name }} {{ user.last_name }}</h3>
+                                <span class="badge bg-warning text-dark fw-bold">
+                                    <i class="fas fa-crown me-1"></i>System Administrator
+                                </span>
+                                <span class="badge bg-success border border-white">
+                                    <i class="fas fa-check-circle me-1"></i>All Services Operational
+                                </span>
+                            </div>
+                            <p class="mb-0 text-white-50 mt-1">
+                                {% if session.get('language') == 'en' %}
+                                    National KrishiBondhu Operations & Digital Agricultural Infrastructure Management
+                                {% else %}
+                                    জাতীয় কৃষিবন্ধু কার্যক্রম ও ডিজিটাল কৃষি অবকাঠামো নিয়ন্ত্রণ কেন্দ্র
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                        <button type="button" class="btn btn-warning btn-sm fw-bold px-3 text-dark shadow-sm" data-bs-toggle="modal" data-bs-target="#addCenterModal">
+                            <i class="fas fa-plus-circle me-1"></i> {% if session.get('language') == 'en' %}Add Center{% else %}নতুন সেন্টার যোগ{% endif %}
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm fw-bold px-3 shadow-sm text-white" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                            <i class="fas fa-user-plus me-1"></i> {% if session.get('language') == 'en' %}Add User{% else %}নতুন ব্যবহারকারী{% endif %}
+                        </button>
+                        <button type="button" class="btn btn-light btn-sm fw-bold text-primary px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                            <i class="fas fa-bullhorn me-1"></i> {% if session.get('language') == 'en' %}Post Notice{% else %}নোটিশ জারি করুন{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System KPIs (7 High-Impact Interactive Metrics) -->
+    <div class="row g-3 mb-4">
+        <!-- Total Farmers (Clickable -> Users Tab filtered by FARMER) -->
+        <div class="col-sm-6 col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 h-100 p-3 kpi-clickable" onclick="activateAdminTabWithRole('users-tab', 'FARMER')" style="border-radius: var(--radius); border-left: 4px solid var(--primary-green) !important; cursor: pointer;">
+                <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Farmers{% else %}নিবন্ধিত কৃষক{% endif %}</span>
+                <h3 class="fw-bold text-success mt-2 mb-0">{{ admin_data.total_farmers }}</h3>
+                <small class="text-success fw-semibold d-block mt-1">
+                    <i class="fas fa-arrow-circle-right me-1"></i>{% if session.get('language') == 'en' %}Directory →{% else %}কৃষক তালিকা →{% endif %}
+                </small>
+            </div>
+        </div>
+        <!-- Field Agents (Clickable -> Users Tab filtered by AGENT) -->
+        <div class="col-sm-6 col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 h-100 p-3 kpi-clickable" onclick="activateAdminTabWithRole('users-tab', 'AGENT')" style="border-radius: var(--radius); border-left: 4px solid #0288d1 !important; cursor: pointer;">
+                <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Field Agents{% else %}ফিল্ড এজেন্ট{% endif %}</span>
+                <h3 class="fw-bold text-info mt-2 mb-0">{{ admin_data.total_agents }}</h3>
+                <small class="text-info fw-semibold d-block mt-1">
+                    <i class="fas fa-arrow-circle-right me-1"></i>{% if session.get('language') == 'en' %}Agents →{% else %}এজেন্ট তালিকা →{% endif %}
+                </small>
+            </div>
+        </div>
+        <!-- Expert Advisors (Clickable -> Advisors Tab) -->
+        <div class="col-sm-6 col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 h-100 p-3 kpi-clickable" onclick="activateAdminTab('advisors-tab')" style="border-radius: var(--radius); border-left: 4px solid var(--accent-green) !important; cursor: pointer;">
+                <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Advisors{% else %}বিশেষজ্ঞ উপদেষ্টা{% endif %}</span>
+                <h3 class="fw-bold text-success mt-2 mb-0">{{ admin_data.total_advisors }}</h3>
+                <small class="text-success fw-semibold d-block mt-1">
+                    <i class="fas fa-arrow-circle-right me-1"></i>{% if session.get('language') == 'en' %}Manage →{% else %}উপদেষ্টা দল →{% endif %}
+                </small>
+            </div>
+        </div>
+        <!-- Centers (Clickable -> Centers Tab) -->
+        <div class="col-sm-6 col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 h-100 p-3 kpi-clickable" onclick="activateAdminTab('centers-tab')" style="border-radius: var(--radius); border-left: 4px solid #7b1fa2 !important; cursor: pointer;">
+                <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Centers{% else %}সেবা কেন্দ্র{% endif %}</span>
+                <h3 class="fw-bold mt-2 mb-0" style="color: #7b1fa2;">{{ admin_data.total_centers }}</h3>
+                <small class="fw-semibold d-block mt-1" style="color: #7b1fa2;">
+                    <i class="fas fa-arrow-circle-right me-1"></i>{% if session.get('language') == 'en' %}All Centers →{% else %}শাখা সমূহ →{% endif %}
+                </small>
+            </div>
+        </div>
+        <!-- Loans Active (Clickable -> Loans Tab) -->
+        <div class="col-sm-6 col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 h-100 p-3 kpi-clickable" onclick="activateAdminTab('loans-tab')" style="border-radius: var(--radius); border-left: 4px solid #f57c00 !important; cursor: pointer;">
+                <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Loans Active{% else %}সক্রিয় ঋণ{% endif %}</span>
+                <h3 class="fw-bold text-warning mt-2 mb-0">{{ admin_data.active_loans }} <span class="fs-6 text-muted">/ {{ admin_data.total_loans }}</span></h3>
+                <small class="text-warning fw-semibold d-block mt-1">
+                    <i class="fas fa-arrow-circle-right me-1"></i>{% if session.get('language') == 'en' %}Portfolio →{% else %}ঋণ বিতরণ →{% endif %}
+                </small>
+            </div>
+        </div>
+        <!-- Consultations (Clickable -> Advisors Tab) -->
+        <div class="col-sm-6 col-md-4 col-xl-2">
+            <div class="card shadow-sm border-0 h-100 p-3 kpi-clickable" onclick="activateAdminTab('advisors-tab')" style="border-radius: var(--radius); border-left: 4px solid #c2185b !important; cursor: pointer;">
+                <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Bookings{% else %}পরামর্শ সেশন{% endif %}</span>
+                <h3 class="fw-bold mt-2 mb-0" style="color: #c2185b;">{{ admin_data.total_consultations }}</h3>
+                <small class="fw-semibold d-block mt-1" style="color: #c2185b;">
+                    <i class="fas fa-arrow-circle-right me-1"></i>{% if session.get('language') == 'en' %}Sessions →{% else %}বুকিং সমূহ →{% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Admin Workspace Console (Tabs) -->
+    <div class="card shadow-sm border-0" style="border-radius: var(--radius);">
+        <div class="card-header bg-white border-0 pt-3 px-4">
+            <ul class="nav nav-pills card-header-pills" id="adminConsoleTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-semibold" id="centers-tab" data-bs-toggle="tab" data-bs-target="#centers-tab-pane" type="button" role="tab">
+                        <i class="fas fa-building me-1"></i> {% if session.get('language') == 'en' %}iFarmer Centers ({{ centers|length }}){% else %}সেবা কেন্দ্র ও শাখা ({{ centers|length }}){% endif %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-tab-pane" type="button" role="tab">
+                        <i class="fas fa-users-cog me-1"></i> {% if session.get('language') == 'en' %}User Directory ({{ users_list|length }}){% else %}ব্যবহারকারী ও কর্মকর্তা ({{ users_list|length }}){% endif %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="loans-tab" data-bs-toggle="tab" data-bs-target="#loans-tab-pane" type="button" role="tab">
+                        <i class="fas fa-hand-holding-usd me-1"></i> {% if session.get('language') == 'en' %}Loans Portfolio ({{ loans_list|length }}){% else %}কৃষি ঋণ পোর্টফোলিও ({{ loans_list|length }}){% endif %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="advisors-tab" data-bs-toggle="tab" data-bs-target="#advisors-tab-pane" type="button" role="tab">
+                        <i class="fas fa-user-graduate me-1"></i> {% if session.get('language') == 'en' %}Advisor Network ({{ advisors_list|length }}){% else %}উপদেষ্টা নেটওয়ার্ক ({{ advisors_list|length }}){% endif %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory-tab-pane" type="button" role="tab">
+                        <i class="fas fa-boxes me-1"></i> {% if session.get('language') == 'en' %}Supplies & Inventory ({{ inventory_list|length }}){% else %}মজুত সামগ্রী ও সার ({{ inventory_list|length }}){% endif %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="announcements-tab" data-bs-toggle="tab" data-bs-target="#announcements-tab-pane" type="button" role="tab">
+                        <i class="fas fa-bullhorn me-1"></i> {% if session.get('language') == 'en' %}Announcements ({{ posts|length }}){% else %}সম্প্রচার ও নোটিশ ({{ posts|length }}){% endif %}
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="tab-content" id="adminConsoleTabsContent">
+
+                <!-- TAB 1: CENTERS MANAGEMENT -->
+                <div class="tab-pane fade show active" id="centers-tab-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0 text-primary">
+                            <i class="fas fa-warehouse me-2"></i>{% if session.get('language') == 'en' %}iFarmer Service Centers & Regional Hubs{% else %}আঞ্চলিক কৃষি সেবা কেন্দ্রসমূহ{% endif %}
+                        </h5>
+                        <button class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addCenterModal">
+                            <i class="fas fa-plus-circle me-1"></i> {% if session.get('language') == 'en' %}Add New Center{% else %}নতুন সেন্টার যুক্ত করুন{% endif %}
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{% if session.get('language') == 'en' %}Code{% else %}কোড{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Center Name{% else %}সেন্টারের নাম{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Upazila & District{% else %}উপজেলা ও জেলা{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Assigned Agents{% else %}দায়িত্বপ্রাপ্ত এজেন্ট{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Farmers{% else %}আওতাভুক্ত কৃষক{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Status{% else %}অবস্থা{% endif %}</th>
+                                    <th class="text-end">{% if session.get('language') == 'en' %}Actions{% else %}পদক্ষেপ{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in centers %}
+                                <tr>
+                                    <td><span class="badge bg-light text-dark border">#{{ c[0] }}</span></td>
+                                    <td><strong class="text-primary"><i class="fas fa-store me-1"></i>{{ c[1] }}</strong></td>
+                                    <td>{{ c[2] }}, {{ c[3] }}</td>
+                                    <td>
+                                        {% if c[6] %}
+                                            <span class="badge bg-info text-dark"><i class="fas fa-user-tie me-1"></i>{{ c[6] }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary bg-opacity-25 text-muted">No Agent</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><span class="badge bg-success bg-opacity-10 text-success fw-bold">{{ c[5] }} Farmers</span></td>
+                                    <td><span class="badge bg-success">Operational</span></td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <!-- Assign Agent Modal Trigger -->
+                                            <button class="btn btn-sm btn-outline-info py-0 px-2" title="Assign Agent" data-bs-toggle="modal" data-bs-target="#assignAgentModal{{ c[0] }}">
+                                                <i class="fas fa-user-plus"></i>
+                                            </button>
+                                            <!-- Edit Modal Trigger -->
+                                            <button class="btn btn-sm btn-outline-primary py-0 px-2" title="Edit Center" data-bs-toggle="modal" data-bs-target="#editCenterModal{{ c[0] }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <!-- Delete Form -->
+                                            <form method="POST" action="{{ url_for('admin_delete_center', center_code=c[0]) }}" onsubmit="return confirm('Are you sure you want to delete center #{{ c[0] }}?');" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Delete Center">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+
+                                        <!-- Edit Center Modal -->
+                                        <div class="modal fade text-start" id="editCenterModal{{ c[0] }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-primary text-white">
+                                                        <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Center #{{ c[0] }}</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form method="POST" action="{{ url_for('admin_edit_center', center_code=c[0]) }}">
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold">Center Name</label>
+                                                                <input type="text" class="form-control" name="center_name" value="{{ c[1] }}" required>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-6 mb-3">
+                                                                    <label class="form-label fw-semibold">Upazila</label>
+                                                                    <input type="text" class="form-control" name="upazila" value="{{ c[2] }}" required>
+                                                                </div>
+                                                                <div class="col-6 mb-3">
+                                                                    <label class="form-label fw-semibold">District</label>
+                                                                    <input type="text" class="form-control" name="district" value="{{ c[3] }}" required>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-primary fw-bold">Save Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Assign Agent Modal -->
+                                        <div class="modal fade text-start" id="assignAgentModal{{ c[0] }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-info text-dark">
+                                                        <h5 class="modal-title"><i class="fas fa-user-tie me-2"></i>Assign Agent to {{ c[1] }}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form method="POST" action="{{ url_for('admin_assign_agent', center_code=c[0]) }}">
+                                                        <div class="modal-body">
+                                                            <label class="form-label fw-semibold">Select Field Agent</label>
+                                                            <select class="form-select" name="agent_code" required>
+                                                                {% for ag in all_agents %}
+                                                                <option value="{{ ag[0] }}">Agent #{{ ag[0] }} - {{ ag[1] }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-info fw-bold">Assign Agent</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 2: USER DIRECTORY -->
+                <div class="tab-pane fade" id="users-tab-pane" role="tabpanel">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                        <h5 class="fw-bold mb-0 text-primary">
+                            <i class="fas fa-id-card-alt me-2"></i>{% if session.get('language') == 'en' %}User Directory & Role Governance{% else %}ব্যবহারকারী ও কর্মকর্তা ব্যবস্থাপনা{% endif %}
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <input type="text" id="userSearchInput" class="form-control form-control-sm" placeholder="🔍 Search name, phone, role..." style="max-width: 250px;">
+                            <select id="userRoleFilter" class="form-select form-select-sm" style="max-width: 150px;">
+                                <option value="ALL">All Roles</option>
+                                <option value="FARMER">Farmers</option>
+                                <option value="AGENT">Agents</option>
+                                <option value="ADVISOR">Advisors</option>
+                                <option value="ADMIN">Admins</option>
+                            </select>
+                            <button class="btn btn-success btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                <i class="fas fa-user-plus me-1"></i> Add User
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="usersTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>{% if session.get('language') == 'en' %}Full Name{% else %}নাম{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Username{% else %}ইউজারনেম{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Phone{% else %}মোবাইল{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}System Role{% else %}ভূমিকা / রোল{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Registered{% else %}নিবন্ধন{% endif %}</th>
+                                    <th class="text-end">{% if session.get('language') == 'en' %}Action{% else %}পদক্ষেপ{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for u in users_list %}
+                                <tr class="user-row" data-role="{{ u[4] }}" data-search="{{ u[1]|lower }} {{ u[2]|lower }} {{ u[3] }} {{ u[4]|lower }}">
+                                    <td><span class="badge bg-light text-dark border">#{{ u[0] }}</span></td>
+                                    <td><strong>{{ u[1] }}</strong></td>
+                                    <td><code>{{ u[2] }}</code></td>
+                                    <td>{{ u[3] }}</td>
+                                    <td>
+                                        {% if u[4] == 'ADMIN' %}
+                                            <span class="badge bg-dark"><i class="fas fa-crown me-1 text-warning"></i>ADMIN</span>
+                                        {% elif u[4] == 'AGENT' %}
+                                            <span class="badge bg-info text-dark"><i class="fas fa-user-shield me-1"></i>AGENT</span>
+                                        {% elif u[4] == 'ADVISOR' %}
+                                            <span class="badge bg-primary"><i class="fas fa-user-md me-1"></i>ADVISOR</span>
+                                        {% else %}
+                                            <span class="badge bg-success"><i class="fas fa-tractor me-1"></i>FARMER</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><small class="text-muted">{{ u[5] or 'N/A' }}</small></td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <!-- Edit Role Modal Button -->
+                                            <button class="btn btn-sm btn-outline-primary py-0 px-2" title="Change Role" data-bs-toggle="modal" data-bs-target="#editUserRoleModal{{ u[0] }}">
+                                                <i class="fas fa-user-tag"></i> Role
+                                            </button>
+                                            {% if u[0] != user.person_id %}
+                                            <form method="POST" action="{{ url_for('admin_delete_user', person_id=u[0]) }}" onsubmit="return confirm('Are you sure you want to delete user {{ u[2] }}?');" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Delete User">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Edit Role Modal -->
+                                        <div class="modal fade text-start" id="editUserRoleModal{{ u[0] }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-primary text-white">
+                                                        <h5 class="modal-title"><i class="fas fa-user-tag me-2"></i>Update Role for {{ u[1] }}</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form method="POST" action="{{ url_for('admin_update_user_role', person_id=u[0]) }}">
+                                                        <div class="modal-body">
+                                                            <p class="small text-muted">Username: <code>{{ u[2] }}</code> | Phone: {{ u[3] }}</p>
+                                                            <label class="form-label fw-semibold">Select Role</label>
+                                                            <select class="form-select" name="role" required>
+                                                                <option value="FARMER" {% if u[4] == 'FARMER' %}selected{% endif %}>FARMER (কৃষক)</option>
+                                                                <option value="AGENT" {% if u[4] == 'AGENT' %}selected{% endif %}>AGENT (ফিল্ড এজেন্ট)</option>
+                                                                <option value="ADVISOR" {% if u[4] == 'ADVISOR' %}selected{% endif %}>ADVISOR (কৃষি বিশেষজ্ঞ)</option>
+                                                                <option value="ADMIN" {% if u[4] == 'ADMIN' %}selected{% endif %}>ADMIN (সিস্টেম অ্যাডমিন)</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-primary fw-bold">Update Role</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 3: LOANS PORTFOLIO -->
+                <div class="tab-pane fade" id="loans-tab-pane" role="tabpanel">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                        <h5 class="fw-bold mb-0 text-primary">
+                            <i class="fas fa-hand-holding-usd me-2"></i>{% if session.get('language') == 'en' %}System-Wide Krishi Loans Portfolio & Repayment Ledger{% else %}সকল কৃষি ঋণ ও কিস্তি আদায় বিবরণী{% endif %}
+                        </h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active loan-filter-btn" data-filter="ALL">All Loans</button>
+                            <button type="button" class="btn btn-outline-warning loan-filter-btn" data-filter="PENDING">Pending</button>
+                            <button type="button" class="btn btn-outline-success loan-filter-btn" data-filter="ACTIVE">Active</button>
+                            <button type="button" class="btn btn-outline-secondary loan-filter-btn" data-filter="CLOSED">Closed</button>
+                        </div>
+                    </div>
+
+                    <!-- Portfolio KPI Summary Cards -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="p-3 bg-light rounded text-center border">
+                                <span class="text-muted small d-block">মোট অনুমোদিত মূলধন</span>
+                                <h4 class="fw-bold text-dark mb-0">৳{{ "{:,.0f}".format(admin_data.total_disbursed_amount or 0) }}</h4>
+                                <small class="text-muted">Total Disbursed</small>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="p-3 bg-light rounded text-center border">
+                                <span class="text-muted small d-block">মোট আদায়কৃত কিস্তি</span>
+                                <h4 class="fw-bold text-success mb-0">৳{{ "{:,.0f}".format(admin_data.total_repaid_amount or 0) }}</h4>
+                                <small class="text-success"><i class="fas fa-check-circle me-1"></i>Total Collected</small>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="p-3 bg-light rounded text-center border">
+                                <span class="text-muted small d-block">মোট অবশিষ্ট পাওনা</span>
+                                <h4 class="fw-bold text-danger mb-0">৳{{ "{:,.0f}".format(admin_data.total_outstanding_due or 0) }}</h4>
+                                <small class="text-danger"><i class="fas fa-clock me-1"></i>Outstanding Due</small>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="p-3 bg-light rounded text-center border">
+                                <span class="text-muted small d-block">সক্রিয় ঋণ অনুপাত</span>
+                                <h4 class="fw-bold text-primary mb-0">{{ admin_data.active_loans }} <small class="fs-6 text-muted">/ {{ admin_data.total_loans }}</small></h4>
+                                <small class="text-primary">Active Portfolio</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loans Table -->
+                    <h6 class="fw-bold text-dark mb-2">
+                        <i class="fas fa-list-alt text-primary me-2"></i>ঋণ পোর্টফোলিও তালিকা
+                    </h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-hover align-middle border" style="border-radius: 8px; overflow: hidden;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{% if session.get('language') == 'en' %}Loan #{% else %}ঋণ নম্বর{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Farmer{% else %}কৃষকের নাম{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Amount (৳){% else %}অনুমোদিত ঋণ (৳){% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Repaid / Due{% else %}আদায় / বাকি দেনা (৳){% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Status{% else %}অবস্থা{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Tenure & Date{% else %}মেয়াদ ও তারিখ{% endif %}</th>
+                                    <th class="text-end">{% if session.get('language') == 'en' %}Decisions{% else %}অনুমোদন পদক্ষেপ{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for l in loans_list %}
+                                <tr class="loan-row" data-state="{{ l[4] }}">
+                                    <td><strong>#{{ l[0] }}</strong></td>
+                                    <td>
+                                        <strong>{{ l[2] }}</strong><br>
+                                        <small class="text-muted">Farmer #{{ l[1] }} • <em>{{ l[8] }}</em></small>
+                                    </td>
+                                    <td><strong class="text-dark">৳ {{ "{:,.0f}".format(l[3] or 50000) }}</strong></td>
+                                    <td>
+                                        <strong class="text-success">৳ {{ "{:,.0f}".format(l[9] or 0) }}</strong>
+                                        <small class="text-muted d-block">
+                                            {% if l[4] == 'CLOSED' %}
+                                                <span class="text-secondary">পরিশোধ সম্পন্ন</span>
+                                            {% else %}
+                                                বাকি: <strong class="text-danger">৳ {{ "{:,.0f}".format((l[3] or 50000) * 1.04 - (l[9] or 0)) }}</strong>
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if l[4] == 'ACTIVE' %}
+                                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Active Loan</span>
+                                        {% elif l[4] == 'PENDING' %}
+                                            <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Pending Review</span>
+                                        {% elif l[4] == 'CLOSED' %}
+                                            <span class="badge bg-secondary"><i class="fas fa-check-double me-1"></i>Closed</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ l[4] }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted d-block">{{ l[6] }} Months</small>
+                                        <small class="text-muted">{{ l[7] or l[5] or 'N/A' }}</small>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-1">
+                                            {% if l[4] == 'PENDING' %}
+                                                <!-- Approve Form -->
+                                                <form method="POST" action="{{ url_for('admin_approve_loan', loan_no=l[0]) }}" onsubmit="return confirm('Approve Loan #{{ l[0] }} for {{ l[2] }}?');" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-success py-0 px-2 fw-bold" title="Approve Loan">
+                                                        <i class="fas fa-check me-1"></i>Approve
+                                                    </button>
+                                                </form>
+                                                <!-- Reject Form -->
+                                                <form method="POST" action="{{ url_for('admin_reject_loan', loan_no=l[0]) }}" onsubmit="return confirm('Reject Loan #{{ l[0] }}?');" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Reject Loan">
+                                                        <i class="fas fa-times me-1"></i>Reject
+                                                    </button>
+                                                </form>
+                                            {% elif l[4] == 'ACTIVE' %}
+                                                <!-- Close/Repaid Form -->
+                                                <form method="POST" action="{{ url_for('admin_close_loan', loan_no=l[0]) }}" onsubmit="return confirm('Mark Loan #{{ l[0] }} as fully repaid/closed?');" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Mark Closed">
+                                                        <i class="fas fa-check-double me-1"></i>Mark Paid
+                                                    </button>
+                                                </form>
+                                            {% else %}
+                                                <span class="text-muted small">No action</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- System-Wide Repayment History -->
+                    <h6 class="fw-bold text-dark mb-2">
+                        <i class="fas fa-history text-success me-2"></i>সকল কিস্তি আদায়ের কেন্দ্রীয় খতিয়ান (System-Wide Repayment History)
+                    </h6>
+                    {% if repayments_list %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle border" style="border-radius: 8px; overflow: hidden;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{% if session.get('language') == 'en' %}Loan #{% else %}ঋণ নং{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Farmer{% else %}কৃষকের নাম{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Month{% else %}পরিশোধের মাস{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Installment #{% else %}কিস্তি নং{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Amount Paid{% else %}আদায়কৃত টাকা{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Remaining Balance{% else %}অবশিষ্ট দেনা{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Date & TXN{% else %}তারিখ ও ট্রানজেকশন{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Method{% else %}মাধ্যম{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Status{% else %}অবস্থা{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in repayments_list %}
+                                <tr>
+                                    <td><strong class="text-primary">#{{ r[1] }}</strong></td>
+                                    <td><strong>{{ r[2] }}</strong></td>
+                                    <td><strong class="text-dark">{{ r[4] }}</strong></td>
+                                    <td><span class="badge bg-light text-dark border">#{{ r[3] }}</span></td>
+                                    <td><strong class="text-success">৳ {{ "{:,.0f}".format(r[6]) }}</strong></td>
+                                    <td><strong class="text-danger">৳ {{ "{:,.0f}".format(r[7]) }}</strong></td>
+                                    <td>
+                                        <small class="text-muted d-block">{{ r[5] }}</small>
+                                        <small class="text-muted" style="font-size: 0.75rem;">{{ r[9] }}</small>
+                                    </td>
+                                    <td><span class="badge bg-info bg-opacity-10 text-dark border">{{ r[8] }}</span></td>
+                                    <td>
+                                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>{{ r[10] }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-light border text-center py-3">
+                        <i class="fas fa-info-circle text-muted me-1"></i> কোনো কিস্তি পরিশোধের রেকর্ড পাওয়া যায়নি।
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- TAB 4: ADVISOR NETWORK -->
+                <div class="tab-pane fade" id="advisors-tab-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0 text-primary">
+                            <i class="fas fa-user-graduate me-2"></i>{% if session.get('language') == 'en' %}Registered Agricultural Advisors{% else %}নিবন্ধিত কৃষি বিশেষজ্ঞ ও পরামর্শক নেটওয়ার্ক{% endif %}
+                        </h5>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{% if session.get('language') == 'en' %}Advisor{% else %}পরামর্শকের নাম{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Specialization{% else %}বিশেষজ্ঞতা{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Qualification{% else %}ডিগ্রী ও যোগ্যতা{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Rating{% else %}রেটিং{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Consultations{% else %}মোট সেশন{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Availability{% else %}উপলব্ধতা{% endif %}</th>
+                                    <th class="text-end">{% if session.get('language') == 'en' %}Control{% else %}নিয়ন্ত্রণ{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in advisors_list %}
+                                <tr>
+                                    <td>
+                                        <strong><i class="fas fa-user-md text-primary me-1"></i>{{ a[1] }}</strong><br>
+                                        <small class="text-muted">{{ a[2] }}</small>
+                                    </td>
+                                    <td><span class="badge bg-light text-dark border">{{ a[3] }}</span></td>
+                                    <td>{{ a[4] or 'বিএসসি ইন এগ্রিকালচার' }}</td>
+                                    <td><span class="text-warning fw-bold"><i class="fas fa-star"></i> {{ a[5] }}</span> / 5.0</td>
+                                    <td><strong>{{ a[6] or 0 }}</strong> sessions</td>
+                                    <td>
+                                        {% if a[7] == 'YES' %}
+                                            <span class="badge bg-success">Available</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Offline</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <!-- Toggle Status -->
+                                            <form method="POST" action="{{ url_for('admin_toggle_advisor_status', advisor_id=a[0]) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-{% if a[7] == 'YES' %}warning{% else %}success{% endif %} py-0 px-2" title="Toggle Availability">
+                                                    <i class="fas fa-power-off me-1"></i>{% if a[7] == 'YES' %}Disable{% else %}Enable{% endif %}
+                                                </button>
+                                            </form>
+                                            <!-- Edit Advisor Modal Button -->
+                                            <button class="btn btn-sm btn-outline-primary py-0 px-2" title="Edit Profile" data-bs-toggle="modal" data-bs-target="#editAdvisorModal{{ a[0] }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Edit Advisor Modal -->
+                                        <div class="modal fade text-start" id="editAdvisorModal{{ a[0] }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-primary text-white">
+                                                        <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Edit Advisor {{ a[1] }}</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form method="POST" action="{{ url_for('admin_edit_advisor', advisor_id=a[0]) }}">
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold">Specialization</label>
+                                                                <input type="text" class="form-control" name="specialization" value="{{ a[3] }}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold">Qualification</label>
+                                                                <input type="text" class="form-control" name="qualification" value="{{ a[4] or '' }}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold">Experience (Years)</label>
+                                                                <input type="number" class="form-control" name="experience_years" value="{{ a[8] or 5 }}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold">Bio</label>
+                                                                <textarea class="form-control" name="bio" rows="3">{{ a[9] or '' }}</textarea>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-primary fw-bold">Save Advisor Details</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 5: SUPPLIES & INVENTORY -->
+                <div class="tab-pane fade" id="inventory-tab-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0 text-primary">
+                            <i class="fas fa-boxes me-2"></i>{% if session.get('language') == 'en' %}Agricultural Inputs & Stock Across Centers{% else %}সেন্টারসমূহের সার ও বীজ মজুত তালিকা{% endif %}
+                        </h5>
+                        <button class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addInventoryModal">
+                            <i class="fas fa-plus-circle me-1"></i> {% if session.get('language') == 'en' %}Add New Item{% else %}নতুন পণ্য যোগ করুন{% endif %}
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>{% if session.get('language') == 'en' %}Item Name{% else %}পণ্যের নাম{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Stock Quantity{% else %}মজুদ পরিমাণ{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Unit{% else %}একক{% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Unit Price (৳){% else %}মূল্য (৳){% endif %}</th>
+                                    <th>{% if session.get('language') == 'en' %}Agent Code{% else %}এজেন্ট কোড{% endif %}</th>
+                                    <th class="text-end">{% if session.get('language') == 'en' %}Actions{% else %}পদক্ষেপ{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in inventory_list %}
+                                <tr>
+                                    <td><span class="badge bg-light text-dark border">#{{ item[0] }}</span></td>
+                                    <td><strong><i class="fas fa-cube text-success me-1"></i>{{ item[2] }}</strong></td>
+                                    <td>
+                                        {% if item[3] <= 10 %}
+                                            <span class="badge bg-danger">{{ item[3] }} {{ item[4] }} (Low)</span>
+                                        {% else %}
+                                            <span class="badge bg-info text-dark fw-bold">{{ item[3] }} {{ item[4] }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item[4] }}</td>
+                                    <td><strong class="text-success">৳ {{ item[5] }}</strong></td>
+                                    <td><code>Agent #{{ item[1] }}</code></td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <!-- Update Stock Modal Button -->
+                                            <button class="btn btn-sm btn-outline-primary py-0 px-2" title="Update Stock" data-bs-toggle="modal" data-bs-target="#editInventoryModal{{ item[0] }}">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <!-- Delete Item Form -->
+                                            <form method="POST" action="{{ url_for('admin_delete_inventory', inventory_id=item[0]) }}" onsubmit="return confirm('Delete {{ item[2] }} from inventory?');" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Delete Item">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+
+                                        <!-- Update Stock Modal -->
+                                        <div class="modal fade text-start" id="editInventoryModal{{ item[0] }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-primary text-white">
+                                                        <h5 class="modal-title"><i class="fas fa-boxes me-2"></i>Update {{ item[2] }}</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <form method="POST" action="{{ url_for('admin_update_inventory', inventory_id=item[0]) }}">
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold">Stock Quantity ({{ item[4] }})</label>
+                                                                <input type="number" class="form-control" name="quantity" value="{{ item[3] }}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label fw-semibold">Unit Price (৳)</label>
+                                                                <input type="number" step="0.01" class="form-control" name="price" value="{{ item[5] }}" required>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-primary fw-bold">Update Stock</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 6: BROADCAST ANNOUNCEMENTS -->
+                <div class="tab-pane fade" id="announcements-tab-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0 text-primary">
+                            <i class="fas fa-bullhorn me-2"></i>{% if session.get('language') == 'en' %}Broadcast Announcements & Directives{% else %}অফিসিয়াল সম্প্রচার ও নোটিশ বোর্ড{% endif %}
+                        </h5>
+                        <button class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                            <i class="fas fa-plus-circle me-1"></i> {% if session.get('language') == 'en' %}Publish Notice{% else %}নতুন নোটিশ জারি{% endif %}
+                        </button>
+                    </div>
+
+                    {% if posts %}
+                    <div class="d-flex flex-column gap-3">
+                        {% for p in posts %}
+                        <div class="card border p-3 shadow-none bg-light" style="border-left: 4px solid #1a237e !important;">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-0 text-primary"><i class="fas fa-bullhorn me-1"></i>{{ p[1] or 'জরুরী নোটিশ' }}</h6>
+                                    <small class="text-muted"><i class="far fa-clock me-1"></i>{{ p[3] }}</small>
+                                </div>
+                                <form method="POST" action="{{ url_for('admin_delete_post', post_id=p[0]) }}" onsubmit="return confirm('Are you sure you want to delete this notice?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size: 0.75rem;">
+                                        <i class="fas fa-trash-alt me-1"></i>Delete
+                                    </button>
+                                </form>
+                            </div>
+                            <p class="mb-0 text-dark">{{ p[2] }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">{% if session.get('language') == 'en' %}No announcements published yet.{% else %}কোনো নোটিশ প্রকাশিত হয়নি।{% endif %}</p>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================
+     MODALS FOR ADMIN ACTIONS
+     ============================================ -->
+
+<!-- Modal: Add New Center -->
+<div class="modal fade" id="addCenterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-warehouse me-2"></i>{% if session.get('language') == 'en' %}Add iFarmer Center{% else %}নতুন কৃষি সেবা কেন্দ্র যোগ করুন{% endif %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_add_center') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{% if session.get('language') == 'en' %}Center Name{% else %}সেন্টারের নাম{% endif %}</label>
+                        <input type="text" class="form-control" name="center_name" placeholder="যেমন: বগুড়া কৃষি কেন্দ্র" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{% if session.get('language') == 'en' %}Upazila{% else %}উপজেলা{% endif %}</label>
+                            <input type="text" class="form-control" name="upazila" placeholder="যেমন: শিবগঞ্জ" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{% if session.get('language') == 'en' %}District{% else %}জেলা{% endif %}</label>
+                            <input type="text" class="form-control" name="district" placeholder="যেমন: বগুড়া" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold">{% if session.get('language') == 'en' %}Save Center{% else %}সংরক্ষণ করুন{% endif %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add New User -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Create New User Account</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_create_user') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold">First Name</label>
+                            <input type="text" class="form-control" name="first_name" placeholder="যেমন: হাসান" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-semibold">Last Name</label>
+                            <input type="text" class="form-control" name="last_name" placeholder="যেমন: মাহমুদ" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Username (for login)</label>
+                        <input type="text" class="form-control" name="username" placeholder="যেমন: hasan123" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Phone Number</label>
+                        <input type="text" class="form-control" name="login_phone" placeholder="017xxxxxxxx" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Password</label>
+                        <input type="password" class="form-control" name="password" value="password123" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">System Role</label>
+                        <select class="form-select" name="role" required>
+                            <option value="FARMER">FARMER (কৃষক)</option>
+                            <option value="AGENT">AGENT (মাঠ কর্মকর্তা)</option>
+                            <option value="ADVISOR">ADVISOR (কৃষি বিশেষজ্ঞ)</option>
+                            <option value="ADMIN">ADMIN (প্রশাসক)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success fw-bold">Create Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Create Post Notice -->
+<div class="modal fade" id="createPostModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-bullhorn me-2"></i>{% if session.get('language') == 'en' %}Broadcast Announcement{% else %}নতুন নোটিশ জারি করুন{% endif %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_create_post') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{% if session.get('language') == 'en' %}Notice Title{% else %}নোটিশের শিরোনাম{% endif %}</label>
+                        <input type="text" class="form-control" name="title" placeholder="যেমন: সার বিতরণ সংক্রান্ত জরুরী নির্দেশিকা" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{% if session.get('language') == 'en' %}Notice Content{% else %}নোটিশের বিবরণ{% endif %}</label>
+                        <textarea class="form-control" name="content" rows="4" placeholder="সকল ফিল্ড এজেন্ট ও কৃষকদের উদ্দেশ্যে বার্তা লিখুন..." required></textarea>
+                    </div>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" name="broadcast_bell" id="broadcastBellCheck" checked>
+                        <label class="form-check-label fw-semibold" for="broadcastBellCheck">
+                            🔔 Send instant bell notification to all users
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold">{% if session.get('language') == 'en' %}Broadcast Now{% else %}প্রকাশ করুন{% endif %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Inventory Stock -->
+<div class="modal fade" id="addInventoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-boxes me-2"></i>{% if session.get('language') == 'en' %}Add Supply Stock{% else %}সেন্টার মজুদে পণ্য যোগ করুন{% endif %}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_add_inventory') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{% if session.get('language') == 'en' %}Item Name{% else %}উপকরণ / পণ্যের নাম{% endif %}</label>
+                        <input type="text" class="form-control" name="item_name" placeholder="যেমন: উন্নত গম বীজ - বারি ৩" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{% if session.get('language') == 'en' %}Quantity{% else %}পরিমাণ{% endif %}</label>
+                            <input type="number" class="form-control" name="quantity" value="100" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{% if session.get('language') == 'en' %}Unit{% else %}একক{% endif %}</label>
+                            <select class="form-select" name="unit">
+                                <option value="কেজি">কেজি (kg)</option>
+                                <option value="বস্তা">বস্তা (Bag 50kg)</option>
+                                <option value="লিটার">লিটার (Liter)</option>
+                                <option value="প্যাকেট">প্যাকেট (Packet)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{% if session.get('language') == 'en' %}Unit Price (৳){% else %}একক মূল্য (৳){% endif %}</label>
+                            <input type="number" step="0.01" class="form-control" name="price" value="650" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{% if session.get('language') == 'en' %}Assign Agent{% else %}বরাদ্দকৃত এজেন্ট{% endif %}</label>
+                            <select class="form-select" name="agent_code">
+                                {% for ag in all_agents %}
+                                <option value="{{ ag[0] }}">Agent #{{ ag[0] }} ({{ ag[1] }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold">{% if session.get('language') == 'en' %}Add Item{% else %}মজুদ নিশ্চিত করুন{% endif %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-pills .nav-link {
+        color: var(--dark-text);
+        border-radius: 8px;
+        padding: 8px 16px;
+    }
+    .nav-pills .nav-link.active {
+        background-color: #1a237e;
+        color: white;
+    }
+</style>
+
+<script>
+    // Live User Search and Filter
+    const userSearchInput = document.getElementById('userSearchInput');
+    const userRoleFilter = document.getElementById('userRoleFilter');
+    const userRows = document.querySelectorAll('.user-row');
+
+    function filterUsers() {
+        const query = (userSearchInput ? userSearchInput.value.toLowerCase().trim() : '');
+        const role = (userRoleFilter ? userRoleFilter.value : 'ALL');
+
+        userRows.forEach(row => {
+            const rowRole = row.getAttribute('data-role');
+            const rowSearch = row.getAttribute('data-search');
+
+            const matchesRole = (role === 'ALL' || rowRole === role);
+            const matchesQuery = (!query || rowSearch.includes(query));
+
+            if (matchesRole && matchesQuery) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    if (userSearchInput) userSearchInput.addEventListener('input', filterUsers);
+    if (userRoleFilter) userRoleFilter.addEventListener('change', filterUsers);
+
+    // Live Loan State Filter
+    const loanFilterBtns = document.querySelectorAll('.loan-filter-btn');
+    const loanRows = document.querySelectorAll('.loan-row');
+
+    loanFilterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            loanFilterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const filter = this.getAttribute('data-filter');
+            loanRows.forEach(row => {
+                const state = row.getAttribute('data-state');
+                if (filter === 'ALL' || state === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    function activateAdminTab(tabId) {
+        const tabEl = document.getElementById(tabId);
+        if (tabEl) {
+            const tab = new bootstrap.Tab(tabEl);
+            tab.show();
+            tabEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function activateAdminTabWithRole(tabId, role) {
+        activateAdminTab(tabId);
+        if (userRoleFilter) {
+            userRoleFilter.value = role;
+            filterUsers();
+        }
+    }
+</script>
+
+<style>
+    .kpi-clickable:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
+    }
+</style>
+{% endblock %}

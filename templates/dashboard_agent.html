@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Field Agent Command Center - KrishiBondhu{% else %}ফিল্ড এজেন্ট ড্যাশবোর্ড ও সেবা কেন্দ্র - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Agent Top Profile & Center Banner -->
+    <div class="card shadow-sm border-0 mb-4" style="background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); border-radius: var(--radius); color: white;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white text-success rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 75px; height: 75px; font-size: 2.2rem;">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <h3 class="fw-bold mb-0 text-white">{{ user.first_name }} {{ user.last_name }}</h3>
+                                <span class="badge bg-warning text-dark fw-bold">
+                                    <i class="fas fa-id-card me-1"></i>Agent #{{ agent_data.agent_code or '2001' }}
+                                </span>
+                                <span class="badge bg-success border border-white">
+                                    <i class="fas fa-check-circle me-1"></i>{% if session.get('language') == 'en' %}Active Agent{% else %}সক্রিয় ফিল্ড অফিসার{% endif %}
+                                </span>
+                            </div>
+                            <p class="mb-1 text-white-50 mt-1">
+                                <i class="fas fa-building me-1 text-warning"></i>{{ agent_data.center_name }}
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-map-marker-alt me-1 text-warning"></i>{{ agent_data.upazila }}, {{ agent_data.district }}
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-calendar-alt me-1 text-warning"></i>{% if session.get('language') == 'en' %}Joined:{% else %}যোগদান:{% endif %} {{ agent_data.join_date }}
+                            </p>
+                            <small class="text-white-50"><i class="fas fa-phone-alt me-1"></i>{{ agent_data.phone or user.login_phone }}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                        <a href="{{ url_for('agent_kyc_requests') }}" class="btn btn-warning btn-sm fw-bold px-3 text-dark shadow-sm">
+                            <i class="fas fa-file-signature me-1"></i> {% if session.get('language') == 'en' %}Verify KYC{% else %}কেওয়াইসি যাচাই{% endif %}
+                            {% if agent_data.pending_kyc > 0 %}
+                                <span class="badge bg-danger ms-1">{{ agent_data.pending_kyc }}</span>
+                            {% endif %}
+                        </a>
+                        <a href="{{ url_for('agent_loan_requests') }}" class="btn btn-light btn-sm fw-bold text-success px-3 shadow-sm">
+                            <i class="fas fa-hand-holding-usd me-1"></i> {% if session.get('language') == 'en' %}Loan Queue{% else %}ঋণ আবেদন{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent KPIs (Interactive Cards) -->
+    <div class="row g-3 mb-4">
+        <!-- Total Farmers (Clickable -> Farmers Tab) -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100 p-3 kpi-clickable" onclick="activateAgentTab('farmers-tab')" style="border-radius: var(--radius); border-left: 4px solid var(--primary-green) !important; cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Assigned Farmers{% else %}দায়িত্বপ্রাপ্ত কৃষক{% endif %}</span>
+                        <h3 class="fw-bold text-success mt-2 mb-0">{{ agent_data.total_farmers or my_farmers|length }}</h3>
+                        <small class="text-success fw-semibold d-block mt-1">
+                            <i class="fas fa-arrow-circle-right me-1"></i>{% if session.get('language') == 'en' %}View Farmers List →{% else %}কৃষক তালিকা দেখুন →{% endif %}
+                        </small>
+                    </div>
+                    <div class="p-3 bg-light rounded-circle text-success shadow-sm">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- KYC Verified (Clickable -> KYC Page) -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100 p-3 kpi-clickable" onclick="window.location.href='{{ url_for('agent_kyc_requests') }}'" style="border-radius: var(--radius); border-left: 4px solid #0288d1 !important; cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}KYC Verified{% else %}কেওয়াইসি সম্পন্ন{% endif %}</span>
+                        <h3 class="fw-bold text-info mt-2 mb-0">{{ agent_data.kyc_done or 0 }}</h3>
+                        <small class="text-danger fw-semibold d-block mt-1">
+                            <i class="fas fa-arrow-circle-right me-1"></i>{{ agent_data.pending_kyc or 0 }} {% if session.get('language') == 'en' %}Pending Verification →{% else %}যাচাই অপেক্ষমাণ →{% endif %}
+                        </small>
+                    </div>
+                    <div class="p-3 bg-light rounded-circle text-info shadow-sm">
+                        <i class="fas fa-id-card-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Loans Managed (Clickable -> Loans Page) -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100 p-3 kpi-clickable" onclick="window.location.href='{{ url_for('agent_loan_requests') }}'" style="border-radius: var(--radius); border-left: 4px solid #f57c00 !important; cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Loans Approved{% else %}অনুমোদিত কৃষি ঋণ{% endif %}</span>
+                        <h3 class="fw-bold text-warning mt-2 mb-0">{{ agent_data.loans_approved or 0 }}</h3>
+                        <small class="text-warning fw-semibold d-block mt-1">
+                            <i class="fas fa-arrow-circle-right me-1"></i>{{ agent_data.pending_loans or 0 }} {% if session.get('language') == 'en' %}Pending Approval →{% else %}অনুমোদন অপেক্ষমাণ →{% endif %}
+                        </small>
+                    </div>
+                    <div class="p-3 bg-light rounded-circle text-warning shadow-sm">
+                        <i class="fas fa-hand-holding-usd fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Deliveries (Clickable -> Action Hub) -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100 p-3 kpi-clickable" onclick="activateAgentTab('actions-tab')" style="border-radius: var(--radius); border-left: 4px solid #7b1fa2 !important; cursor: pointer;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small fw-semibold text-uppercase">{% if session.get('language') == 'en' %}Pending Orders{% else %}বিতরণযোগ্য চালান{% endif %}</span>
+                        <h3 class="fw-bold mt-2 mb-0" style="color: #7b1fa2;">{{ agent_data.pending_deliveries or 0 }}</h3>
+                        <small class="fw-semibold d-block mt-1" style="color: #7b1fa2;">
+                            <i class="fas fa-arrow-circle-right me-1"></i>{% if session.get('language') == 'en' %}View Operations →{% else %}মাঠ কার্যক্রম দেখুন →{% endif %}
+                        </small>
+                    </div>
+                    <div class="p-3 bg-light rounded-circle shadow-sm" style="color: #7b1fa2;">
+                        <i class="fas fa-boxes fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Workspace: Main Tabs -->
+    <div class="row g-4">
+        <!-- Left 8 Cols: Farmers Directory & Action Center -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4" style="border-radius: var(--radius);">
+                <div class="card-header bg-white border-0 pt-3 px-4">
+                    <ul class="nav nav-pills card-header-pills" id="agentDashboardTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-semibold" id="farmers-tab" data-bs-toggle="tab" data-bs-target="#farmers-tab-pane" type="button" role="tab">
+                                <i class="fas fa-users me-1"></i> {% if session.get('language') == 'en' %}My Farmers ({{ my_farmers|length }}){% else %}আমার কৃষক তালিকা ({{ my_farmers|length }}){% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions-tab-pane" type="button" role="tab">
+                                <i class="fas fa-tasks me-1"></i> {% if session.get('language') == 'en' %}Action Hub{% else %}কার্যতালিকা ও সেবা{% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" id="bulletins-tab" data-bs-toggle="tab" data-bs-target="#bulletins-tab-pane" type="button" role="tab">
+                                <i class="fas fa-bullhorn me-1"></i> {% if session.get('language') == 'en' %}Admin Notices{% else %}অ্যাডমিন নোটিশ{% endif %}
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="tab-content" id="agentDashboardTabsContent">
+
+                        <!-- TAB 1: MY FARMERS -->
+                        <div class="tab-pane fade show active" id="farmers-tab-pane" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold mb-0 text-success">
+                                    <i class="fas fa-user-friends me-1"></i>{% if session.get('language') == 'en' %}Registered Farmers in Your Center{% else %}আপনার সেন্টারের আওতাভুক্ত কৃষকবৃন্দ{% endif %}
+                                </h6>
+                                <a href="{{ url_for('agent_farmers') }}" class="btn btn-outline-success btn-sm fw-semibold">
+                                    {% if session.get('language') == 'en' %}Full View{% else %}সম্পূর্ণ তালিকা{% endif %} <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+
+                            {% if my_farmers %}
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>{% if session.get('language') == 'en' %}Code{% else %}কোড{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Farmer Name{% else %}কৃষকের নাম{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Phone{% else %}মোবাইল{% endif %}</th>
+                                            <th>KYC</th>
+                                            <th>{% if session.get('language') == 'en' %}Loan Status{% else %}ঋণ স্থিতি{% endif %}</th>
+                                            <th>{% if session.get('language') == 'en' %}Action{% else %}পদক্ষেপ{% endif %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for f in my_farmers %}
+                                        <tr>
+                                            <td><span class="badge bg-light text-dark border">#{{ f[0] }}</span></td>
+                                            <td><strong>{{ f[1] }}</strong></td>
+                                            <td>{{ f[2] }}</td>
+                                            <td>
+                                                {% if f[3] == 'VERIFIED' %}
+                                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Verified</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Pending</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if f[4] == 'Active Loan' %}
+                                                    <span class="badge bg-primary">Active</span>
+                                                {% elif f[4] == 'Paid' %}
+                                                    <span class="badge bg-secondary">Paid</span>
+                                                {% elif f[4] == 'Loan Pending' %}
+                                                    <span class="badge bg-warning text-dark">Pending</span>
+                                                {% else %}
+                                                    <span class="badge bg-light text-muted border">No Loan</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('agent_farmer_detail', farmer_code=f[0]) }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">
+                                                    <i class="fas fa-eye me-1"></i>{% if session.get('language') == 'en' %}Profile{% else %}প্রোফাইল{% endif %}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-users fa-3x text-secondary mb-2"></i>
+                                <p>{% if session.get('language') == 'en' %}No farmers assigned yet.{% else %}এখনো কোনো কৃষক যুক্ত করা হয়নি।{% endif %}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- TAB 2: ACTION HUB -->
+                        <div class="tab-pane fade" id="actions-tab-pane" role="tabpanel">
+                            <h6 class="fw-bold mb-3 text-success">
+                                <i class="fas fa-tasks me-1"></i>{% if session.get('language') == 'en' %}Core Operations & Workflows{% else %}প্রধান মাঠ কার্যক্রম ও সেবা কেন্দ্র{% endif %}
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('agent_kyc_requests') }}" class="text-decoration-none">
+                                        <div class="card p-3 border h-100 hover-shadow transition-all bg-light">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="p-3 bg-warning bg-opacity-25 text-warning rounded-circle">
+                                                    <i class="fas fa-file-signature fa-2x"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="fw-bold mb-0 text-dark">{% if session.get('language') == 'en' %}KYC Verification{% else %}কৃষক কেওয়াইসি যাচাই{% endif %}</h6>
+                                                    <small class="text-muted">{% if session.get('language') == 'en' %}Review NID and farmer identities{% else %}জাতীয় পরিচয়পত্র ও তথ্য যাচাই করুন{% endif %}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('agent_loan_requests') }}" class="text-decoration-none">
+                                        <div class="card p-3 border h-100 hover-shadow transition-all bg-light">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="p-3 bg-success bg-opacity-25 text-success rounded-circle">
+                                                    <i class="fas fa-hand-holding-usd fa-2x"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="fw-bold mb-0 text-dark">{% if session.get('language') == 'en' %}Loan Processing{% else %}কৃষি ঋণ প্রক্রিয়াকরণ{% endif %}</h6>
+                                                    <small class="text-muted">{% if session.get('language') == 'en' %}Assess applications & disburse{% else %}ঋণ আবেদন যাচাই ও অনুমোদন করুন{% endif %}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('agent_purchases') }}" class="text-decoration-none">
+                                        <div class="card p-3 border h-100 hover-shadow transition-all bg-light">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="p-3 bg-info bg-opacity-25 text-info rounded-circle">
+                                                    <i class="fas fa-truck-loading fa-2x"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="fw-bold mb-0 text-dark">{% if session.get('language') == 'en' %}Product Deliveries{% else %}বীজ ও সার বিতরণ{% endif %}</h6>
+                                                    <small class="text-muted">{% if session.get('language') == 'en' %}Manage confirmed input orders{% else %}কৃষকের পণ্য সরবরাহ নিশ্চিত করুন{% endif %}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('agent_inventory') }}" class="text-decoration-none">
+                                        <div class="card p-3 border h-100 hover-shadow transition-all bg-light">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="p-3 bg-secondary bg-opacity-25 text-secondary rounded-circle">
+                                                    <i class="fas fa-warehouse fa-2x"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="fw-bold mb-0 text-dark">{% if session.get('language') == 'en' %}Center Inventory{% else %}সেন্টার মজুত সামগ্রী{% endif %}</h6>
+                                                    <small class="text-muted">{% if session.get('language') == 'en' %}Check fertilizer and seed stock{% else %}সারের মজুদ ও দাম পরিচালনা করুন{% endif %}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: ADMIN NOTICES -->
+                        <div class="tab-pane fade" id="bulletins-tab-pane" role="tabpanel">
+                            <h6 class="fw-bold mb-3 text-success">
+                                <i class="fas fa-bullhorn me-1"></i>{% if session.get('language') == 'en' %}Official Announcements & Directives{% else %}প্রধান কার্যালয়ের অফিসিয়াল নোটিশ{% endif %}
+                            </h6>
+                            {% if posts %}
+                                <div class="d-flex flex-column gap-3">
+                                    {% for p in posts %}
+                                    <div class="card border p-3 shadow-none bg-light" style="border-left: 4px solid var(--primary-green) !important;">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <h6 class="fw-bold mb-0 text-dark">{{ p[3] or 'জরুরী নোটিশ' }}</h6>
+                                            <small class="text-muted"><i class="far fa-clock me-1"></i>{{ p[2] }}</small>
+                                        </div>
+                                        <p class="mb-0 text-secondary small">{{ p[1] }}</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted small">{% if session.get('language') == 'en' %}No announcements posted yet.{% else %}কোনো নতুন নোটিশ নেই।{% endif %}</p>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right 4 Cols: Agent Leaderboard & Support -->
+        <div class="col-lg-4">
+            
+            <!-- Agent Ranking Leaderboard -->
+            <div class="card shadow-sm border-0 mb-4" style="border-radius: var(--radius); border-top: 4px solid var(--accent-green);">
+                <div class="card-header bg-white border-0 pt-3 px-4">
+                    <h6 class="fw-bold mb-0" style="color: var(--primary-green);">
+                        <i class="fas fa-trophy text-warning me-2"></i>{% if session.get('language') == 'en' %}Field Agent Leaderboard{% else %}এজেন্ট পারফরম্যান্স র‍্যাঙ্কিং{% endif %}
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    {% if ranking %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless align-middle mb-0">
+                            <thead>
+                                <tr class="text-muted small border-bottom">
+                                    <th>#</th>
+                                    <th>{% if session.get('language') == 'en' %}Agent{% else %}এজেন্ট{% endif %}</th>
+                                    <th class="text-end">{% if session.get('language') == 'en' %}Score{% else %}সাফল্য{% endif %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in ranking %}
+                                <tr>
+                                    <td>
+                                        <span class="badge rounded-circle p-2 bg-{% if loop.index == 1 %}warning text-dark{% elif loop.index == 2 %}secondary text-white{% else %}light text-dark border{% endif %}">
+                                            {{ loop.index }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong class="d-block text-dark">{{ r[1] }}</strong>
+                                        <small class="text-muted">Agent #{{ r[0] }}</small>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="badge bg-success bg-opacity-10 text-success fw-bold">{{ r[4] }}%</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted small">{% if session.get('language') == 'en' %}No ranking data available.{% else %}কোনো তথ্য নেই।{% endif %}</p>
+                    {% endif %}
+
+    </div>
+
+</div>
+
+
+<style>
+
+    .hover-card {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .hover-card:hover {
+        background-color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        transform: translateY(-2px);
+    }
+
+    .table td {
+        padding: 8px 6px;
+        vertical-align: middle;
+        font-size: 14px;
+    }
+
+    .table th {
+        font-size: 13px;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .container {
+        max-width: 1400px;
+    }
+
+    .bg-opacity-10 {
+        --bs-bg-opacity: 0.1;
+    }
+
+    .shadow-sm {
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04) !important;
+    }
+
+    .rounded-3 {
+        border-radius: 12px !important;
+    }
+
+    .badge {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+
+    ::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #d0d0d0;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #b0b0b0;
+    }
+
+    .fs-2 {
+        font-size: 1.8rem !important;
+    }
+
+    .fs-5 {
+        font-size: 1.2rem !important;
+    }
+
+    h5 {
+        font-size: 1.2rem !important;
+    }
+
+    .table td {
+        font-size: 14px !important;
+    }
+
+    .kpi-clickable:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
+    }
+</style>
+
+<script>
+    function activateAgentTab(tabId) {
+        const tabEl = document.getElementById(tabId);
+        if (tabEl) {
+            const tab = new bootstrap.Tab(tabEl);
+            tab.show();
+            tabEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+</script>
+
+{% endblock %}

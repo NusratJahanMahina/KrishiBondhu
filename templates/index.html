@@ -1,0 +1,447 @@
+{% extends "base.html" %}
+
+{% block title %}কৃষিবন্ধু - কৃষির উন্নয়নে প্রযুক্তির নির্ভরযোগ্য সঙ্গী{% endblock %}
+
+{% block content %}
+<!-- ============================================
+     HERO SECTION - Full Screen Video Background
+     ============================================ -->
+<section class="hero-video-section d-flex align-items-center">
+    <!-- Video Background -->
+    <div class="video-background">
+        <video autoplay muted loop playsinline>
+            <source src="{{ url_for('static', filename='images/krishibondhu.mp4') }}" type="video/mp4">
+            <img src="{{ url_for('static', filename='images/hero-bg.jpg') }}" alt="Background" class="video-fallback">
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+    
+    <!-- Hero Content -->
+    <div class="container position-relative z-index-2">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-7 text-white">
+                <h1 class="display-1 fw-bold mb-3">
+                    {% if session.get('language') == 'en' %}
+                        KrishiBondhu
+                    {% else %}
+                        কৃষিবন্ধু
+                    {% endif %}
+                </h1>
+                <p class="display-6 fw-light mb-3" style="font-size: 2rem;">
+                    {% if session.get('language') == 'en' %}
+                        Your Trusted Partner in Agricultural Development
+                    {% else %}
+                        কৃষির উন্নয়নে প্রযুক্তির নির্ভরযোগ্য সঙ্গী
+                    {% endif %}
+                </p>
+                <p class="lead mb-4 text-white-50" style="font-size: 1.2rem;">
+                    {% if session.get('language') == 'en' %}
+                        Modern technology, expert advice, and financial support for every farmer
+                    {% else %}
+                        আধুনিক প্রযুক্তি, বিশেষজ্ঞ পরামর্শ ও আর্থিক সহায়তায় কৃষকদের পাশে
+                    {% endif %}
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="{{ url_for('register_step1') }}" class="btn btn-success btn-lg px-5 py-3">
+                        <i class="fas fa-user-plus me-2"></i>
+                        {% if session.get('language') == 'en' %}Join Now{% else %}যোগ দিন{% endif %}
+                    </a>
+                    <a href="{{ url_for('login_register') }}" class="btn btn-outline-light btn-lg px-5 py-3">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        {% if session.get('language') == 'en' %}Login{% else %}লগইন করুন{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scroll Down Indicator -->
+    <div class="scroll-indicator text-white">
+        <span>{% if session.get('language') == 'en' %}Scroll to learn more{% else %}আরও জানুন{% endif %}</span>
+        <i class="fas fa-chevron-down fa-2x d-block mx-auto"></i>
+    </div>
+</section>
+
+<!-- ============================================
+     MISSION SECTION
+     ============================================ -->
+<section class="py-5 bg-light-green">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h2 class="display-5 fw-bold text-success mb-3">
+                    {% if session.get('language') == 'en' %}Our Mission{% else %}আমাদের লক্ষ্য{% endif %}
+                </h2>
+                <p class="lead text-muted">
+                    {% if session.get('language') == 'en' %}
+                        Empowering Bangladeshi farmers with modern technology, expert guidance, and financial support to build a sustainable future.
+                    {% else %}
+                        আধুনিক প্রযুক্তি, বিশেষজ্ঞ পরামর্শ ও আর্থিক সহায়তার মাধ্যমে বাংলাদেশের কৃষকদের স্বাবলম্বী করে তোলাই আমাদের লক্ষ্য।
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     SERVICES / FEATURES SECTION - 6 Cards
+     ============================================ -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold text-success">
+                {% if session.get('language') == 'en' %}Everything Farmers Need to Thrive{% else %}কৃষকের সফলতার জন্য যা যা দরকার{% endif %}
+            </h2>
+            <p class="text-muted">
+                {% if session.get('language') == 'en' %}An all-in-one hub for agricultural services{% else %}কৃষি সেবার জন্য একটি সম্পূর্ণ প্ল্যাটফর্ম{% endif %}
+            </p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Service 1: Loan -->
+            <div class="col-md-4 d-flex">
+                <div class="service-card p-4 text-center w-100">
+                    <div class="icon-circle bg-success bg-opacity-10 mx-auto mb-3">
+                        <i class="fas fa-hand-holding-usd text-success fa-2x"></i>
+                    </div>
+                    <h5>{% if session.get('language') == 'en' %}Easy Farm Loans{% else %}সহজ কৃষিঋণ{% endif %}</h5>
+                    <p class="text-muted small">{% if session.get('language') == 'en' %}Apply for collateral-free loans with simple paperwork{% else %}জামানত ছাড়াই সহজ প্রক্রিয়ায় কৃষিঋণ পান{% endif %}</p>
+                </div>
+            </div>
+            
+            <!-- Service 2: Advisory -->
+            <div class="col-md-4 d-flex">
+                <div class="service-card p-4 text-center w-100">
+                    <div class="icon-circle bg-success bg-opacity-10 mx-auto mb-3">
+                        <i class="fas fa-user-graduate text-success fa-2x"></i>
+                    </div>
+                    <h5>{% if session.get('language') == 'en' %}Expert Advisory{% else %}বিশেষজ্ঞ পরামর্শ{% endif %}</h5>
+                    <p class="text-muted small">{% if session.get('language') == 'en' %}Get reliable advice on crops, livestock, and farming methods{% else %}ফসল, প্রাণিসম্পদ ও চাষাবাদ বিষয়ে নির্ভরযোগ্য পরামর্শ নিন{% endif %}</p>
+                </div>
+            </div>
+            
+            <!-- Service 3: Inputs -->
+            <div class="col-md-4 d-flex">
+                <div class="service-card p-4 text-center w-100">
+                    <div class="icon-circle bg-success bg-opacity-10 mx-auto mb-3">
+                        <i class="fas fa-seedling text-success fa-2x"></i>
+                    </div>
+                    <h5>{% if session.get('language') == 'en' %}Quality Inputs{% else %}মানসম্মত উপকরণ{% endif %}</h5>
+                    <p class="text-muted small">{% if session.get('language') == 'en' %}Get certified seeds, fertilizers, and farming equipment{% else %}প্রমাণিত বীজ, সার ও কৃষি যন্ত্রপাতি সংগ্রহ করুন{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row g-4 mt-2">
+            <!-- Service 4: Market -->
+            <div class="col-md-4 d-flex">
+                <div class="service-card p-4 text-center w-100">
+                    <div class="icon-circle bg-success bg-opacity-10 mx-auto mb-3">
+                        <i class="fas fa-store-alt text-success fa-2x"></i>
+                    </div>
+                    <h5>{% if session.get('language') == 'en' %}Market Access{% else %}বাজার সংযোগ{% endif %}</h5>
+                    <p class="text-muted small">{% if session.get('language') == 'en' %}Sell your produce directly to buyers at fair prices{% else %}ক্রেতার সঙ্গে সরাসরি যুক্ত হয়ে ন্যায্য দামে ফসল বিক্রি করুন{% endif %}</p>
+                </div>
+            </div>
+            
+            <!-- Service 5: Weather -->
+            <div class="col-md-4 d-flex">
+                <div class="service-card p-4 text-center w-100">
+                    <div class="icon-circle bg-success bg-opacity-10 mx-auto mb-3">
+                        <i class="fas fa-cloud-sun text-success fa-2x"></i>
+                    </div>
+                    <h5>{% if session.get('language') == 'en' %}Weather & Risk{% else %}আবহাওয়া ও ঝুঁকি{% endif %}</h5>
+                    <p class="text-muted small">{% if session.get('language') == 'en' %}Get real-time weather updates and risk management tips{% else %}আবহাওয়ার আপডেট ও ঝুঁকি মোকাবিলার পরামর্শ পান{% endif %}</p>
+                </div>
+            </div>
+            
+            <!-- Service 6: Center -->
+            <div class="col-md-4 d-flex">
+                <div class="service-card p-4 text-center w-100">
+                    <div class="icon-circle bg-success bg-opacity-10 mx-auto mb-3">
+                        <i class="fas fa-building text-success fa-2x"></i>
+                    </div>
+                    <h5>{% if session.get('language') == 'en' %}KrishiBondhu Centers{% else %}কৃষিবন্ধু সেবা কেন্দ্র{% endif %}</h5>
+                    <p class="text-muted small">{% if session.get('language') == 'en' %}Visit our local centers for personalized farmer support{% else %}সরাসরি কৃষক সহায়তার জন্য আমাদের স্থানীয় কেন্দ্রে আসুন{% endif %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     OUR TECHNOLOGY / FEATURES SECTION - 3 Cards
+     ============================================ -->
+<section class="py-5 bg-light-green">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold text-success">
+                {% if session.get('language') == 'en' %}Our Technology: Designed to Empower You{% else %}আমাদের প্রযুক্তি, আপনার সাফল্যের সঙ্গী{% endif %}
+            </h2>
+            <p class="text-muted">
+                {% if session.get('language') == 'en' %}Three powerful platforms working together for smarter farming{% else %}স্মার্ট কৃষির জন্য আমাদের তিনটি সমন্বিত প্ল্যাটফর্ম{% endif %}
+            </p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Feature 1: Loan & Advisory -->
+            <div class="col-md-4 d-flex">
+                <div class="app-card p-4 text-center w-100">
+                    <div class="icon-circle bg-success bg-opacity-10 mx-auto mb-3">
+                        <i class="fas fa-hand-holding-usd text-success fa-2x"></i>
+                    </div>
+                    <h4 class="text-success fw-bold">{% if session.get('language') == 'en' %}Loan & Advisory{% else %}ঋণ ও পরামর্শ{% endif %}</h4>
+                    <p class="text-muted small">{% if session.get('language') == 'en' %}Access to low-cost, collateral-free financing for farming needs.{% else %}কম খরচে জামানতবিহীন কৃষি ঋণের সুবিধা।{% endif %}</p>
+                    <ul class="list-unstyled text-start small">
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Expert agricultural advice{% else %}বিশেষজ্ঞ কৃষি পরামর্শ{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Easy loan application{% else %}সহজে ঋণের আবেদন{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Crop monitoring{% else %}ফসল পর্যবেক্ষণ{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Weather forecasting{% else %}আবহাওয়ার পূর্বাভাস{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Flexible repayment terms{% else %}সহজ কিস্তিতে পরিশোধের সুবিধা{% endif %}</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Feature 2: Input Supply & Market -->
+            <div class="col-md-4 d-flex">
+                <div class="app-card p-4 text-center w-100">
+                    <div class="icon-circle bg-success bg-opacity-10 mx-auto mb-3">
+                        <i class="fas fa-store-alt text-success fa-2x"></i>
+                    </div>
+                    <h4 class="text-success fw-bold">{% if session.get('language') == 'en' %}Input Supply & Market{% else %}উপকরণ সরবরাহ ও বাজার{% endif %}</h4>
+                    <p class="text-muted small">{% if session.get('language') == 'en' %}Quality agri-inputs and expert advisory to maximize yield.{% else %}মানসম্মত কৃষি উপকরণ ও বিশেষজ্ঞের পরামর্শে অধিক ফলন নিশ্চিত করুন।{% endif %}</p>
+                    <ul class="list-unstyled text-start small">
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Direct buyer connections{% else %}সরাসরি ক্রেতার সাথে সংযোগ{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Fair price guarantee{% else %}ন্যায্য মূল্যের নিশ্চয়তা{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Retailer network{% else %}বিশ্বস্ত বিক্রেতা নেটওয়ার্ক{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Quality certification{% else %}গুণগত মানের নিশ্চয়তা{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Logistics support{% else %}লজিস্টিক সহায়তা{% endif %}</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Feature 3: Transparency & Support -->
+            <div class="col-md-4 d-flex">
+                <div class="app-card p-4 text-center w-100">
+                    <div class="icon-circle bg-success bg-opacity-10 mx-auto mb-3">
+                        <i class="fas fa-shield-alt text-success fa-2x"></i>
+                    </div>
+                    <h4 class="text-success fw-bold">{% if session.get('language') == 'en' %}Transparency & Support{% else %}স্বচ্ছতা ও সহায়তা{% endif %}</h4>
+                    <p class="text-muted small">{% if session.get('language') == 'en' %}Ensuring real-time transparency, instant farmer support.{% else %}রিয়েল-টাইম তথ্য ও দ্রুত কৃষক সহায়তা।{% endif %}</p>
+                    <ul class="list-unstyled text-start small">
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Crop insurance{% else %}ফসল বীমা{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Weather protection{% else %}প্রতিকূল আবহাওয়া থেকে সুরক্ষা{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}Risk management{% else %}ঝুঁকি ব্যবস্থাপনা{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}IoT based solutions{% else %}আইওটি-ভিত্তিক স্মার্ট সমাধান{% endif %}</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>{% if session.get('language') == 'en' %}24/7 farmer support{% else %}২৪/৭ কৃষক সহায়তা{% endif %}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================
+     FOOTER
+     ============================================ -->
+<footer class="bg-dark text-white py-5 mt-4">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <h5 class="text-success fw-bold">
+                    {% if session.get('language') == 'en' %}KrishiBondhu{% else %}কৃষিবন্ধু{% endif %}
+                </h5>
+                <p class="text-muted small">
+                    {% if session.get('language') == 'en' %}Empowering farmers with technology, finance, and expert guidance.{% else %}প্রযুক্তি, অর্থায়ন ও বিশেষজ্ঞ পরামর্শে কৃষকদের পাশে।{% endif %}
+                </p>
+                <p class="text-muted small">
+                    {% if session.get('language') == 'en' %}Shaping the future of sustainable agriculture in Bangladesh.{% else %}বাংলাদেশে টেকসই কৃষির ভবিষ্যৎ গঠন করছি।{% endif %}
+                </p>
+            </div>
+            
+            <div class="col-md-3">
+                <h6 class="text-white fw-semibold">{% if session.get('language') == 'en' %}Contact{% else %}যোগাযোগ{% endif %}</h6>
+                <ul class="list-unstyled text-muted small">
+                    <li class="mb-2"><i class="fas fa-envelope me-2 text-success"></i>hello@krishibondhu.com</li>
+                    <li class="mb-2"><i class="fas fa-phone me-2 text-success"></i>+৮৮ ০৮০০৮৫০০৮০০</li>
+                    <li class="mb-2"><i class="fas fa-clock me-2 text-success"></i>শনি-বৃহস্পতি, সকাল ১০টা - সন্ধ্যা ৬টা</li>
+                    <li class="mb-2"><i class="fas fa-map-marker-alt me-2 text-success"></i>ঢাকা, বাংলাদেশ</li>
+                </ul>
+            </div>
+            
+            <div class="col-md-2">
+                <h6 class="text-white fw-semibold">{% if session.get('language') == 'en' %}Services{% else %}সেবাসমূহ{% endif %}</h6>
+                <ul class="list-unstyled text-muted small">
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-muted hover-text-success">কৃষিঋণ</a></li>
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-muted hover-text-success">পরামর্শ</a></li>
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-muted hover-text-success">বাজার সংযোগ</a></li>
+                </ul>
+            </div>
+            
+            <div class="col-md-2">
+                <h6 class="text-white fw-semibold">{% if session.get('language') == 'en' %}Company{% else %}কোম্পানি{% endif %}</h6>
+                <ul class="list-unstyled text-muted small">
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-muted hover-text-success">পরিচয়</a></li>
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-muted hover-text-success">ব্লগ</a></li>
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-muted hover-text-success">ক্যারিয়ার</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <hr class="border-secondary my-4">
+        
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="text-muted small mb-0">&copy; ২০২৫ কৃষিবন্ধু। সর্বস্বত্ব সংরক্ষিত।</p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <a href="#" class="text-muted me-3 hover-text-success"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-muted me-3 hover-text-success"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-muted me-3 hover-text-success"><i class="fab fa-linkedin-in"></i></a>
+                <a href="#" class="text-muted hover-text-success"><i class="fab fa-youtube"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+    .hero-video-section {
+        position: relative;
+        min-height: 100vh;
+        overflow: hidden;
+    }
+    
+    .video-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+    
+    .video-background video,
+    .video-background .video-fallback {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .video-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 2;
+    }
+    
+    .z-index-2 {
+        z-index: 3;
+        position: relative;
+    }
+    
+    .min-vh-100 {
+        min-height: 100vh;
+    }
+    
+    .scroll-indicator {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 3;
+        text-align: center;
+        font-size: 0.8rem;
+        letter-spacing: 2px;
+        animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-10px); }
+    }
+    
+    .service-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(46, 125, 50, 0.08);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .service-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(46, 125, 50, 0.12);
+        border-color: rgba(46, 125, 50, 0.2);
+    }
+    
+    .app-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border-top: 4px solid #2E7D32;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .app-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+    }
+    
+    .icon-circle {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .hover-text-success:hover {
+        color: #43A047 !important;
+        transition: color 0.3s ease;
+    }
+    
+    footer .list-unstyled a {
+        transition: color 0.3s ease;
+    }
+    
+    footer .list-unstyled a:hover {
+        color: #43A047 !important;
+    }
+    
+    footer .fab {
+        font-size: 1.1rem;
+        transition: color 0.3s ease;
+    }
+    
+    footer .fab:hover {
+        color: #43A047 !important;
+    }
+    
+    .bg-light-green {
+        background-color: #F1F8E9;
+    }
+    
+    @media (max-width: 768px) {
+        .display-1 {
+            font-size: 3.5rem !important;
+        }
+        .display-6 {
+            font-size: 1.5rem !important;
+        }
+        .scroll-indicator {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}

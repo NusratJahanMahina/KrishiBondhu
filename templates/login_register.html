@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Farmer & User Login - KrishiBondhu{% else %}কৃষক ও ব্যবহারকারী লগইন - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            
+            <!-- Hero Header with Agricultural Branding -->
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center p-3 bg-white shadow-sm rounded-circle mb-3 border border-success border-opacity-25" style="width: 80px; height: 80px;">
+                    <i class="fas fa-tractor text-success fa-2x"></i>
+                </div>
+                <h2 class="fw-bold" style="color: var(--primary-green);">
+                    {% if session.get('language') == 'en' %}
+                        Welcome to KrishiBondhu
+                    {% else %}
+                        কৃষিবন্ধু-তে স্বাগতম
+                    {% endif %}
+                </h2>
+                <p class="text-muted mb-0" style="font-size: 1.1rem;">
+                    {% if session.get('language') == 'en' %}
+                        Empowering farmers with smart agriculture, expert advice & financial services
+                    {% else %}
+                        প্রযুক্তির ছোঁয়ায় সমৃদ্ধ কৃষি — বিশেষজ্ঞ পরামর্শ, সহজ ঋণ ও আধুনিক সেবা
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Bootstrap Tabs -->
+            <ul class="nav nav-pills nav-fill bg-white rounded-pill p-1 mb-4 shadow-sm border" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active rounded-pill fw-semibold py-2" id="login-tab" data-bs-toggle="pill" data-bs-target="#login-pane" type="button" role="tab">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        {% if session.get('language') == 'en' %}Login to Account{% else %}অ্যাকাউন্টে লগইন করুন{% endif %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill fw-semibold py-2" id="register-tab" data-bs-toggle="pill" data-bs-target="#register-pane" type="button" role="tab">
+                        <i class="fas fa-user-plus me-2"></i>
+                        {% if session.get('language') == 'en' %}Register New Farmer / User{% else %}নতুন কৃষক / ব্যবহারকারী নিবন্ধন{% endif %}
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- LOGIN PANE -->
+                <div class="tab-pane fade show active" id="login-pane" role="tabpanel">
+                    <div class="card shadow border-0" style="border-radius: var(--radius); overflow: hidden;">
+                        <div class="row g-0">
+                            <!-- Left: Login Form -->
+                            <div class="col-lg-7 p-4 p-md-5">
+                                <h4 class="fw-bold mb-1" style="color: var(--primary-green);">
+                                    {% if session.get('language') == 'en' %}Farmer & User Portal{% else %}কৃষক ও ব্যবহারকারী প্রবেশদ্বার{% endif %}
+                                </h4>
+                                <p class="text-muted small mb-4">
+                                    {% if session.get('language') == 'en' %}Enter your registered Username or Phone Number to continue.{% else %}লগইন করতে আপনার ইউজারনেম বা মোবাইল ফোন নম্বর লিখুন।{% endif %}
+                                </p>
+                                
+                                <form method="POST" action="{{ url_for('login') }}" id="loginForm">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold" style="font-size: 0.9rem;">
+                                            <i class="fas fa-user-circle text-success me-1"></i>
+                                            {% if session.get('language') == 'en' %}Username or Mobile Phone Number{% else %}ইউজারনেম অথবা মোবাইল ফোন নম্বর{% endif %}
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-id-card text-success"></i></span>
+                                            <input type="text" class="form-control border-start-0 ps-0" name="username" id="loginUsername" 
+                                                   placeholder="{% if session.get('language') == 'en' %}e.g. farmer1 or 01911234567{% else %}যেমন: farmer1 অথবা 01911234567{% endif %}" required autofocus>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold" style="font-size: 0.9rem;">
+                                            <i class="fas fa-lock text-success me-1"></i>
+                                            {% if session.get('language') == 'en' %}Password{% else %}পাসওয়ার্ড{% endif %}
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-key text-success"></i></span>
+                                            <input type="password" class="form-control border-start-0 border-end-0 ps-0" name="password" id="loginPassword" 
+                                                   placeholder="{% if session.get('language') == 'en' %}Enter password{% else %}পাসওয়ার্ড লিখুন{% endif %}" required>
+                                            <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()">
+                                                <i class="fas fa-eye text-muted" id="togglePasswordIcon"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                                            <label class="form-check-label small text-muted" for="remember">
+                                                {% if session.get('language') == 'en' %}Keep me logged in{% else %}লগইন মনে রাখুন{% endif %}
+                                            </label>
+                                        </div>
+                                        <a href="#" class="text-decoration-none small text-success fw-semibold">
+                                            {% if session.get('language') == 'en' %}Forgot Password?{% else %}পাসওয়ার্ড ভুলে গেছেন?{% endif %}
+                                        </a>
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm" style="background: linear-gradient(135deg, var(--primary-green), var(--secondary-green)); border: none; font-size: 1rem;">
+                                        <i class="fas fa-sign-in-alt me-2"></i>
+                                        {% if session.get('language') == 'en' %}Log In to Dashboard{% else %}ড্যাশবোর্ডে প্রবেশ করুন{% endif %}
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Right: Key Benefits for Farmers -->
+                            <div class="col-lg-5 p-4 p-md-5 d-flex flex-column justify-content-between text-white" style="background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);">
+                                <div>
+                                    <h5 class="fw-bold mb-3 text-white">
+                                        <i class="fas fa-seedling text-warning me-2"></i>
+                                        {% if session.get('language') == 'en' %}Farmer Support Services{% else %}কৃষকদের জন্য বিশেষ সেবা{% endif %}
+                                    </h5>
+                                    <ul class="list-unstyled d-flex flex-column gap-3 small mb-0">
+                                        <li class="d-flex align-items-start gap-2">
+                                            <i class="fas fa-check-circle text-warning mt-1"></i>
+                                            <div>
+                                                <strong>{% if session.get('language') == 'en' %}Expert Agricultural Advisors:{% else %}বিশেষজ্ঞ কৃষি পরামর্শক:{% endif %}</strong>
+                                                <div class="text-white-50">{% if session.get('language') == 'en' %}Book one-on-one sessions for crop diseases, soil & fertilizers.{% else %}মাটি পরীক্ষা, রোগবালাই দমন ও সারের সঠিক পরামর্শ নিন।{% endif %}</div>
+                                            </div>
+                                        </li>
+                                        <li class="d-flex align-items-start gap-2">
+                                            <i class="fas fa-check-circle text-warning mt-1"></i>
+                                            <div>
+                                                <strong>{% if session.get('language') == 'en' %}Krishi Loans & Inputs:{% else %}কৃষি ঋণ ও উপকরণ সরবরাহ:{% endif %}</strong>
+                                                <div class="text-white-50">{% if session.get('language') == 'en' %}Access low-interest loans, quality seeds, and genuine fertilizers.{% else %}সহজ শর্তে কৃষি ঋণ এবং মানসম্মত বীজ ও সার সংগ্রহ করুন।{% endif %}</div>
+                                            </div>
+                                        </li>
+                                        <li class="d-flex align-items-start gap-2">
+                                            <i class="fas fa-check-circle text-warning mt-1"></i>
+                                            <div>
+                                                <strong>{% if session.get('language') == 'en' %}Market Rates & Weather:{% else %}দৈনিক বাজার দর ও আবহাওয়া:{% endif %}</strong>
+                                                <div class="text-white-50">{% if session.get('language') == 'en' %}Real-time crop prices and accurate weather forecasting.{% else %}সরাসরি ফসলের পাইকারি বাজার দর ও আবহাওয়ার পূর্বাভাস।{% endif %}</div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="mt-4 pt-3 border-top border-white border-opacity-25 text-center">
+                                    <small class="d-block text-white-50 mb-1">{% if session.get('language') == 'en' %}24/7 National Farmer Helpline{% else %}২৪/৭ জাতীয় কৃষি হেল্পলাইন (টোল ফ্রি){% endif %}</small>
+                                    <a href="tel:16123" class="btn btn-warning btn-sm fw-bold px-3 text-dark rounded-pill">
+                                        <i class="fas fa-phone-alt me-1"></i> 16123
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REGISTER PANE -->
+                <div class="tab-pane fade" id="register-pane" role="tabpanel">
+                    <div class="card shadow border-0" style="border-radius: var(--radius);">
+                        <div class="card-body p-4 p-md-5 text-center py-5">
+                            <div class="d-inline-flex p-3 bg-light rounded-circle text-success mb-3">
+                                <i class="fas fa-user-plus fa-3x"></i>
+                            </div>
+                            <h3 class="fw-bold mb-2" style="color: var(--primary-green);">
+                                {% if session.get('language') == 'en' %}Join KrishiBondhu in 3 Simple Steps{% else %}৩টি সহজ ধাপে কৃষিবন্ধু পরিবারে যুক্ত হোন{% endif %}
+                            </h3>
+                            <p class="text-muted mb-4 mx-auto" style="max-width: 550px;">
+                                {% if session.get('language') == 'en' %}
+                                    Create your account as a Farmer, Agricultural Advisor, Field Agent, or Admin to unlock agricultural digital tools.
+                                {% else %}
+                                    কৃষক, কৃষি পরামর্শক, ফিল্ড এজেন্ট বা অ্যাডমিন হিসেবে নিবন্ধন করুন এবং ডিজিটাল কৃষির সকল সুবিধা উপভোগ করুন।
+                                {% endif %}
+                            </p>
+                            
+                            <!-- 3 Step Highlights -->
+                            <div class="row g-3 justify-content-center mb-4">
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-light rounded border text-center">
+                                        <span class="badge bg-success rounded-circle mb-2">১</span>
+                                        <h6 class="fw-bold mb-1">{% if session.get('language') == 'en' %}Select Role{% else %}ভূমিকা নির্বাচন{% endif %}</h6>
+                                        <small class="text-muted">{% if session.get('language') == 'en' %}Farmer, Advisor, Agent{% else %}কৃষক, উপদেষ্টা, এজেন্ট{% endif %}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-light rounded border text-center">
+                                        <span class="badge bg-success rounded-circle mb-2">২</span>
+                                        <h6 class="fw-bold mb-1">{% if session.get('language') == 'en' %}Basic Info{% else %}ব্যক্তিগত তথ্য{% endif %}</h6>
+                                        <small class="text-muted">{% if session.get('language') == 'en' %}Name & Mobile Phone{% else %}নাম ও মোবাইল নম্বর{% endif %}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-light rounded border text-center">
+                                        <span class="badge bg-success rounded-circle mb-2">৩</span>
+                                        <h6 class="fw-bold mb-1">{% if session.get('language') == 'en' %}Account Security{% else %}নিরাপত্তা তৈরি{% endif %}</h6>
+                                        <small class="text-muted">{% if session.get('language') == 'en' %}Username & Password{% else %}ইউজারনেম ও পাসওয়ার্ড{% endif %}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a href="{{ url_for('register_step1') }}" class="btn btn-success btn-lg px-5 py-3 fw-bold rounded-pill shadow" style="background: linear-gradient(135deg, var(--primary-green), var(--secondary-green)); border: none;">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                {% if session.get('language') == 'en' %}Start Easy Registration{% else %}সহজ নিবন্ধন শুরু করুন{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePasswordVisibility() {
+        const passInput = document.getElementById('loginPassword');
+        const icon = document.getElementById('togglePasswordIcon');
+        if (passInput.type === 'password') {
+            passInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
+
+<style>
+    .pulse-highlight {
+        animation: pulseHighlight 0.6s ease;
+    }
+    @keyframes pulseHighlight {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.01); }
+        100% { transform: scale(1); }
+    }
+    .nav-pills .nav-link.active {
+        background-color: var(--primary-green);
+        color: white;
+    }
+    .nav-pills .nav-link {
+        color: var(--dark-text);
+    }
+</style>
+{% endblock %}

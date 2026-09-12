@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}KYC Requests - KrishiBondhu{% else %}KYC অনুরোধ - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-file-signature me-2"></i>
+                {% if session.get('language') == 'en' %}Pending KYC Requests{% else %}বিবেচনাধীন KYC অনুরোধ{% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if pending_kyc %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% if session.get('language') == 'en' %}Code{% else %}কোড{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Name{% else %}নাম{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Phone{% else %}ফোন{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Village{% else %}গ্রাম{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Registered{% else %}নিবন্ধিত{% endif %}</th>
+                                <th>{% if session.get('language') == 'en' %}Action{% else %}কর্ম{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for kyc in pending_kyc %}
+                            <tr>
+                                <td><strong>{{ kyc[0] }}</strong></td>
+                                <td>{{ kyc[1] }}</td>
+                                <td>{{ kyc[2] }}</td>
+                                <td>{{ kyc[3] }}</td>
+                                <td>{{ kyc[4] if kyc[4] else 'N/A' }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-success" onclick="openKycForm('{{ kyc[0] }}', '{{ kyc[1] }}')">
+                                        <i class="fas fa-check me-1"></i> {% if session.get('language') == 'en' %}Verify{% else %}যাচাই{% endif %}
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="rejectKYC('{{ kyc[0] }}')">
+                                        <i class="fas fa-times me-1"></i> {% if session.get('language') == 'en' %}Reject{% else %}বাতিল{% endif %}
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                    <h5>{% if session.get('language') == 'en' %}No pending KYC requests{% else %}কোনো বিবেচনাধীন KYC অনুরোধ নেই{% endif %}</h5>
+                    <p class="text-muted">
+                        {% if session.get('language') == 'en' %}All farmers in your center have completed KYC.{% else %}আপনার সেন্টারের সব কৃষক KYC সম্পন্ন করেছেন।{% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- KYC Verification Modal -->
+<div class="modal fade" id="kycModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-file-signature me-2"></i>KYC Verification</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="kycForm" action="{{ url_for('agent_verify_kyc') }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" id="farmer_code" name="farmer_code">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Farmer Name</label>
+                            <input type="text" id="farmer_name" class="form-control" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Farmer Code</label>
+                            <input type="text" id="farmer_code_display" class="form-control" disabled>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">NID Front</label>
+                            <input type="file" class="form-control" name="nid_front" accept="image/*">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">NID Back</label>
+                            <input type="file" class="form-control" name="nid_back" accept="image/*">
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Land Document</label>
+                            <input type="file" class="form-control" name="land_doc" accept="image/*,application/pdf">
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Land Legal Status</label>
+                            <select class="form-select" name="land_legal_status">
+                                <option value="VERIFIED">Verified</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="NOT_APPLICABLE">Not Applicable</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Remarks</label>
+                            <textarea class="form-control" name="remarks" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Submit KYC</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openKycForm(code, name) {
+        document.getElementById('farmer_code').value = code;
+        document.getElementById('farmer_code_display').value = code;
+        document.getElementById('farmer_name').value = name;
+        var modal = new bootstrap.Modal(document.getElementById('kycModal'));
+        modal.show();
+    }
+
+    function rejectKYC(code) {
+        if (confirm('Are you sure you want to reject KYC for farmer ' + code + '?')) {
+            fetch('{{ url_for("agent_reject_kyc") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'farmer_code=' + encodeURIComponent(code)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('KYC rejected successfully.');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => alert('Error: ' + error));
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}Book Consultation - KrishiBondhu{% else %}কৃষি পরামর্শক বুকিং ও ফি প্রদান - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm border-0" style="border-radius: 16px; overflow: hidden; border-top: 4px solid var(--accent-green) !important;">
+                <div class="card-header text-white p-4" style="background: linear-gradient(135deg, var(--primary-green), var(--secondary-green)); border: none;">
+                    <h4 class="mb-1 fw-bold">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        {% if session.get('language') == 'en' %}
+                            Book Consultation with {{ advisor[1] }} {{ advisor[2] }}
+                        {% else %}
+                            {{ advisor[1] }} {{ advisor[2] }}-এর সাথে পরামর্শ সেশন বুকিং
+                        {% endif %}
+                    </h4>
+                    <p class="mb-0 text-white-50 small">
+                        {% if session.get('language') == 'en' %}
+                            Fill the details below to schedule an expert agricultural consultation session.
+                        {% else %}
+                            আপনার ফসলের রোগবালাই বা মাটি সংক্রান্ত সমস্যা সমাধানে সময় ও বিবরণ নির্ধারণ করুন।
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Advisor Summary -->
+                    <div class="alert alert-light border p-3 rounded mb-4 shadow-sm" style="background: #f8faf8;">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 50px; height: 50px; font-size: 1.3rem;">
+                                        <i class="fas fa-user-md"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-1" style="color: var(--primary-green);">{{ advisor[1] }} {{ advisor[2] }}</h5>
+                                        <p class="mb-0 text-muted small">
+                                            <i class="fas fa-certificate text-success me-1"></i> {{ advisor[3] }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Consultation Fee:{% else %}পরামর্শ ফি:{% endif %}</span>
+                                <strong id="rate-display" class="display-6 fw-bold text-success">৳{{ rates[0][1] if rates else 500 }}</strong>
+                                <small id="rate-label" class="text-muted">/{% if session.get('language') == 'en' %}hr{% else %}ঘণ্টা{% endif %}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('book_advisor', advisor_id=advisor[0]) }}">
+                        <!-- Consultation Type -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">
+                                <i class="fas fa-clock text-success me-1"></i>
+                                {% if session.get('language') == 'en' %}Select Consultation Type{% else %}পরামর্শের ধরন নির্বাচন করুন{% endif %}
+                            </label>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check card p-3 h-100 border shadow-none" style="border-radius: 10px;">
+                                        <input class="form-check-input" type="radio" name="rate_type" 
+                                               id="rate_hourly" value="HOURLY" checked onchange="updateRate()">
+                                        <label class="form-check-label ms-2" for="rate_hourly">
+                                            <strong class="text-success">{% if session.get('language') == 'en' %}Hourly Consultation{% else %}ঘণ্টা ভিত্তিক পরামর্শ{% endif %}</strong>
+                                            <div class="small text-muted">{% if session.get('language') == 'en' %}Pay per hour for targeted problem discussion{% else %}নির্দিষ্ট সমস্যা সমাধানের জন্য ঘণ্টা অনুযায়ী ফি{% endif %}</div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check card p-3 h-100 border shadow-none" style="border-radius: 10px;">
+                                        <input class="form-check-input" type="radio" name="rate_type" 
+                                               id="rate_daily" value="DAILY" onchange="updateRate()">
+                                        <label class="form-check-label ms-2" for="rate_daily">
+                                            <strong class="text-primary">{% if session.get('language') == 'en' %}Full Day Consultation{% else %}সারাদিনের সরেজমিন পরামর্শ{% endif %}</strong>
+                                            <div class="small text-muted">{% if session.get('language') == 'en' %}Full day guidance & comprehensive field visit (8 hrs){% else %}সম্পূর্ণ দিন (৮ ঘণ্টা) সার্বিক পর্যবেক্ষণ ও সহায়তা{% endif %}</div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Available Rates -->
+                        <div class="mb-4">
+                            <div class="alert alert-info py-2 px-3 small border-0" id="rate-info" style="border-radius: 10px; background: #e3f2fd;">
+                                <strong><i class="fas fa-tag me-1"></i>{% if session.get('language') == 'en' %}Official Rate Chart:{% else %}নির্ধারিত ফি তালিকা:{% endif %}</strong>
+                                <div class="mt-2 d-flex flex-wrap gap-2">
+                                    {% for rate_type, amount, currency in rates %}
+                                    <span class="badge bg-white text-dark border p-2">
+                                        {% if rate_type == 'HOURLY' %}
+                                            <i class="fas fa-hourglass-half text-success me-1"></i> <strong>{% if session.get('language') == 'en' %}Hourly:{% else %}ঘণ্টাপ্রতি:{% endif %}</strong> ৳{{ amount }}
+                                        {% else %}
+                                            <i class="fas fa-calendar-day text-primary me-1"></i> <strong>{% if session.get('language') == 'en' %}Full Day (8 hrs):{% else %}সারাদিন (৮ ঘণ্টা):{% endif %}</strong> ৳{{ amount }}
+                                        {% endif %}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Date Selection -->
+                        <div class="mb-4">
+                            <label for="scheduled_date" class="form-label fw-bold text-dark">
+                                <i class="fas fa-calendar-alt text-success me-1"></i>
+                                {% if session.get('language') == 'en' %}Select Consultation Date{% else %}পরামর্শের কাঙ্ক্ষিত তারিখ{% endif %}
+                            </label>
+                            <input type="date" class="form-control form-control-lg" id="scheduled_date" name="scheduled_date" 
+                                   required min="{{ today_date }}">
+                            <small class="text-muted">{% if session.get('language') == 'en' %}Select the date you wish to receive advice{% else %}যে তারিখে আপনি উপদেষ্টার সাথে কথা বলতে চান তা নির্ধারণ করুন{% endif %}</small>
+                        </div>
+                        
+                        <!-- Time Selection for Hourly -->
+                        <div class="row g-3 mb-4">
+                            <div id="hourly-section" class="col-md-6">
+                                <label for="start_time" class="form-label fw-bold text-dark">
+                                    <i class="fas fa-clock text-primary me-1"></i>
+                                    {% if session.get('language') == 'en' %}Start Time{% else %}শুরুর সময়{% endif %}
+                                </label>
+                                <input type="time" class="form-control" id="start_time" name="start_time" value="10:00">
+                                <small class="text-muted">{% if session.get('language') == 'en' %}When should the call/session begin?{% else %}সেশন কখন শুরু হবে?{% endif %}</small>
+                            </div>
+                            
+                            <div id="end-time-section" class="col-md-6">
+                                <label for="end_time" class="form-label fw-bold text-dark">
+                                    <i class="fas fa-stopwatch text-primary me-1"></i>
+                                    {% if session.get('language') == 'en' %}End Time{% else %}শেষের সময়{% endif %}
+                                </label>
+                                <input type="time" class="form-control" id="end_time" name="end_time" value="12:00">
+                                <small class="text-muted">{% if session.get('language') == 'en' %}When will the session end?{% else %}সেশন কখন সমাপ্ত হবে?{% endif %}</small>
+                            </div>
+                        </div>
+
+                        <div id="duration-info" class="alert alert-light border small mb-4" style="display: none;"></div>
+                        
+                        <!-- Consultation Topic -->
+                        <div class="mb-4">
+                            <label for="consultation_topic" class="form-label fw-bold text-dark">
+                                <i class="fas fa-comment-medical text-success me-1"></i>
+                                {% if session.get('language') == 'en' %}Crop Issue / Consultation Topic{% else %}ফসলের সমস্যা বা পরামর্শের বিষয়বস্তু{% endif %}
+                            </label>
+                            <textarea class="form-control" id="consultation_topic" name="consultation_topic" 
+                                      rows="4" required placeholder="{% if session.get('language') == 'en' %}Describe what you need consultation about (e.g. crop leaf yellowing, pest attack, fertilizer balance)...{% else %}আপনার ফসলের সমস্যা বা রোগের লক্ষণ বিস্তারিত লিখুন (যেমন: ধানের পাতায় বাদামি দাগ, মাজরা পোকা দমন, সারের সঠিক মাত্রা)...{% endif %}"></textarea>
+                            <small class="text-muted">{% if session.get('language') == 'en' %}Clear details help the advisor prepare effective prescriptions{% else %}সমস্যার বিস্তারিত বিবরণ উপদেষ্টাকে দ্রুত সঠিক ওষুধ ও সমাধান প্রেসক্রিপশন করতে সাহায্য করে{% endif %}</small>
+                        </div>
+                        
+                        <!-- Cost Summary -->
+                        <div class="card bg-light border mb-4" style="border-radius: 12px;">
+                            <div class="card-body p-3">
+                                <h6 class="fw-bold text-dark mb-3">
+                                    <i class="fas fa-receipt text-success me-1"></i>
+                                    {% if session.get('language') == 'en' %}Cost & Fee Summary{% else %}মোট খরচের হিসাব বিবরণী{% endif %}
+                                </h6>
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">{% if session.get('language') == 'en' %}Applicable Rate:{% else %}প্রযোজ্য ফি হার:{% endif %}</span>
+                                    <strong id="summary-rate">৳500 / {% if session.get('language') == 'en' %}hour{% else %}ঘণ্টা{% endif %}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">{% if session.get('language') == 'en' %}Total Duration:{% else %}মোট সময়কাল:{% endif %}</span>
+                                    <strong id="summary-duration">2 {% if session.get('language') == 'en' %}hours{% else %}ঘণ্টা{% endif %}</strong>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="fw-bold mb-0 text-dark">{% if session.get('language') == 'en' %}Total Payable Fee:{% else %}সর্বমোট পরিশোধযোগ্য ফি:{% endif %}</h6>
+                                    <h4 class="fw-bold text-success mb-0" id="summary-total">৳1,000</h4>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Advisor Availability Info -->
+                        <div class="alert alert-light border mb-4" style="border-radius: 12px;">
+                            <h6 class="fw-bold mb-2 text-dark">
+                                <i class="fas fa-calendar-check text-success me-1"></i> 
+                                {% if session.get('language') == 'en' %}Advisor Weekly Active Schedule{% else %}উপদেষ্টার সাপ্তাহিক সাক্ষাতের সময়সূচী{% endif %}
+                            </h6>
+                            <div class="small">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-borderless mb-0">
+                                        {% if session.get('language') == 'en' %}
+                                            {% set days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                                        {% else %}
+                                            {% set days = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'] %}
+                                        {% endif %}
+                                        {% for avail in availability %}
+                                        {% set day_idx = (avail[0]|string)|int %}
+                                        <tr>
+                                            <td width="40%"><strong>{{ days[day_idx] if day_idx < days|length else 'সকল কার্যদিবস' }}</strong></td>
+                                            <td class="text-muted">{{ avail[1] }} - {{ avail[2] }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Terms & Conditions -->
+                        <div class="mb-4">
+                            <div class="form-check small text-muted">
+                                <input class="form-check-input" type="checkbox" id="terms" required checked>
+                                <label class="form-check-label" for="terms">
+                                    {% if session.get('language') == 'en' %}
+                                        I agree to the KrishiBondhu consultation terms and understand that the fee will be charged upon session confirmation.
+                                    {% else %}
+                                        আমি কৃষিবন্ধুর সেবা নীতিমালার সাথে একমত এবং নিশ্চিত করছি যে বুকিং নিশ্চিত হলে নির্ধারিত ফি প্রযোজ্য হবে।
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-lg btn-success fw-bold py-3 shadow-sm" id="book-btn" style="background: linear-gradient(135deg, var(--secondary-green), var(--accent-green)); border: none; border-radius: 10px;">
+                                <i class="fas fa-check-circle me-2"></i> 
+                                {% if session.get('language') == 'en' %}Confirm & Submit Booking{% else %}বুকিং নিশ্চিত করুন ও অনুরোধ পাঠান{% endif %}
+                            </button>
+                            <a href="{{ url_for('advisor_profile', advisor_id=advisor[0]) }}" class="btn btn-outline-secondary py-2" style="border-radius: 10px;">
+                                <i class="fas fa-arrow-left me-1"></i> {% if session.get('language') == 'en' %}Back to Advisor Profile{% else %}উপদেষ্টা প্রোফাইলে ফিরে যান{% endif %}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const isBangla = "{{ session.get('language', 'bn') }}" === "bn";
+    const today = new Date().toISOString().split('T')[0];
+    const schedDateInput = document.getElementById('scheduled_date');
+    if (schedDateInput) schedDateInput.setAttribute('min', today);
+    
+    const rates = {
+        'HOURLY': {{ rates[0][1] if rates and rates[0][0] == 'HOURLY' else (rates[1][1] if rates|length > 1 and rates[1][0] == 'HOURLY' else 500) }},
+        'DAILY': {{ rates[0][1] if rates and rates[0][0] == 'DAILY' else (rates[1][1] if rates|length > 1 and rates[1][0] == 'DAILY' else 3500) }}
+    };
+    
+    function updateRate() {
+        const rateTypeRadio = document.querySelector('input[name="rate_type"]:checked');
+        if (!rateTypeRadio) return;
+        const rateType = rateTypeRadio.value;
+        const hourlyRate = rates['HOURLY'];
+        const dailyRate = rates['DAILY'];
+        
+        const rateDisplay = document.getElementById('rate-display');
+        const rateLabel = document.getElementById('rate-label');
+        const endSection = document.getElementById('end-time-section');
+        const hourlySection = document.getElementById('hourly-section');
+        
+        if (rateType === 'HOURLY') {
+            if (rateDisplay) rateDisplay.textContent = '৳' + hourlyRate;
+            if (rateLabel) rateLabel.textContent = isBangla ? '/ঘণ্টা' : '/hr';
+            if (endSection) endSection.style.display = 'block';
+            calculateCost();
+        } else {
+            if (rateDisplay) rateDisplay.textContent = '৳' + dailyRate;
+            if (rateLabel) rateLabel.textContent = isBangla ? '/দিন' : '/day';
+            if (endSection) endSection.style.display = 'none';
+            document.getElementById('summary-rate').textContent = '৳' + dailyRate + (isBangla ? ' / দিন (৮ ঘণ্টা)' : ' / day (8 hours)');
+            document.getElementById('summary-duration').textContent = isBangla ? '৮ ঘণ্টা (সারাদিন)' : '8 hours (Full Day)';
+            document.getElementById('summary-total').textContent = '৳' + Number(dailyRate).toLocaleString(isBangla ? 'bn-BD' : 'en-US');
+        }
+    }
+    
+    function calculateCost() {
+        const rateTypeRadio = document.querySelector('input[name="rate_type"]:checked');
+        if (!rateTypeRadio) return;
+        const rateType = rateTypeRadio.value;
+        const startTime = document.getElementById('start_time').value;
+        const endTime = document.getElementById('end_time').value;
+        
+        if (rateType === 'HOURLY' && startTime && endTime) {
+            const start = new Date(`2025-01-01 ${startTime}`);
+            const end = new Date(`2025-01-01 ${endTime}`);
+            let hours = (end - start) / (1000 * 60 * 60);
+            if (hours <= 0) hours = 1;
+            
+            const hourlyRate = rates['HOURLY'];
+            const total = Math.round(hourlyRate * hours);
+            
+            const rateStr = '৳' + hourlyRate + (isBangla ? ' / ঘণ্টা' : ' / hour');
+            const durStr = hours.toFixed(1) + (isBangla ? ' ঘণ্টা' : ' hours');
+            const totalStr = '৳' + Number(total).toLocaleString(isBangla ? 'bn-BD' : 'en-US');
+            
+            document.getElementById('summary-rate').textContent = rateStr;
+            document.getElementById('summary-duration').textContent = durStr;
+            document.getElementById('summary-total').textContent = totalStr;
+        }
+    }
+    
+    document.getElementById('start_time').addEventListener('change', calculateCost);
+    document.getElementById('end_time').addEventListener('change', calculateCost);
+    
+    updateRate();
+</script>
+{% endblock %}
