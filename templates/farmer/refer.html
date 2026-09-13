@@ -1,0 +1,106 @@
+{% extends "farmer/base_farmer.html" %}
+
+{% block title %}Refer a Farmer - KrishiBondhu{% endblock %}
+
+{% block content %}
+<style>
+    .refer-container { padding: 20px; }
+    .card-box {
+        background: #fff;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        margin-bottom: 20px;
+    }
+    .form-control { border-radius: 8px; }
+    .btn-success { background: #1b5e20; border: none; border-radius: 8px; padding: 10px 24px; }
+    .btn-success:hover { background: #145214; }
+    .referral-item {
+        border-bottom: 1px solid #f1f1f1;
+        padding: 12px 0;
+    }
+    .referral-item:last-child { border-bottom: none; }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .status-PENDING { background: #fff3cd; color: #856404; }
+    .status-ACCEPTED { background: #d4edda; color: #155724; }
+    .status-COMPLETED { background: #d1ecf1; color: #0c5460; }
+</style>
+
+<div class="refer-container">
+    <h4 class="mb-4 text-muted">
+        <i class="fas fa-user-plus me-2"></i>Refer a Farmer
+    </h4>
+
+    <!-- Search Form -->
+    <div class="card-box">
+        <h6 class="fw-bold mb-3"><i class="fas fa-search text-success me-2"></i>Search Farmer by Name</h6>
+        <form method="POST" action="{{ url_for('farmer_refer') }}">
+            <input type="hidden" name="action" value="search">
+            <div class="input-group">
+                <input type="text" name="search_name" class="form-control" 
+                       placeholder="Enter farmer's name (e.g., Abdul Karim)" 
+                       value="{{ search_term }}" required>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-search me-1"></i>Search
+                </button>
+            </div>
+            <small class="text-muted mt-2 d-block">
+                Type the name of the farmer you want to refer. The system will find their profile.
+            </small>
+        </form>
+    </div>
+
+    <!-- Search Results -->
+    {% if search_results %}
+        <div class="card-box">
+            <h6 class="fw-bold mb-3"><i class="fas fa-list text-success me-2"></i>Search Results</h6>
+            {% for farmer in search_results %}
+                <div class="referral-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">{{ farmer[1] }} {{ farmer[2] }}</div>
+                        <small class="text-muted">Code: {{ farmer[0] }} | Phone: {{ farmer[3] }}</small>
+                    </div>
+                    <form method="POST" action="{{ url_for('farmer_refer') }}" style="display:inline;">
+                        <input type="hidden" name="action" value="confirm">
+                        <input type="hidden" name="referee_code" value="{{ farmer[0] }}">
+                        <button type="submit" class="btn btn-sm btn-success">
+                            <i class="fas fa-check me-1"></i>Refer
+                        </button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% elif search_term %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-circle me-2"></i>No farmer found with that name.
+        </div>
+    {% endif %}
+
+    <!-- My Referrals -->
+    <div class="card-box">
+        <h6 class="fw-bold mb-3"><i class="fas fa-users text-success me-2"></i>My Referrals</h6>
+        {% if my_referrals %}
+            {% for r in my_referrals %}
+                <div class="referral-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">{{ r[1] }}</div>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>{{ r[2] }}
+                        </small>
+                    </div>
+                    <span class="status-badge status-{{ r[3] }}">{{ r[3] }}</span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted text-center py-3 mb-0">
+                <i class="fas fa-inbox me-2"></i>You haven't referred anyone yet.
+            </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -25,11 +25,16 @@ def get_recent_activity(cursor, farmer_code):
     return cursor.fetchall()
 
 def get_farmer_loans(cursor, farmer_code):
+    """Uses the VIEW_FARMER_LOAN_DETAILS view (simplified version)"""
     cursor.execute("""
-        SELECT loan_no, amount, interest_rate, tenure_months, purpose, loan_state, 
-               TO_CHAR(application_date, 'DD-Mon-YYYY') as app_date, 
-               TO_CHAR(approval_date, 'DD-Mon-YYYY') as appr_date
-        FROM LOAN
+        SELECT 
+            loan_no,
+            amount,
+            purpose,
+            loan_state,
+            TO_CHAR(application_date, 'DD-Mon-YYYY') AS applied_date,
+            TO_CHAR(due_date, 'DD-Mon-YYYY') AS due_date
+        FROM VIEW_FARMER_LOAN_DETAILS
         WHERE farmer_code = :1
         ORDER BY application_date DESC
     """, (farmer_code,))
@@ -103,7 +108,9 @@ def get_community_posts(cursor, farmer_code):
 
 def get_farmer_credit_score(cursor, farmer_code):
     cursor.execute("""
-        SELECT score, TO_CHAR(last_update, 'DD-Mon-YYYY HH24:MI') as last_update
+        SELECT 
+            score,
+            TO_CHAR(last_update, 'DD-Mon-YYYY HH24:MI') as last_update
         FROM CREDIT_SCORE
         WHERE farmer_code = :1
     """, (farmer_code,))
@@ -112,10 +119,12 @@ def get_farmer_credit_score(cursor, farmer_code):
 def get_credit_breakdown(cursor, farmer_code):
     cursor.execute("""
         SELECT 
-            (SELECT COUNT(*) FROM ACTIVITY_RECORD WHERE farmer_code = :1 AND activity_type = 'REFERRAL') as referrals,
-            (SELECT COUNT(*) FROM ACTIVITY_RECORD WHERE farmer_code = :1 AND activity_type = 'LIKE') as likes,
-            (SELECT COUNT(*) FROM ACTIVITY_RECORD WHERE farmer_code = :1 AND activity_type = 'REPAYMENT') as repayments,
-            (SELECT COUNT(*) FROM LOAN WHERE farmer_code = :1 AND loan_state = 'ACTIVE') as active_loans
+            NVL((SELECT COUNT(*) FROM ACTIVITY_RECORD WHERE farmer_code = :1 AND activity_type = 'REPAYMENT'), 0) as repayments,
+            NVL((SELECT COUNT(*) FROM ACTIVITY_RECORD WHERE farmer_code = :1 AND activity_type = 'REFERRAL'), 0) as referrals,
+            NVL((SELECT COUNT(*) FROM REPAYMENT r 
+                 JOIN LOAN l ON r.loan_no = l.loan_no 
+                 WHERE l.farmer_code = :1 AND r.payment_state = 'OVERDUE'), 0) as overdue,
+            NVL((SELECT COUNT(*) FROM LOAN WHERE farmer_code = :1 AND loan_state = 'ACTIVE'), 0) as active_loans
         FROM DUAL
     """, (farmer_code,))
     return cursor.fetchone()
@@ -136,7 +145,7 @@ def mark_notifications_read(cursor, farmer_code):
 
 
 # ============================================
-# NEW: INVENTORY & ORDER HISTORY QUERIES
+# INVENTORY & ORDERS
 # ============================================
 
 def get_center_code_for_farmer(cursor, farmer_code):
@@ -211,3 +220,38 @@ def add_item_to_purchase(cursor, purchase_id, inventory_id, quantity, unit_price
         SET quantity = quantity - :1 
         WHERE inventory_id = :2
     """, (quantity, inventory_id))
+
+
+# ============================================
+# REFERRAL QUERIES
+# ============================================
+
+def search_farmer_by_name(cursor, name_search):
+    cursor.execute("""
+        SELECT f.farmer_code, p.first_name, p.last_name, p.login_phone
+        FROM FARMER f
+        JOIN PERSON p ON f.person_id = p.person_id
+        WHERE UPPER(p.first_name || ' ' || p.last_name) LIKE UPPER('%' || :1 || '%')
+        AND f.account_status = 'ACTIVE'
+    """, (name_search,))
+    return cursor.fetchall()
+
+def create_farmer_referral(cursor, referrer_code, referee_code):
+    cursor.execute("""
+        INSERT INTO FARMER_REFERRAL (referrer_code, referee_code)
+        VALUES (:1, :2)
+    """, (referrer_code, referee_code))
+
+def get_my_referrals(cursor, farmer_code):
+    cursor.execute("""
+        SELECT r.referral_id,
+               p.first_name || ' ' || p.last_name AS referee_name,
+               TO_CHAR(r.referral_date, 'DD-Mon-YYYY') AS referral_date,
+               r.status
+        FROM FARMER_REFERRAL r
+        JOIN FARMER f ON r.referee_code = f.farmer_code
+        JOIN PERSON p ON f.person_id = p.person_id
+        WHERE r.referrer_code = :1
+        ORDER BY r.referral_date DESC
+    """, (farmer_code,))
+    return cursor.fetchall()

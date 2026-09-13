@@ -7,13 +7,12 @@
     <i class="fas fa-star me-2"></i>Credit Score
 </h4>
 
-<!-- Credit Score Card -->
 <div class="row">
     <div class="col-md-6">
         <div class="credit-score-card mb-4">
             <div class="label">Your Credit Score</div>
             <div class="score">
-                {% if credit_score %}
+                {% if credit_score and credit_score[0] %}
                     {{ credit_score[0] }}
                 {% else %}
                     N/A
@@ -21,7 +20,7 @@
             </div>
             <div class="update-date">
                 Last updated: 
-                {% if credit_score %}
+                {% if credit_score and credit_score[1] %}
                     {{ credit_score[1] }}
                 {% else %}
                     Never
@@ -39,68 +38,68 @@
     <div class="col-md-6">
         <div class="tab-content-section">
             <h6 class="mb-3">
-                <i class="fas fa-chart-bar me-2 text-success"></i>Breakdown
+                <i class="fas fa-chart-bar me-2 text-success"></i>Score Breakdown
             </h6>
             
             {% if credit_breakdown %}
-                {% set referrals = credit_breakdown[0] or 0 %}
-                {% set likes = credit_breakdown[1] or 0 %}
-                {% set repayments = credit_breakdown[2] or 0 %}
+                {% set repayments = credit_breakdown[0] or 0 %}
+                {% set referrals = credit_breakdown[1] or 0 %}
+                {% set overdue = credit_breakdown[2] or 0 %}
                 {% set loans = credit_breakdown[3] or 0 %}
-                
-                {% set referral_width = referrals * 5 %}
-                {% set likes_width = likes * 2 %}
-                {% set repayment_width = repayments * 5 %}
-                {% set loan_width = loans * 10 %}
-                
+
+                <!-- Repayments -->
                 <div class="mb-3">
                     <div class="d-flex justify-content-between mb-1">
-                        <span>Referrals</span>
-                        <span class="fw-semibold">{{ referrals }}</span>
+                        <span><i class="fas fa-hand-holding-usd text-success me-2"></i>Repayments</span>
+                        <span class="fw-semibold">{{ repayments }} <small class="text-muted">(max 50 pts)</small></span>
                     </div>
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-success" style="--width: {{ referral_width }}%; width: var(--width);"></div>
+                        {% set rep_width = repayments * 10 if repayments * 10 <= 50 else 50 %}
+                        <div class="progress-bar bg-success" style="width: {{ rep_width }}%;"></div>
                     </div>
                 </div>
-                
+
+                <!-- Referrals -->
                 <div class="mb-3">
                     <div class="d-flex justify-content-between mb-1">
-                        <span>Community Likes</span>
-                        <span class="fw-semibold">{{ likes }}</span>
+                        <span><i class="fas fa-user-plus text-info me-2"></i>Referrals</span>
+                        <span class="fw-semibold">{{ referrals }} <small class="text-muted">(max 20 pts)</small></span>
                     </div>
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-info" style="--width: {{ likes_width }}%; width: var(--width);"></div>
+                        {% set ref_width = referrals * 10 if referrals * 10 <= 20 else 20 %}
+                        <div class="progress-bar bg-info" style="width: {{ ref_width }}%;"></div>
                     </div>
                 </div>
-                
+
+                <!-- Overdue Penalties -->
                 <div class="mb-3">
                     <div class="d-flex justify-content-between mb-1">
-                        <span>Repayments</span>
-                        <span class="fw-semibold">{{ repayments }}</span>
+                        <span><i class="fas fa-exclamation-triangle text-danger me-2"></i>Overdue Payments</span>
+                        <span class="fw-semibold text-danger">{{ overdue }} <small class="text-muted">(−5 pts each, max −20)</small></span>
                     </div>
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-warning" style="--width: {{ repayment_width }}%; width: var(--width);"></div>
+                        {% set overdue_width = overdue * 5 if overdue * 5 <= 20 else 20 %}
+                        <div class="progress-bar bg-danger" style="width: {{ overdue_width }}%;"></div>
                     </div>
                 </div>
-                
+
+                <!-- Active Loans (Info Only) -->
                 <div class="mb-3">
                     <div class="d-flex justify-content-between mb-1">
-                        <span>Active Loans</span>
-                        <span class="fw-semibold">{{ loans }}</span>
+                        <span><i class="fas fa-file-invoice-dollar text-secondary me-2"></i>Active Loans</span>
+                        <span class="fw-semibold">{{ loans }} <small class="text-muted">(info only)</small></span>
                     </div>
                     <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-danger" style="--width: {{ loan_width }}%; width: var(--width);"></div>
+                        {% set loan_width = loans * 10 if loans * 10 <= 50 else 50 %}
+                        <div class="progress-bar bg-secondary" style="width: {{ loan_width }}%;"></div>
                     </div>
                 </div>
+
             {% else %}
                 <p class="text-muted text-center py-3">
                     <i class="fas fa-info-circle me-2"></i>
                     Complete your profile and activities to build your credit score.
                 </p>
-                <div class="alert alert-info small">
-                    <i class="fas fa-lightbulb me-2"></i>
-                    <strong>Tip:</strong> Refer friends, make timely repayments, and engage with the community to improve your score!
-                </div>
             {% endif %}
         </div>
     </div>
@@ -114,28 +113,22 @@
                 <i class="fas fa-lightbulb me-2 text-warning"></i>How to Improve Your Score
             </h6>
             <div class="row g-3">
-                <div class="col-md-3 col-sm-6 text-center">
+                <div class="col-md-4 col-sm-6 text-center">
                     <div class="p-3 bg-light rounded-3">
                         <i class="fas fa-handshake text-success fa-2x mb-2"></i>
-                        <p class="small mb-0">Refer other farmers</p>
+                        <p class="small mb-0">Refer other farmers <br><strong>+10 pts each</strong></p>
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-6 text-center">
+                <div class="col-md-4 col-sm-6 text-center">
                     <div class="p-3 bg-light rounded-3">
                         <i class="fas fa-money-bill-wave text-success fa-2x mb-2"></i>
-                        <p class="small mb-0">Make timely repayments</p>
+                        <p class="small mb-0">Make timely repayments <br><strong>+10 pts each</strong></p>
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-6 text-center">
+                <div class="col-md-4 col-sm-6 text-center">
                     <div class="p-3 bg-light rounded-3">
-                        <i class="fas fa-thumbs-up text-success fa-2x mb-2"></i>
-                        <p class="small mb-0">Engage with community</p>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6 text-center">
-                    <div class="p-3 bg-light rounded-3">
-                        <i class="fas fa-id-card text-success fa-2x mb-2"></i>
-                        <p class="small mb-0">Complete KYC verification</p>
+                        <i class="fas fa-exclamation-circle text-danger fa-2x mb-2"></i>
+                        <p class="small mb-0">Avoid overdue payments <br><strong>−5 pts each</strong></p>
                     </div>
                 </div>
             </div>
@@ -223,14 +216,8 @@
     .rounded-3 {
         border-radius: 12px !important;
     }
-    .bg-light {
-        background-color: #f8f9fa !important;
-    }
     .badge {
         font-weight: 600;
-    }
-    .d-inline-block {
-        display: inline-block !important;
     }
 </style>
 {% endblock %}

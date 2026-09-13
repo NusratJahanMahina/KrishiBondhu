@@ -23,6 +23,7 @@
                     <th>Purpose</th>
                     <th>Status</th>
                     <th>Applied</th>
+                    <th>Due Date</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -33,13 +34,20 @@
                         <span class="fw-semibold text-success">{{ loan[0] }}</span>
                     </td>
                     <td>৳ {{ loan[1] }}</td>
-                    <td>{{ loan[4] }}</td>
+                    <td>{{ loan[2] }}</td>
                     <td>
-                        <span class="badge bg-{{ 'warning' if loan[5] == 'PENDING' else 'success' if loan[5] == 'ACTIVE' else 'secondary' if loan[5] == 'CLOSED' else 'danger' }}">
-                            {{ loan[5] }}
+                        <span class="badge bg-{{ 'warning' if loan[3] == 'PENDING' else 'success' if loan[3] == 'ACTIVE' else 'secondary' if loan[3] == 'CLOSED' else 'danger' }}">
+                            {{ loan[3] }}
                         </span>
                     </td>
-                    <td>{{ loan[6] }}</td>
+                    <td>{{ loan[4] }}</td>
+                    <td>
+                        {% if loan[5] %}
+                            <span class="badge bg-info text-dark">{{ loan[5] }}</span>
+                        {% else %}
+                            <span class="text-muted small">Not Approved</span>
+                        {% endif %}
+                    </td>
                     <td>
                         <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#repaymentModal{{ loop.index }}">
                             <i class="fas fa-eye"></i> Schedule
