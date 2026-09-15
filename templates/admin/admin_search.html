@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Search - Admin{% endblock %}
+{% block content %}
+<div class="container py-4">
+
+    <h4 class="fw-bold mb-3">
+        <i class="fas fa-search text-success me-2"></i>
+        {% if session.get('language') == 'en' %}Database Search{% else %}ডেটাবেস অনুসন্ধান{% endif %}
+    </h4>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('admin_search') }}" class="row g-2">
+                <div class="col-md-3">
+                    <select name="type" class="form-select">
+                        <option value="farmer" {% if search_type == 'farmer' %}selected{% endif %}>Farmers</option>
+                        <option value="loan" {% if search_type == 'loan' %}selected{% endif %}>Loans</option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <input type="text" name="q" class="form-control"
+                           placeholder="Search by name, code, phone, village, purpose..."
+                           value="{{ keyword or '' }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-search me-1"></i> Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if keyword %}
+        <div class="alert alert-info">
+            Found <strong>{{ results|length }}</strong> result(s) for "{{ keyword }}"
+        </div>
+    {% endif %}
+
+    {% if results %}
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-hover">
+                    {% if search_type == 'loan' %}
+                    <thead>
+                        <tr>
+                            <th>Loan No</th>
+                            <th>Farmer Code</th>
+                            <th>Name</th>
+                            <th>Amount</th>
+                            <th>Purpose</th>
+                            <th>State</th>
+                            <th>Applied</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in results %}
+                        <tr>
+                            <td><strong>{{ r[0] }}</strong></td>
+                            <td>{{ r[1] }}</td>
+                            <td>{{ r[2] }}</td>
+                            <td>BDT {{ r[3] }}</td>
+                            <td>{{ r[4] }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if r[5]=='ACTIVE' else 'warning' if r[5]=='PENDING' else 'secondary' }}">
+                                    {{ r[5] }}
+                                </span>
+                            </td>
+                            <td>{{ r[6] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% else %}
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Location</th>
+                            <th>KYC</th>
+                            <th>Center</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in results %}
+                        <tr>
+                            <td><strong>{{ r[0] }}</strong></td>
+                            <td>{{ r[1] }}</td>
+                            <td>{{ r[2] }}</td>
+                            <td>{{ r[3] }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if r[4]=='VERIFIED' else 'warning' }}">
+                                    {{ r[4] }}
+                                </span>
+                            </td>
+                            <td>{{ r[5] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    {% elif keyword %}
+        <div class="alert alert-warning">
+            No results found for "{{ keyword }}"
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

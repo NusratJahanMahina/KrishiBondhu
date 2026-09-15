@@ -379,12 +379,13 @@ def register_login_routes(app):
         user = session['user']
         role = user['role'].lower()
 
-        if role == 'agent':
+        if role == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        elif role == 'agent':
             return redirect(url_for('agent_dashboard'))
 
         template_map = {
             'farmer': 'farmer/dashboard.html',
-            'admin': 'dashboard_admin.html',
             'advisor': 'dashboard_advisor.html'
         }
         template = template_map.get(role, 'dashboard_farmer.html')
