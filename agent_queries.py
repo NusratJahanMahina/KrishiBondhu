@@ -1,6 +1,3 @@
-# ============================================
-# AGENT QUERIES - ASCII ONLY
-# ============================================
 
 
 def get_agent_dashboard_data(cursor, person_id):
