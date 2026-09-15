@@ -286,6 +286,10 @@
                        href="{{ url_for('farmer_community') }}">
                         <i class="fas fa-users me-2"></i> Community
                     </a>
+                    <a class="nav-link {{ 'active' if active_tab == 'refer' else '' }}" 
+                       href="{{ url_for('farmer_refer') }}">
+                        <i class="fas fa-user-plus me-2"></i> Refer a Farmer
+                    </a>
                     <a class="nav-link {{ 'active' if active_tab == 'inventory' else '' }}" 
                        href="{{ url_for('farmer_inventory') }}">
                         <i class="fas fa-shopping-cart me-2"></i> Inventory

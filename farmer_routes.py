@@ -435,7 +435,7 @@ def register_farmer_routes(app):
                 cursor.execute("INSERT INTO CONSULTATION (session_id, topic) VALUES (:1, :2)", (session_id, topic))
                 conn.commit()
                 
-                advisor_id = 1004  # Default Admin, will change later
+                advisor_id = 1004
                 cursor.execute("""
                     INSERT INTO ATTENDS (advisor_id, farmer_code, session_id, scheduled_date, notes, resolution_status)
                     VALUES (:1, :2, :3, TO_DATE(:4, 'YYYY-MM-DD'), :5, 'PENDING')
@@ -523,6 +523,73 @@ def register_farmer_routes(app):
                 if conn:
                     conn.close()
         return redirect(url_for('farmer_community'))
+
+    @app.route('/farmer/refer', methods=['GET', 'POST'])
+    def farmer_refer():
+        if 'user' not in session or session['user']['role'] != 'FARMER':
+            flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
+            return redirect(url_for('login_register'))
+        
+        conn = get_connection()
+        my_referrals = []
+        farmer_code = None
+        search_results = None
+        search_term = ''
+        
+        if conn:
+            cursor = conn.cursor()
+            try:
+                farmer_code = get_farmer_code(cursor, session['user']['person_id'])
+                
+                if request.method == 'POST':
+                    action = request.form.get('action')
+                    
+                    if action == 'search':
+                        search_term = request.form.get('search_name', '').strip()
+                        if search_term:
+                            search_results = search_farmer_by_name(cursor, search_term)
+                    
+                    elif action == 'confirm':
+                        referee_code = request.form.get('referee_code')
+                        if referee_code and farmer_code:
+                            if referee_code == farmer_code:
+                                flash(get_flash_message(
+                                    'আপনি নিজেকে রেফার করতে পারবেন না।',
+                                    'You cannot refer yourself.'), 'warning')
+                            else:
+                                create_farmer_referral(cursor, farmer_code, referee_code)
+                                conn.commit()
+                                
+                                activity_id = 'ACT-' + str(generate_id())[:8]
+                                cursor.execute("""
+                                    INSERT INTO ACTIVITY_RECORD (activity_id, farmer_code, activity_type, description, activity_date, reference_id)
+                                    VALUES (:1, :2, 'REFERRAL', :3, SYSDATE, :4)
+                                """, (activity_id, farmer_code, f'Referred a new farmer', referee_code))
+                                conn.commit()
+                                
+                                flash(get_flash_message(
+                                    'রেফারেল সফলভাবে যোগ করা হয়েছে!',
+                                    'Referral submitted successfully!'), 'success')
+                
+                if farmer_code:
+                    my_referrals = get_my_referrals(cursor, farmer_code)
+                    
+                cursor.close()
+                conn.close()
+            except Exception as e:
+                if conn:
+                    conn.rollback()
+                    conn.close()
+                flash(get_flash_message('ত্রুটি: ' + str(e), 'Error: ' + str(e)), 'danger')
+                print(f"Refer error: {e}")
+        
+        return render_template('farmer/refer.html',
+                              user=session['user'],
+                              farmer_code=farmer_code,
+                              my_referrals=my_referrals,
+                              search_results=search_results,
+                              search_term=search_term,
+                              active_tab='refer')
 
     @app.route('/farmer/credit_score')
     def farmer_credit_score():
@@ -669,15 +736,12 @@ def register_farmer_routes(app):
                     return redirect(url_for('farmer_inventory'))
                 
                 agent_code = get_farmer_agent_code(cursor, farmer_code)
-                
-                # REMOVED collection_point - now passes 5 arguments
                 purchase_id = create_new_purchase(cursor, farmer_code, agent_code, payment_method, generate_id)
                 
                 for item in cart:
                     inventory_id = item.get('id')
                     quantity = item.get('qty')
                     
-                    # FIXED: Changed from unit_price to price_per_unit
                     cursor.execute("SELECT price_per_unit FROM INVENTORY WHERE inventory_id = :1", (inventory_id,))
                     price_row = cursor.fetchone()
                     
