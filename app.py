@@ -3,6 +3,9 @@ from login_register import register_login_routes
 from farmer_routes import register_farmer_routes
 from agent_routes import register_agent_routes
 from admin_routes import register_admin_routes
+from admin_alerts_routes import register_admin_alerts_routes
+from advisor_routes import register_advisor_routes
+# ...
 
 import os
 
@@ -25,7 +28,8 @@ register_login_routes(app)
 register_farmer_routes(app)
 register_agent_routes(app)
 register_admin_routes(app)
-
+register_admin_alerts_routes(app)
+register_advisor_routes(app)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

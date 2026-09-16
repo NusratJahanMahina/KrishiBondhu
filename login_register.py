@@ -66,14 +66,14 @@ def register_login_routes(app):
             return redirect(url_for('login_register'))
 
         conn = get_connection()
-        
+
         if conn is None:
             flash(get_flash_message(
                 'ডেটাবেস সংযোগ ব্যর্থ হয়েছে।',
                 'Database connection failed.'
             ), 'danger')
             return redirect(url_for('login_register'))
-        
+
         cursor = conn.cursor()
 
         if re.match(r'^01[3-9]\d{8}$', login_input):
@@ -364,7 +364,7 @@ def register_login_routes(app):
 
 
     # ============================================
-    # DASHBOARD (REDIRECTS TO ROLE-SPECIFIC DASHBOARDS)
+    # DASHBOARD
     # ============================================
 
     @app.route('/dashboard')
@@ -383,10 +383,11 @@ def register_login_routes(app):
             return redirect(url_for('admin_dashboard'))
         elif role == 'agent':
             return redirect(url_for('agent_dashboard'))
+        elif role == 'advisor':
+            return redirect(url_for('advisor_dashboard'))
 
         template_map = {
             'farmer': 'farmer/dashboard.html',
-            'advisor': 'dashboard_advisor.html'
         }
         template = template_map.get(role, 'dashboard_farmer.html')
         return render_template(template, user=user)

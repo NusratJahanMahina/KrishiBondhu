@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if session.get('language') == 'en' %}Database Search - KrishiBondhu{% else %}ডাটাবেজ অনুসন্ধান - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <h2 class="fw-bold text-success mb-1">
+                <i class="fas fa-search me-2"></i>
+                {% if session.get('language') == 'en' %}Search & Filter Console{% else %}ডাটাবেজ অনুসন্ধান ও ফিল্টার কনসোল{% endif %}
+            </h2>
+            <p class="text-muted mb-0">
+                {% if session.get('language') == 'en' %}
+                Search across Farmers, Advisors, Loans, Inventory, and Regional Centers in real-time.
+                {% else %}
+                কৃষক, কৃষি বিশেষজ্ঞ, ঋণ তথ্য, ইনভেন্টরি পণ্য ও আঞ্চলিক সেন্টারের দ্রুত অনুসন্ধান।
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <a href="{{ url_for('admin_analytics') }}" class="btn btn-outline-success">
+                <i class="fas fa-chart-pie me-1"></i>
+                {% if session.get('language') == 'en' %}Analytics Dashboard{% else %}অ্যানালিটিক্স ড্যাশবোর্ড{% endif %}
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body p-4">
+            <form method="GET" action="{{ url_for('search_page') }}" class="row g-3">
+                <div class="col-lg-7 col-md-6">
+                    <label class="form-label fw-semibold text-secondary">
+                        <i class="fas fa-keyboard me-1"></i>
+                        {% if session.get('language') == 'en' %}Search Keyword{% else %}অনুসন্ধান কীওয়ার্ড (নাম, ফোন, আইডি, এলাকা){% endif %}
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" name="q" class="form-control form-control-lg bg-white" 
+                               placeholder="e.g. রহিম, 01911, ধান, ঢাকা, 1001..." 
+                               value="{{ query_term }}">
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <label class="form-label fw-semibold text-secondary">
+                        <i class="fas fa-filter me-1"></i>
+                        {% if session.get('language') == 'en' %}Category / Entity{% else %}বিভাগ ফিল্টার{% endif %}
+                    </label>
+                    <select name="category" class="form-select form-select-lg bg-white">
+                        <option value="ALL" {% if category == 'ALL' %}selected{% endif %}>
+                            {% if session.get('language') == 'en' %}All Categories{% else %}সব বিভাগ (গ্লোবাল সার্চ){% endif %}
+                        </option>
+                        <option value="FARMERS" {% if category == 'FARMERS' %}selected{% endif %}>
+                            {% if session.get('language') == 'en' %}Farmers (কৃষক){% else %}কৃষক তালিকা{% endif %}
+                        </option>
+                        <option value="ADVISORS" {% if category == 'ADVISORS' %}selected{% endif %}>
+                            {% if session.get('language') == 'en' %}Advisors (উপদেষ্টা){% else %}উপদেষ্টা তালিকা{% endif %}
+                        </option>
+                        <option value="LOANS" {% if category == 'LOANS' %}selected{% endif %}>
+                            {% if session.get('language') == 'en' %}Loans (ঋণ তথ্য){% else %}ঋণ আবেদন ও স্ট্যাটাস{% endif %}
+                        </option>
+                        <option value="INVENTORY" {% if category == 'INVENTORY' %}selected{% endif %}>
+                            {% if session.get('language') == 'en' %}Inventory (বীজ/সার/পণ্য){% else %}ইনভেন্টরি ও পণ্য{% endif %}
+                        </option>
+                        <option value="CENTERS" {% if category == 'CENTERS' %}selected{% endif %}>
+                            {% if session.get('language') == 'en' %}Centers (সেন্টারসমূহ){% else %}আইফার্মার সেন্টারসমূহ{% endif %}
+                        </option>
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success btn-lg w-100 fw-bold">
+                        <i class="fas fa-search me-1"></i>
+                        {% if session.get('language') == 'en' %}Search{% else %}খুঁজুন{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-4">
+        <div class="col">
+            <div class="card border-0 bg-white shadow-sm p-3 text-center">
+                <small class="text-muted">কৃষক ফলাফল</small>
+                <h5 class="fw-bold text-success mb-0">{{ farmers|length }}</h5>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 bg-white shadow-sm p-3 text-center">
+                <small class="text-muted">উপদেষ্টা ফলাফল</small>
+                <h5 class="fw-bold text-primary mb-0">{{ advisors|length }}</h5>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 bg-white shadow-sm p-3 text-center">
+                <small class="text-muted">ঋণ রেকর্ড</small>
+                <h5 class="fw-bold text-warning mb-0">{{ loans|length }}</h5>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 bg-white shadow-sm p-3 text-center">
+                <small class="text-muted">ইনভেন্টরি আইটেম</small>
+                <h5 class="fw-bold text-info mb-0">{{ inventory|length }}</h5>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card border-0 bg-white shadow-sm p-3 text-center">
+                <small class="text-muted">সেন্টার</small>
+                <h5 class="fw-bold text-secondary mb-0">{{ centers|length }}</h5>
+            </div>
+        </div>
+    </div>
+
+    {% if category in ['ALL', 'FARMERS'] and farmers %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-success">
+                <i class="fas fa-user-friends me-2"></i>
+                {% if session.get('language') == 'en' %}Farmers ({{ farmers|length }}){% else %}কৃষক তালিকা ({{ farmers|length }} জন){% endif %}
+            </h5>
+            <span class="badge bg-success-subtle text-success">ফলাফল</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>কোড</th>
+                        <th>নাম</th>
+                        <th>ফোন নম্বর</th>
+                        <th>জমি (একর)</th>
+                        <th>সেন্টার / এলাকা</th>
+                        <th>KYC স্ট্যাটাস</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in farmers %}
+                    <tr>
+                        <td class="fw-bold text-secondary">#{{ f.farmer_code }}</td>
+                        <td class="fw-semibold text-dark">{{ f.farmer_name }}</td>
+                        <td><code>{{ f.login_phone }}</code></td>
+                        <td>{{ f.land_area or 1.5 }} একর</td>
+                        <td>
+                            <i class="fas fa-map-marker-alt text-danger me-1 small"></i>
+                            {{ f.center_name }} ({{ f.district }})
+                        </td>
+                        <td>
+                            {% if f.kyc_status == 'VERIFIED' %}
+                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>VERIFIED</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>PENDING</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if category in ['ALL', 'ADVISORS'] and advisors %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-primary">
+                <i class="fas fa-user-tie me-2"></i>
+                {% if session.get('language') == 'en' %}Advisors ({{ advisors|length }}){% else %}কৃষি বিশেষজ্ঞ / উপদেষ্টা তালিকা ({{ advisors|length }} জন){% endif %}
+            </h5>
+            <span class="badge bg-primary-subtle text-primary">ফলাফল</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>আইডি</th>
+                        <th>নাম ও পদবি</th>
+                        <th>বিশেষজ্ঞতা</th>
+                        <th>অভিজ্ঞতা</th>
+                        <th>রেটিং</th>
+                        <th>যোগাযোগ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in advisors %}
+                    <tr>
+                        <td class="fw-bold">#{{ a.advisor_id }}</td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ a.advisor_name }}</div>
+                            <small class="text-muted">{{ a.qualification or 'B.Sc / M.Sc Agriculture' }}</small>
+                        </td>
+                        <td><span class="badge bg-info text-dark">{{ a.specialization }}</span></td>
+                        <td>{{ a.experience_years or 5 }}+ বছর</td>
+                        <td>
+                            <span class="text-warning fw-bold"><i class="fas fa-star me-1"></i>{{ a.rating }}</span>
+                            <small class="text-muted">({{ a.total_bookings }} সেশন)</small>
+                        </td>
+                        <td><code>{{ a.login_phone }}</code></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if category in ['ALL', 'LOANS'] and loans %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-warning-emphasis">
+                <i class="fas fa-hand-holding-usd me-2"></i>
+                {% if session.get('language') == 'en' %}Loan Records ({{ loans|length }}){% else %}ঋণ ও আর্থিক রেকর্ড ({{ loans|length }} টি){% endif %}
+            </h5>
+            <span class="badge bg-warning-subtle text-warning-emphasis">ফলাফল</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ঋণ নং</th>
+                        <th>কৃষকের নাম</th>
+                        <th>পরিমাণ</th>
+                        <th>উদ্দেশ্য</th>
+                        <th>মেয়াদ</th>
+                        <th>স্ট্যাটাস</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for l in loans %}
+                    <tr>
+                        <td class="fw-bold">#{{ l.loan_no }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ l.farmer_name }}</div>
+                            <small class="text-muted">{{ l.login_phone }}</small>
+                        </td>
+                        <td class="fw-bold text-success">৳{{ "{:,.2f}".format(l.amount) }}</td>
+                        <td>{{ l.purpose }}</td>
+                        <td>{{ l.tenure_months or 12 }} মাস</td>
+                        <td>
+                            {% if l.loan_state == 'ACTIVE' %}
+                                <span class="badge bg-success">ACTIVE</span>
+                            {% elif l.loan_state == 'CLOSED' %}
+                                <span class="badge bg-secondary">CLOSED</span>
+                            {% elif l.loan_state == 'PENDING' %}
+                                <span class="badge bg-warning text-dark">PENDING</span>
+                            {% else %}
+                                <span class="badge bg-danger">{{ l.loan_state }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if category in ['ALL', 'INVENTORY'] and inventory %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-info-emphasis">
+                <i class="fas fa-boxes me-2"></i>
+                {% if session.get('language') == 'en' %}Inventory Stock ({{ inventory|length }}){% else %}ইনভেন্টরি ও কৃষি উপকরণ ({{ inventory|length }} টি){% endif %}
+            </h5>
+            <span class="badge bg-info-subtle text-info-emphasis">ফলাফল</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>আইটেম কোড</th>
+                        <th>পণ্যের নাম</th>
+                        <th>মজুদ পরিমাণ</th>
+                        <th>একক মূল্য</th>
+                        <th>দায়িত্বপ্রাপ্ত এজেন্ট</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in inventory %}
+                    <tr>
+                        <td class="fw-bold">#{{ item.inventory_id }}</td>
+                        <td class="fw-semibold text-dark">{{ item.item_name }}</td>
+                        <td>
+                            <span class="badge bg-light text-dark border">{{ item.quantity }} {{ item.unit }}</span>
+                        </td>
+                        <td class="fw-bold text-success">৳{{ "{:,.2f}".format(item.price) }}</td>
+                        <td>
+                            <div>{{ item.agent_name }}</div>
+                            <small class="text-muted">{{ item.agent_phone }}</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if category in ['ALL', 'CENTERS'] and centers %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-dark">
+                <i class="fas fa-building me-2"></i>
+                {% if session.get('language') == 'en' %}IFarmer Centers ({{ centers|length }}){% else %}আইফার্মার আঞ্চলিক সেন্টারসমূহ ({{ centers|length }} টি){% endif %}
+            </h5>
+            <span class="badge bg-secondary-subtle text-secondary">ফলাফল</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>সেন্টার কোড</th>
+                        <th>সেন্টারের নাম</th>
+                        <th>উপজেলা</th>
+                        <th>জেলা</th>
+                        <th>নিবন্ধিত কৃষক</th>
+                        <th>ফিল্ড এজেন্ট</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in centers %}
+                    <tr>
+                        <td class="fw-bold">#{{ c.center_code }}</td>
+                        <td class="fw-semibold">{{ c.center_name }}</td>
+                        <td>{{ c.upazila }}</td>
+                        <td><span class="badge bg-secondary">{{ c.district }}</span></td>
+                        <td class="fw-bold text-success">{{ c.farmer_count }} জন</td>
+                        <td class="fw-bold text-primary">{{ c.agent_count }} জন</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not farmers and not advisors and not loans and not inventory and not centers %}
+    <div class="card border-0 shadow-sm p-5 text-center my-4">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">কোনো রেকর্ড খুঁজে পাওয়া যায়নি (No records matched your search)</h5>
+        <p class="text-muted small">অনুগ্রহ করে অন্য কোনো কীওয়ার্ড দিয়ে চেষ্টা করুন।</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

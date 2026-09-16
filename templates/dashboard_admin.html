@@ -1,350 +1,269 @@
-{% extends "base.html" %}
-
-{% block title %}
-{% if session.get('language') == 'en' %}Admin Dashboard{% else %}প্রশাসক ড্যাশবোর্ড{% endif %}
-{% endblock %}
-
+﻿{% extends "base.html" %}
+{% block title %}Admin Dashboard - KrishiBondhu{% endblock %}
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid py-4 px-lg-5">
 
-    <div class="row g-4 align-items-stretch">
-
-        <!-- LEFT COLUMN -->
-        <div class="col-lg-4 d-flex flex-column">
-
-            <!-- Profile Card -->
-            <div class="card border-0 shadow-sm mb-3 rounded-3 overflow-hidden">
-                <div class="card-body p-3" style="background: linear-gradient(145deg, #ffffff, #f8f9fa);">
+    <div class="card shadow-sm border-0 mb-4" style="background: linear-gradient(135deg, #1a237e, #0d47a1); border-radius: 16px; color:white;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="position-relative">
-                            <i class="fas fa-user-circle fa-4x text-secondary"></i>
-                            <span class="position-absolute bottom-0 end-0">
-                                <i class="fas fa-circle text-success fs-6"></i>
-                            </span>
+                        <div class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:70px;height:70px;font-size:2rem;">
+                            <i class="fas fa-shield-alt"></i>
                         </div>
-                        <div class="flex-grow-1">
-                            <h6 class="fw-bold mb-0 text-dark">{{ user.first_name }} {{ user.last_name }}</h6>
-                            <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
-                                <span class="badge bg-success bg-opacity-15 text-success rounded-pill px-3 py-1">
-                                    <i class="fas fa-circle me-1 fs-8"></i>
-                                    {% if session.get('language') == 'en' %}Active{% else %}সক্রিয়{% endif %}
-                                </span>
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 py-1">
-                                    <i class="fas fa-id-badge me-1"></i>{{ admin_info[0] }}
-                                </span>
-                            </div>
-                            <div class="d-flex flex-wrap gap-2 mt-1 small text-muted">
-                                <span>
-                                    <i class="fas fa-user-shield me-1 text-primary"></i>
-                                    {% if is_super == 'SUPER' %}
-                                        {% if session.get('language') == 'en' %}Super Admin{% else %}সুপার অ্যাডমিন{% endif %}
-                                    {% else %}
-                                        {% if session.get('language') == 'en' %}Center Admin{% else %}সেন্টার অ্যাডমিন{% endif %}
+                        <div>
+                            <h3 class="fw-bold mb-1 text-white">{{ user.first_name }} {{ user.last_name }}</h3>
+                            <span class="badge bg-warning text-dark fw-bold"><i class="fas fa-crown me-1"></i>System Administrator</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <a href="{{ url_for('admin_alerts') }}" class="btn btn-danger btn-sm fw-bold text-white me-2"><i class="fas fa-bell me-1"></i> Alerts</a>
+                    <a href="{{ url_for('admin_analytics') }}" class="btn btn-info btn-sm fw-bold text-white me-2"><i class="fas fa-chart-line me-1"></i> CTE Analytics</a>
+                    <a href="{{ url_for('search_page') }}" class="btn btn-light btn-sm fw-bold text-primary me-2"><i class="fas fa-search me-1"></i> Search</a>
+                    <button class="btn btn-warning btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                        <i class="fas fa-bullhorn me-1"></i> Post Notice
+                    </button>
+                    <button class="btn btn-success btn-sm fw-bold text-white" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                        <i class="fas fa-user-plus me-1"></i> Add User
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-2"><div class="card p-3 border-0 shadow-sm"><span class="text-muted small">Farmers</span><h3 class="fw-bold text-success mb-0">{{ admin_data.total_farmers }}</h3></div></div>
+        <div class="col-6 col-md-2"><div class="card p-3 border-0 shadow-sm"><span class="text-muted small">Agents</span><h3 class="fw-bold text-info mb-0">{{ admin_data.total_agents }}</h3></div></div>
+        <div class="col-6 col-md-2"><div class="card p-3 border-0 shadow-sm"><span class="text-muted small">Advisors</span><h3 class="fw-bold text-success mb-0">{{ admin_data.total_advisors }}</h3></div></div>
+        <div class="col-6 col-md-2"><div class="card p-3 border-0 shadow-sm"><span class="text-muted small">Centers</span><h3 class="fw-bold mb-0" style="color:#7b1fa2;">{{ admin_data.total_centers }}</h3></div></div>
+        <div class="col-6 col-md-2"><div class="card p-3 border-0 shadow-sm"><span class="text-muted small">Active Loans</span><h3 class="fw-bold text-warning mb-0">{{ admin_data.active_loans }}</h3></div></div>
+        <div class="col-6 col-md-2"><div class="card p-3 border-0 shadow-sm"><span class="text-muted small">Bookings</span><h3 class="fw-bold mb-0" style="color:#c2185b;">{{ admin_data.total_consultations }}</h3></div></div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white pt-3 px-4">
+            <ul class="nav nav-pills">
+                <li class="nav-item"><button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#centers-pane" type="button"><i class="fas fa-building me-1"></i> Centers ({{ centers|length }})</button></li>
+                <li class="nav-item"><button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#users-pane" type="button"><i class="fas fa-users me-1"></i> Users ({{ users_list|length }})</button></li>
+                <li class="nav-item"><button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#loans-pane" type="button"><i class="fas fa-hand-holding-usd me-1"></i> Loans ({{ loans_list|length }})</button></li>
+                <li class="nav-item"><button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#advisors-pane" type="button"><i class="fas fa-user-graduate me-1"></i> Advisors ({{ advisors_list|length }})</button></li>
+                <li class="nav-item"><button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#inventory-pane" type="button"><i class="fas fa-boxes me-1"></i> Inventory ({{ inventory_list|length }})</button></li>
+                <li class="nav-item"><button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#posts-pane" type="button"><i class="fas fa-bullhorn me-1"></i> Notices ({{ posts|length }})</button></li>
+            </ul>
+        </div>
+        <div class="card-body p-4">
+            <div class="tab-content">
+
+                <div class="tab-pane fade show active" id="centers-pane">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light"><tr><th>Code</th><th>Name</th><th>Location</th><th>Agents</th><th>Farmers</th><th class="text-end">Action</th></tr></thead>
+                        <tbody>
+                        {% for c in centers %}
+                            <tr>
+                                <td><span class="badge bg-light text-dark border">#{{ c[0] }}</span></td>
+                                <td><strong class="text-primary">{{ c[1] }}</strong></td>
+                                <td>{{ c[2] }}, {{ c[3] }}</td>
+                                <td>{% if c[6] %}<span class="badge bg-info text-dark">{{ c[6] }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                                <td><span class="badge bg-success">{{ c[5] }}</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCenter{{ c[0] }}"><i class="fas fa-edit"></i></button>
+                                    <form method="POST" action="{{ url_for('admin_delete_center', center_code=c[0]) }}" class="d-inline" onsubmit="return confirm('Delete?');">
+                                        <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <div class="modal fade" id="editCenter{{ c[0] }}" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="POST" action="{{ url_for('admin_edit_center', center_code=c[0]) }}">
+                                <div class="modal-header bg-primary text-white"><h5 class="modal-title">Edit Center</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">
+                                    <div class="mb-3"><label class="form-label">Name</label><input class="form-control" name="center_name" value="{{ c[1] }}" required></div>
+                                    <div class="mb-3"><label class="form-label">Upazila</label><input class="form-control" name="upazila" value="{{ c[2] }}" required></div>
+                                    <div class="mb-3"><label class="form-label">District</label><input class="form-control" name="district" value="{{ c[3] }}" required></div>
+                                </div>
+                                <div class="modal-footer"><button type="submit" class="btn btn-primary fw-bold">Save</button></div>
+                            </form></div></div></div>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="tab-pane fade" id="users-pane">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light"><tr><th>ID</th><th>Name</th><th>Username</th><th>Phone</th><th>Role</th><th>Joined</th><th class="text-end">Action</th></tr></thead>
+                        <tbody>
+                        {% for u in users_list %}
+                            <tr>
+                                <td>#{{ u[0] }}</td>
+                                <td><strong>{{ u[1] }}</strong></td>
+                                <td><code>{{ u[2] }}</code></td>
+                                <td>{{ u[3] }}</td>
+                                <td>
+                                    {% if u[4]=='ADMIN' %}<span class="badge bg-dark">ADMIN</span>
+                                    {% elif u[4]=='AGENT' %}<span class="badge bg-info text-dark">AGENT</span>
+                                    {% elif u[4]=='ADVISOR' %}<span class="badge bg-primary">ADVISOR</span>
+                                    {% else %}<span class="badge bg-success">FARMER</span>{% endif %}
+                                </td>
+                                <td><small class="text-muted">{{ u[5] or 'N/A' }}</small></td>
+                                <td class="text-end">
+                                    {% if u[0] != user.person_id %}
+                                    <form method="POST" action="{{ url_for('admin_delete_user', person_id=u[0]) }}" class="d-inline" onsubmit="return confirm('Delete user?');">
+                                        <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </form>
                                     {% endif %}
-                                </span>
-                                <span>
-                                    <i class="fas fa-building me-1 text-success"></i>
-                                    {{ center_name }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-            </div>
 
-            <!-- Supervisor Hierarchy -->
-            <div class="card border-0 shadow-sm mb-3 rounded-3 overflow-hidden">
-                <div class="card-header bg-light py-2 border-0">
-                    <h6 class="mb-0 fw-semibold"><i class="fas fa-sitemap me-2 text-primary"></i>{% if session.get('language') == 'en' %}Supervisor Hierarchy{% else %}তত্ত্বাবধান শ্রেণিবিন্যাস{% endif %}</h6>
+                <div class="tab-pane fade" id="loans-pane">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light"><tr><th>Loan</th><th>Farmer</th><th>Amount</th><th>Repaid</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                        <tbody>
+                        {% for l in loans_list %}
+                            <tr>
+                                <td><strong>#{{ l[0] }}</strong></td>
+                                <td>{{ l[2] }}<br><small class="text-muted">FR #{{ l[1] }}</small></td>
+                                <td><strong>৳{{ "{:,.0f}".format(l[3]) }}</strong></td>
+                                <td><strong class="text-success">৳{{ "{:,.0f}".format(l[9]) }}</strong></td>
+                                <td>
+                                    {% if l[4]=='ACTIVE' %}<span class="badge bg-success">Active</span>
+                                    {% elif l[4]=='PENDING' %}<span class="badge bg-warning text-dark">Pending</span>
+                                    {% elif l[4]=='CLOSED' %}<span class="badge bg-secondary">Closed</span>
+                                    {% else %}<span class="badge bg-danger">{{ l[4] }}</span>{% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if l[4]=='PENDING' %}
+                                    <form method="POST" action="{{ url_for('admin_approve_loan', loan_no=l[0]) }}" class="d-inline" onsubmit="return confirm('Approve?');">
+                                        <button class="btn btn-sm btn-success fw-bold"><i class="fas fa-check me-1"></i>Approve</button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin_reject_loan', loan_no=l[0]) }}" class="d-inline" onsubmit="return confirm('Reject?');">
+                                        <button class="btn btn-sm btn-outline-danger"><i class="fas fa-times"></i></button>
+                                    </form>
+                                    {% elif l[4]=='ACTIVE' %}
+                                    <form method="POST" action="{{ url_for('admin_close_loan', loan_no=l[0]) }}" class="d-inline" onsubmit="return confirm('Mark closed?');">
+                                        <button class="btn btn-sm btn-outline-secondary">Mark Paid</button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                <div class="card-body p-3">
-                    {% if subordinates %}
-                    <div class="tree">
-                        <ul class="list-unstyled mb-0">
-                            <li>
-                                <div class="d-flex align-items-center mb-2 p-2 bg-success bg-opacity-10 rounded-2">
-                                    <i class="fas fa-user-shield text-success me-2"></i>
-                                    <strong class="small">{{ user.first_name }} {{ user.last_name }}</strong>
-                                    <span class="badge bg-success ms-2" style="font-size: 0.6rem;">{{ is_super }}</span>
-                                </div>
-                                <ul class="list-unstyled ms-3">
-                                    {% for sub in subordinates %}
-                                    <li class="mb-1">
-                                        <div class="d-flex align-items-center p-1 ps-2 rounded-1 hover-bg-light">
-                                            <i class="fas fa-user-circle text-secondary me-2"></i>
-                                            <span class="small">{{ sub[1] }}</span>
-                                            <span class="badge bg-secondary bg-opacity-10 text-secondary ms-2" style="font-size: 0.6rem;">{{ sub[3] or 'Center Admin' }}</span>
-                                        </div>
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                            </li>
-                        </ul>
-                    </div>
-                    {% else %}
-                    <div class="text-center text-muted small py-2">
-                        <i class="fas fa-info-circle me-1"></i>
-                        {% if session.get('language') == 'en' %}No hierarchy info{% else %}কোনো শ্রেণিবিন্যাস তথ্য নেই{% endif %}
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
 
-            <!-- Incoming Requests -->
-            <div class="card border-0 shadow-sm mb-3 rounded-3 overflow-hidden">
-                <div class="card-header bg-warning bg-opacity-25 py-2 d-flex justify-content-between align-items-center border-0">
-                    <h6 class="mb-0 fw-semibold"><i class="fas fa-inbox me-2 text-warning"></i>{% if session.get('language') == 'en' %}Incoming Requests{% else %}আগত আবেদন{% endif %}</h6>
-                    <span class="badge bg-warning rounded-pill">{{ pending_loans|length if pending_loans else 0 }}</span>
+                <div class="tab-pane fade" id="advisors-pane">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light"><tr><th>Advisor</th><th>Specialization</th><th>Rating</th><th>Bookings</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+                        <tbody>
+                        {% for a in advisors_list %}
+                            <tr>
+                                <td><strong>{{ a[1] }}</strong><br><small class="text-muted">{{ a[2] }}</small></td>
+                                <td><span class="badge bg-light text-dark border">{{ a[3] }}</span></td>
+                                <td><span class="text-warning fw-bold"><i class="fas fa-star"></i> {{ a[5] }}</span></td>
+                                <td>{{ a[6] }}</td>
+                                <td>{% if a[7]=='YES' %}<span class="badge bg-success">Available</span>{% else %}<span class="badge bg-secondary">Offline</span>{% endif %}</td>
+                                <td class="text-end">
+                                    <form method="POST" action="{{ url_for('admin_toggle_advisor_status', advisor_id=a[0]) }}" class="d-inline">
+                                        <button class="btn btn-sm btn-outline-{% if a[7]=='YES' %}warning{% else %}success{% endif %}"><i class="fas fa-power-off"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                <div class="card-body p-2" style="max-height: 250px; overflow-y: auto;">
-                    {% if pending_loans %}
-                    {% for loan in pending_loans %}
-                    <div class="border-bottom pb-2 mb-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="small fw-semibold">{{ loan[2] }}</span>
-                            <span class="small text-success fw-bold">৳{{ loan[3] }}</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-muted small"><i class="far fa-calendar-alt me-1"></i>{{ loan[5] or 'N/A' }}</span>
-                            <span class="badge bg-warning bg-opacity-25 text-warning px-2 py-1">
-                                <i class="fas fa-clock me-1"></i>Pending
-                            </span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <div class="text-center text-muted small py-2">
-                        <i class="fas fa-check-circle text-success me-1"></i>
-                        {% if session.get('language') == 'en' %}No pending requests{% else %}কোনো বিবেচনাধীন আবেদন নেই{% endif %}
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
 
-        </div>
+                <div class="tab-pane fade" id="inventory-pane">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light"><tr><th>ID</th><th>Item</th><th>Stock</th><th>Unit</th><th>Price</th><th>Center</th><th class="text-end">Action</th></tr></thead>
+                        <tbody>
+                        {% for it in inventory_list %}
+                            <tr>
+                                <td>{{ it[0] }}</td>
+                                <td><strong>{{ it[2] }}</strong></td>
+                                <td>{% if it[3] <= 10 %}<span class="badge bg-danger">{{ it[3] }} (Low)</span>{% else %}<span class="badge bg-info text-dark">{{ it[3] }}</span>{% endif %}</td>
+                                <td>{{ it[4] }}</td>
+                                <td><strong class="text-success">৳{{ it[5] }}</strong></td>
+                                <td><code>{{ it[1] }}</code></td>
+                                <td class="text-end">
+                                    <form method="POST" action="{{ url_for('admin_delete_inventory', inventory_id=it[0]) }}" class="d-inline" onsubmit="return confirm('Delete?');">
+                                        <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
 
-        <!-- MIDDLE COLUMN -->
-        <div class="col-lg-5 d-flex flex-column">
-
-            <div class="row g-3 mb-3">
-                <div class="col-4">
-                    <div class="card border-0 shadow-sm h-100 rounded-3 overflow-hidden">
-                        <div class="card-body py-3 px-3 d-flex align-items-center">
-                            <div class="bg-warning bg-opacity-10 p-2 rounded-2 me-3">
-                                <i class="fas fa-clock text-warning fs-5"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted small text-uppercase fw-semibold">{% if session.get('language') == 'en' %}Pending{% else %}বিবেচনাধীন{% endif %}</div>
-                                <span class="fw-bold fs-5 text-dark">{{ pending_loans|length if pending_loans else 0 }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-4">
-                    <div class="card border-0 shadow-sm h-100 rounded-3 overflow-hidden">
-                        <div class="card-body py-3 px-3 d-flex align-items-center">
-                            <div class="bg-danger bg-opacity-10 p-2 rounded-2 me-3">
-                                <i class="fas fa-exclamation-triangle text-danger fs-5"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted small text-uppercase fw-semibold">{% if session.get('language') == 'en' %}Low Stock{% else %}স্বল্প মজুত{% endif %}</div>
-                                <span class="fw-bold fs-5 text-dark">{{ inventory_alerts|length if inventory_alerts else 0 }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-4">
-                    <div class="card border-0 shadow-sm h-100 rounded-3 overflow-hidden">
-                        <div class="card-body py-3 px-3 d-flex align-items-center">
-                            <div class="bg-primary bg-opacity-10 p-2 rounded-2 me-3">
-                                <i class="fas fa-hand-holding-usd text-primary fs-5"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted small text-uppercase fw-semibold">{% if session.get('language') == 'en' %}Active Loans{% else %}সক্রিয় ঋণ{% endif %}</div>
-                                <span class="fw-bold fs-5 text-dark">{{ stats.active_loans if stats else 0 }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Create Post -->
-            <div class="card border-0 shadow-sm mb-3 rounded-3 overflow-hidden">
-                <div class="card-header bg-success text-white py-2 border-0">
-                    <h6 class="mb-0 fw-semibold"><i class="fas fa-pen me-2"></i>{% if session.get('language') == 'en' %}Create New Post{% else %}নতুন পোস্ট তৈরি করুন{% endif %}</h6>
-                </div>
-                <div class="card-body p-3">
-                    <form method="POST" action="{{ url_for('admin_create_post') }}" enctype="multipart/form-data">
-                        <div class="mb-2">
-                            <textarea class="form-control form-control-sm" name="content" rows="2" placeholder="{% if session.get('language') == 'en' %}Write your advisory...{% else %}আপনার পরামর্শ লিখুন...{% endif %}" required></textarea>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <div class="flex-grow-1">
-                                <input type="file" class="form-control form-control-sm" name="image" accept="image/*">
-                            </div>
-                            <button type="submit" class="btn btn-success btn-sm px-4">
-                                <i class="fas fa-paper-plane me-1"></i> {% if session.get('language') == 'en' %}Publish{% else %}প্রকাশ{% endif %}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Recent Posts -->
-            <div class="card border-0 shadow-sm flex-grow-1 rounded-3 overflow-hidden">
-                <div class="card-header bg-light py-2 border-0 d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-semibold"><i class="fas fa-newspaper me-2 text-primary"></i>{% if session.get('language') == 'en' %}Recent Posts{% else %}সাম্প্রতিক পোস্ট{% endif %}</h6>
-                    <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ posts|length if posts else 0 }}</span>
-                </div>
-                <div class="card-body p-3" style="max-height: 350px; overflow-y: auto;">
+                <div class="tab-pane fade" id="posts-pane">
                     {% if posts %}
-                    {% for post in posts %}
-                    <div class="border-bottom pb-2 mb-2 post-item">
-                        <p class="mb-0 small">{{ post[1] }}</p>
-                        <div class="d-flex align-items-center gap-2 mt-1">
-                            <span class="text-muted small"><i class="far fa-clock me-1"></i>{{ post[2] }}</span>
-                            {% if post[3] %}
-                            <span class="badge bg-primary bg-opacity-10 text-primary">
-                                <i class="fas fa-image me-1"></i>Image
-                            </span>
-                            {% endif %}
+                    {% for p in posts %}
+                    <div class="card p-3 mb-2 bg-light">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="fw-bold text-primary mb-1"><i class="fas fa-bullhorn me-1"></i>{{ p[1] }}</h6>
+                                <small class="text-muted">{{ p[3] }}</small>
+                            </div>
+                            <form method="POST" action="{{ url_for('admin_delete_post', post_id=p[0]) }}" onsubmit="return confirm('Delete?');">
+                                <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                            </form>
                         </div>
-                        {% if post[3] %}
-                        <img src="{{ url_for('serve_image', filename=post[3]) }}" class="img-fluid rounded mt-1" style="max-height: 60px; width: auto;">
-                        {% endif %}
+                        <p class="mb-0 mt-2 text-dark">{{ p[2] }}</p>
                     </div>
                     {% endfor %}
                     {% else %}
-                    <div class="text-center text-muted small py-4">
-                        <i class="fas fa-newspaper fs-3 d-block mb-2 text-muted opacity-50"></i>
-                        {% if session.get('language') == 'en' %}No posts yet. Start sharing!{% else %}এখনো কোনো পোস্ট নেই। এখনই শেয়ার করুন!{% endif %}
-                    </div>
+                    <p class="text-muted">No notices yet.</p>
                     {% endif %}
                 </div>
-            </div>
 
-        </div>
-
-        <!-- RIGHT COLUMN: Admin Actions -->
-        <div class="col-lg-3 d-flex flex-column">
-            <div class="card border-0 shadow-sm h-100 rounded-3 overflow-hidden">
-                <div class="card-header bg-secondary text-white py-2 border-0">
-                    <h6 class="mb-0 fw-semibold"><i class="fas fa-link me-2"></i>{% if session.get('language') == 'en' %}Admin Actions{% else %}প্রশাসক কর্ম{% endif %}</h6>
-                </div>
-                <div class="card-body p-3 d-flex flex-column justify-content-center">
-                    <div class="row g-2">
-
-                        <div class="col-6">
-                            <a href="{{ url_for('admin_search') }}" class="text-decoration-none">
-                                <div class="p-3 bg-light rounded-3 text-center hover-card transition-all">
-                                    <i class="fas fa-search text-primary fs-4"></i>
-                                    <p class="mb-0 small fw-semibold mt-1">{% if session.get('language') == 'en' %}Search{% else %}অনুসন্ধান{% endif %}</p>
-                                </div>
-                            </a>
-                        </div>
-
-                        <div class="col-6">
-                            <a href="{{ url_for('admin_reports') }}" class="text-decoration-none">
-                                <div class="p-3 bg-light rounded-3 text-center hover-card transition-all">
-                                    <i class="fas fa-chart-bar text-success fs-4"></i>
-                                    <p class="mb-0 small fw-semibold mt-1">{% if session.get('language') == 'en' %}Reports{% else %}প্রতিবেদন{% endif %}</p>
-                                </div>
-                            </a>
-                        </div>
-
-                        <div class="col-6">
-                            <a href="{{ url_for('admin_centers') }}" class="text-decoration-none">
-                                <div class="p-3 bg-light rounded-3 text-center hover-card transition-all">
-                                    <i class="fas fa-building text-success fs-4"></i>
-                                    <p class="mb-0 small fw-semibold mt-1">{% if session.get('language') == 'en' %}Centers{% else %}কেন্দ্র{% endif %}</p>
-                                </div>
-                            </a>
-                        </div>
-
-                        <div class="col-6">
-                            <a href="{{ url_for('admin_agents') }}" class="text-decoration-none">
-                                <div class="p-3 bg-light rounded-3 text-center hover-card transition-all">
-                                    <i class="fas fa-user-tie text-primary fs-4"></i>
-                                    <p class="mb-0 small fw-semibold mt-1">{% if session.get('language') == 'en' %}Agents{% else %}এজেন্ট{% endif %}</p>
-                                </div>
-                            </a>
-                        </div>
-
-                        <div class="col-6">
-                            <a href="{{ url_for('admin_inventory') }}" class="text-decoration-none">
-                                <div class="p-3 bg-light rounded-3 text-center hover-card transition-all">
-                                    <i class="fas fa-warehouse text-warning fs-4"></i>
-                                    <p class="mb-0 small fw-semibold mt-1">{% if session.get('language') == 'en' %}Inventory{% else %}মজুত{% endif %}</p>
-                                </div>
-                            </a>
-                        </div>
-
-                        <div class="col-6">
-                            <a href="{{ url_for('admin_farmers') }}" class="text-decoration-none">
-                                <div class="p-3 bg-light rounded-3 text-center hover-card transition-all">
-                                    <i class="fas fa-users text-info fs-4"></i>
-                                    <p class="mb-0 small fw-semibold mt-1">{% if session.get('language') == 'en' %}Farmers{% else %}কৃষক{% endif %}</p>
-                                </div>
-                            </a>
-                        </div>
-
-                        <div class="col-6">
-                            <a href="{{ url_for('admin_banks') }}" class="text-decoration-none">
-                                <div class="p-3 bg-light rounded-3 text-center hover-card transition-all">
-                                    <i class="fas fa-university text-dark fs-4"></i>
-                                    <p class="mb-0 small fw-semibold mt-1">{% if session.get('language') == 'en' %}Bank{% else %}ব্যাংক{% endif %}</p>
-                                </div>
-                            </a>
-                        </div>
-
-                        <div class="col-6">
-                            <a href="{{ url_for('admin_kyc') }}" class="text-decoration-none">
-                                <div class="p-3 bg-light rounded-3 text-center hover-card transition-all">
-                                    <i class="fas fa-file-alt text-primary fs-4"></i>
-                                    <p class="mb-0 small fw-semibold mt-1">KYC</p>
-                                </div>
-                            </a>
-                        </div>
-
-                    </div>
-                </div>
             </div>
         </div>
-
     </div>
 </div>
 
-<style>
-    .hover-card {
-        transition: all 0.25s ease;
-        cursor: pointer;
-        border: 1px solid transparent;
-    }
-    .hover-card:hover {
-        background-color: #ffffff !important;
-        border-color: rgba(0, 0, 0, 0.08);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-        transform: translateY(-3px);
-    }
-    .transition-all { transition: all 0.25s ease; }
-    .hover-bg-light:hover { background-color: #f8f9fa !important; border-radius: 6px; }
-    .tree ul { padding-left: 0; }
-    .tree li { list-style: none; padding: 2px 0; }
-    .tree .ms-3 { margin-left: 1.2rem; }
-    .fs-4 { font-size: 1.5rem !important; }
-    .fs-8 { font-size: 0.5rem !important; }
-    .align-items-stretch { align-items: stretch; }
-    .card-body::-webkit-scrollbar { width: 4px; }
-    .card-body::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-    .card-body::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-    .post-item:hover {
-        background-color: #fafafa;
-        border-radius: 6px;
-        padding-left: 8px;
-        padding-right: 8px;
-        margin-left: -8px;
-        margin-right: -8px;
-    }
-</style>
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+<form method="POST" action="{{ url_for('admin_create_user') }}">
+    <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Create User</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-6 mb-3"><label class="form-label">First Name</label><input class="form-control" name="first_name" required></div>
+            <div class="col-6 mb-3"><label class="form-label">Last Name</label><input class="form-control" name="last_name"></div>
+        </div>
+        <div class="mb-3"><label class="form-label">Username</label><input class="form-control" name="username" required></div>
+        <div class="mb-3"><label class="form-label">Phone</label><input class="form-control" name="login_phone" required></div>
+        <div class="mb-3"><label class="form-label">Password</label><input type="password" class="form-control" name="password" value="password123" required></div>
+        <div class="mb-3"><label class="form-label">Role</label>
+            <select class="form-select" name="role" required>
+                <option value="FARMER">FARMER</option>
+                <option value="AGENT">AGENT</option>
+                <option value="ADVISOR">ADVISOR</option>
+                <option value="ADMIN">ADMIN</option>
+            </select>
+        </div>
+    </div>
+    <div class="modal-footer"><button type="submit" class="btn btn-success fw-bold">Create</button></div>
+</form>
+</div></div></div>
 
+<!-- Create Post Modal -->
+<div class="modal fade" id="createPostModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+<form method="POST" action="{{ url_for('admin_create_post') }}">
+    <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fas fa-bullhorn me-2"></i>Publish Notice</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <div class="mb-3"><label class="form-label">Title</label><input class="form-control" name="title" required></div>
+        <div class="mb-3"><label class="form-label">Content</label><textarea class="form-control" name="content" rows="4" required></textarea></div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="broadcast_bell" id="bcast" checked>
+            <label class="form-check-label fw-semibold" for="bcast">Send bell notification to all users</label>
+        </div>
+    </div>
+    <div class="modal-footer"><button type="submit" class="btn btn-primary fw-bold">Broadcast</button></div>
+</form>
+</div></div></div>
+
+<style>.nav-pills .nav-link{color:#1A1A2E;border-radius:8px;padding:8px 14px;}.nav-pills .nav-link.active{background:#1a237e;color:white;}</style>
 {% endblock %}

@@ -1,9 +1,5 @@
 # ============================================================
-# advisor_queries.py
-# Oracle-native advisor module queries.
-# Uses real tables: ADVISOR, ADVISOR_RATE, ADVISOR_AVAILABILITY,
-#                   ADVISOR_BOOKING, ADVISOR_RATING
-# Notifications fire via DB triggers (no manual inserts).
+# advisor_queries.py — Oracle-native advisor module queries.
 # ============================================================
 
 
@@ -73,21 +69,29 @@ def list_all_advisors(cursor, search=None, specialization=None, only_available=F
     """
     params = []
     if search:
-        sql += """ AND (UPPER(P.FIRST_NAME) LIKE :1 OR
-                        UPPER(P.LAST_NAME)  LIKE :1 OR
-                        UPPER(A.SPECIALIZATION) LIKE :1)"""
+        sql += """ AND (
+            UPPER(P.FIRST_NAME) LIKE :1 OR
+            UPPER(P.LAST_NAME)  LIKE :1 OR
+            UPPER(A.SPECIALIZATION) LIKE :1
+        )"""
         params.append(f"%{search.upper()}%")
     if specialization:
-        idx = len(params) + 1
-        sql += f" AND UPPER(A.SPECIALIZATION) LIKE :{idx}"
+        sql += f" AND UPPER(A.SPECIALIZATION) LIKE :{len(params) + 1}"
         params.append(f"%{specialization.upper()}%")
     if only_available:
         sql += " AND NVL(A.IS_AVAILABLE,'YES') = 'YES'"
-    sql += """ ORDER BY CASE WHEN NVL(A.IS_AVAILABLE,'YES') = 'YES' THEN 0 ELSE 1 END,
-                          NVL(A.RATING, 5.0) DESC,
-                          NVL(A.TOTAL_BOOKINGS, 0) DESC """
+    sql += """
+        ORDER BY CASE WHEN NVL(A.IS_AVAILABLE,'YES')='YES' THEN 0 ELSE 1 END,
+                 NVL(A.RATING, 5.0) DESC,
+                 NVL(A.TOTAL_BOOKINGS, 0) DESC
+    """
     cursor.execute(sql, tuple(params))
     return cursor.fetchall()
+
+
+def list_all_specializations(cursor):
+    cursor.execute("SELECT DISTINCT SPECIALIZATION FROM ADVISOR ORDER BY SPECIALIZATION")
+    return [r[0] for r in cursor.fetchall() if r[0]]
 
 
 def upsert_advisor_rate(cursor, advisor_id, rate_type, amount):
@@ -103,8 +107,7 @@ def upsert_advisor_rate(cursor, advisor_id, rate_type, amount):
         """, (amount, row[0]))
     else:
         cursor.execute("""
-            INSERT INTO ADVISOR_RATE
-                (RATE_ID, ADVISOR_ID, RATE_TYPE, AMOUNT, CURRENCY)
+            INSERT INTO ADVISOR_RATE (RATE_ID, ADVISOR_ID, RATE_TYPE, AMOUNT, CURRENCY)
             VALUES (ADVISOR_RATE_SEQ.NEXTVAL, :1, :2, :3, 'BDT')
         """, (advisor_id, rate_type, amount))
 
@@ -114,14 +117,13 @@ def replace_availability(cursor, advisor_id, days, start_time, end_time):
     for day in days:
         cursor.execute("""
             INSERT INTO ADVISOR_AVAILABILITY
-                (AVAILABILITY_ID, ADVISOR_ID, DAY_OF_WEEK,
-                 START_TIME, END_TIME, IS_AVAILABLE)
-            VALUES
-                (ADVISOR_AVAIL_SEQ.NEXTVAL, :1, :2, :3, :4, 'YES')
+                (AVAILABILITY_ID, ADVISOR_ID, DAY_OF_WEEK, START_TIME, END_TIME, IS_AVAILABLE)
+            VALUES (ADVISOR_AVAIL_SEQ.NEXTVAL, :1, :2, :3, :4, 'YES')
         """, (advisor_id, day, start_time, end_time))
 
 
-def get_bookings_for_advisor(cursor, advisor_id):
+# Dashboard version — combined name, phone, duration_hours
+def get_bookings_for_advisor_dashboard(cursor, advisor_id):
     cursor.execute("""
         SELECT B.BOOKING_ID,
                TO_CHAR(B.SCHEDULED_DATE, 'YYYY-MM-DD'),
@@ -129,7 +131,8 @@ def get_bookings_for_advisor(cursor, advisor_id):
                B.TOTAL_AMOUNT, B.PAYMENT_STATUS, B.BOOKING_STATUS,
                B.CONSULTATION_TOPIC, B.NOTES,
                P.FIRST_NAME || ' ' || P.LAST_NAME,
-               P.LOGIN_PHONE, B.FARMER_ID,
+               P.LOGIN_PHONE,
+               B.FARMER_ID,
                TO_CHAR(B.BOOKING_DATE, 'YYYY-MM-DD HH24:MI'),
                NVL(R.RATING, 0), R.REVIEW
         FROM ADVISOR_BOOKING B
@@ -142,16 +145,49 @@ def get_bookings_for_advisor(cursor, advisor_id):
     return cursor.fetchall()
 
 
+# /my-bookings version (advisor viewing their bookings)
+def get_bookings_for_advisor(cursor, advisor_id):
+    cursor.execute("""
+        SELECT B.BOOKING_ID,
+               TO_CHAR(B.SCHEDULED_DATE, 'YYYY-MM-DD'),
+               B.START_TIME, B.END_TIME, B.RATE_TYPE, B.TOTAL_AMOUNT,
+               B.PAYMENT_STATUS, B.BOOKING_STATUS, B.CONSULTATION_TOPIC,
+               P.FIRST_NAME,
+               P.LAST_NAME,
+               A.SPECIALIZATION,
+               NVL(A.RATING, 5.0),
+               B.FARMER_ID,
+               B.NOTES,
+               NVL(R.RATING, 0),
+               R.REVIEW,
+               P.LOGIN_PHONE
+        FROM ADVISOR_BOOKING B
+        JOIN FARMER F ON B.FARMER_ID = F.FARMER_CODE
+        JOIN PERSON P ON F.PERSON_ID = P.PERSON_ID
+        JOIN ADVISOR A ON B.ADVISOR_ID = A.ADVISOR_ID
+        LEFT JOIN ADVISOR_RATING R ON B.BOOKING_ID = R.BOOKING_ID
+        WHERE B.ADVISOR_ID = :1
+        ORDER BY B.BOOKING_DATE DESC
+    """, (advisor_id,))
+    return cursor.fetchall()
+
+
+# /my-bookings version (farmer viewing their bookings)
 def get_bookings_for_farmer(cursor, farmer_code):
     cursor.execute("""
         SELECT B.BOOKING_ID,
                TO_CHAR(B.SCHEDULED_DATE, 'YYYY-MM-DD'),
                B.START_TIME, B.END_TIME, B.RATE_TYPE, B.TOTAL_AMOUNT,
                B.PAYMENT_STATUS, B.BOOKING_STATUS, B.CONSULTATION_TOPIC,
-               P.FIRST_NAME || ' ' || P.LAST_NAME,
-               A.SPECIALIZATION, NVL(A.RATING, 5.0),
-               B.ADVISOR_ID, B.NOTES,
-               NVL(R.RATING, 0), R.REVIEW
+               P.FIRST_NAME,
+               P.LAST_NAME,
+               A.SPECIALIZATION,
+               NVL(A.RATING, 5.0),
+               B.ADVISOR_ID,
+               B.NOTES,
+               NVL(R.RATING, 0),
+               R.REVIEW,
+               P.LOGIN_PHONE
         FROM ADVISOR_BOOKING B
         JOIN ADVISOR A ON B.ADVISOR_ID = A.ADVISOR_ID
         JOIN PERSON P ON A.PERSON_ID = P.PERSON_ID
@@ -163,35 +199,34 @@ def get_bookings_for_farmer(cursor, farmer_code):
 
 
 def get_advisor_reviews(cursor, advisor_id, limit=10):
-    cursor.execute(f"""
-        SELECT R.RATING, R.REVIEW,
-               TO_CHAR(R.CREATED_AT, 'YYYY-MM-DD'),
-               P.FIRST_NAME || ' ' || P.LAST_NAME,
-               B.CONSULTATION_TOPIC
-        FROM ADVISOR_RATING R
-        JOIN FARMER F ON R.FARMER_ID = F.FARMER_CODE
-        JOIN PERSON P ON F.PERSON_ID = P.PERSON_ID
-        JOIN ADVISOR_BOOKING B ON R.BOOKING_ID = B.BOOKING_ID
-        WHERE R.ADVISOR_ID = :1
-        ORDER BY R.CREATED_AT DESC
-        FETCH FIRST {int(limit)} ROWS ONLY
-    """, (advisor_id,))
+    cursor.execute("""
+        SELECT * FROM (
+            SELECT R.RATING, R.REVIEW,
+                   TO_CHAR(R.CREATED_AT, 'YYYY-MM-DD'),
+                   P.FIRST_NAME || ' ' || P.LAST_NAME,
+                   B.CONSULTATION_TOPIC
+            FROM ADVISOR_RATING R
+            JOIN FARMER F ON R.FARMER_ID = F.FARMER_CODE
+            JOIN PERSON P ON F.PERSON_ID = P.PERSON_ID
+            JOIN ADVISOR_BOOKING B ON R.BOOKING_ID = B.BOOKING_ID
+            WHERE R.ADVISOR_ID = :1
+            ORDER BY R.CREATED_AT DESC
+        ) WHERE ROWNUM <= :2
+    """, (advisor_id, int(limit)))
     return cursor.fetchall()
-
-
 def get_user_notifications(cursor, person_id, limit=10):
-    cursor.execute(f"""
-        SELECT NOTIF_ID, NVL(TITLE,'নোটিফিকেশন'), MESSAGE,
-               NVL(LINK, '/'), NVL(IS_READ, 'NO'),
-               TO_CHAR(CREATED_AT, 'YYYY-MM-DD HH24:MI'),
-               NVL(NOTIFICATION_TYPE, 'GENERAL')
-        FROM NOTIFICATION
-        WHERE PERSON_ID = :1
-        ORDER BY CREATED_AT DESC
-        FETCH FIRST {int(limit)} ROWS ONLY
-    """, (person_id,))
+    cursor.execute("""
+        SELECT * FROM (
+            SELECT NOTIF_ID, NVL(TITLE,'নোটিফিকেশন'), MESSAGE,
+                   NVL(LINK, '/'), NVL(IS_READ, 'NO'),
+                   TO_CHAR(CREATED_AT, 'YYYY-MM-DD HH24:MI'),
+                   NVL(NOTIFICATION_TYPE, 'GENERAL')
+            FROM NOTIFICATION
+            WHERE PERSON_ID = :1
+            ORDER BY CREATED_AT DESC
+        ) WHERE ROWNUM <= :2
+    """, (person_id, int(limit)))
     return cursor.fetchall()
-
 
 def count_unread_notifications(cursor, person_id):
     cursor.execute("""
@@ -298,5 +333,3 @@ def mark_all_notifications_read(cursor, person_id):
         UPDATE NOTIFICATION SET IS_READ = 'YES'
         WHERE PERSON_ID = :1 AND NVL(IS_READ, 'NO') = 'NO'
     """, (person_id,))
-
-    

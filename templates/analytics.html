@@ -1,0 +1,543 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if session.get('language') == 'en' %}Executive Analytics & Management - KrishiBondhu{% else %}অ্যানালিটিক্স ও ম্যানেজমেন্ট ড্যাশবোর্ড - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <h2 class="fw-bold text-success mb-1">
+                <i class="fas fa-chart-pie me-2"></i>
+                {% if session.get('language') == 'en' %}Executive Analytics & Action Center{% else %}সিস্টেম অ্যানালিটিক্স ও অ্যাকশন সেন্টার{% endif %}
+            </h2>
+            <p class="text-muted mb-0">
+                {% if session.get('language') == 'en' %}
+                Real-time performance analytics with direct admin management controls to resolve issues across centers, farmers, advisors, and loans.
+                {% else %}
+                সেন্টার, কৃষক ঋণ ঝুঁকি, কৃষি উপদেষ্টা এবং ঋণ কিস্তির সমস্যাগুলো অ্যানালিটিক্স ডেটা দেখে সরাসরি সমাধানের প্রশাসনিক কন্ট্রোল প্যানেল।
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <a href="{{ url_for('search_page') }}" class="btn btn-outline-success me-2">
+                <i class="fas fa-search me-1"></i>
+                {% if session.get('language') == 'en' %}Search Database{% else %}ডাটাবেজ সার্চ{% endif %}
+            </a>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-success">
+                <i class="fas fa-tachometer-alt me-1"></i>
+                {% if session.get('language') == 'en' %}Admin Panel{% else %}মূল অ্যাডমিন প্যানেল{% endif %}
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0 fw-bold text-primary">
+                    <i class="fas fa-trophy text-warning me-2"></i>
+                    {% if session.get('language') == 'en' %}Regional Center Performance & Hierarchy Ranking{% else %}১. আঞ্চলিক সেন্টার পারফরম্যান্স ও ম্যানেজমেন্ট{% endif %}
+                </h5>
+                <small class="text-muted">
+                    {% if session.get('language') == 'en' %}Click "Manage" on any center to edit details or reassign agents.{% else %}যেকোনো সেন্টারে ফিল্ড এজেন্ট রি-অ্যাসাইন বা তথ্য পরিবর্তনের জন্য "ম্যানেজ" বাটনে চাপুন।{% endif %}
+                </small>
+            </div>
+            <span class="badge bg-primary-subtle text-primary fw-semibold">সেন্টার র‍্যাংকিং</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>র‍্যাংক</th>
+                            <th>সেন্টারের নাম</th>
+                            <th>অবস্থান (উপজেলা, জেলা)</th>
+                            <th>কৃষক সংখ্যা</th>
+                            <th>ফিল্ড এজেন্ট</th>
+                            <th>মোট ঋণ বিতরণ</th>
+                            <th>অপারেশনাল টায়ার</th>
+                            <th class="text-center">প্রশাসনিক অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in center_rankings %}
+                        <tr>
+                            <td>
+                                {% if c.performance_rank == 1 %}
+                                    <span class="badge bg-warning text-dark fs-6"><i class="fas fa-crown me-1"></i>#1</span>
+                                {% elif c.performance_rank == 2 %}
+                                    <span class="badge bg-secondary fs-6">#2</span>
+                                {% elif c.performance_rank == 3 %}
+                                    <span class="badge bg-bronze text-white fs-6" style="background-color: #cd7f32;">#3</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark border">#{{ c.performance_rank }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-dark">{{ c.center_name }}</td>
+                            <td>{{ c.upazila }}, {{ c.district }}</td>
+                            <td class="fw-semibold text-success">{{ c.total_farmers }} জন</td>
+                            <td>{{ c.total_agents }} জন</td>
+                            <td class="fw-bold text-primary">৳{{ "{:,.2f}".format(c.total_loan_disbursed) }}</td>
+                            <td>
+                                {% if 'TIER-A' in c.operational_tier %}
+                                    <span class="badge bg-success">{{ c.operational_tier }}</span>
+                                {% elif 'TIER-B' in c.operational_tier %}
+                                    <span class="badge bg-info text-dark">{{ c.operational_tier }}</span>
+                                {% else %}
+                                    <span class="badge bg-light text-muted border">{{ c.operational_tier }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCenterModal{{ c.center_code }}">
+                                    <i class="fas fa-edit me-1"></i> সেন্টার এডিট
+                                </button>
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="editCenterModal{{ c.center_code }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form method="POST" action="{{ url_for('admin_edit_center', center_code=c.center_code) }}">
+                                        <input type="hidden" name="next_url" value="{{ request.path }}">
+                                        <div class="modal-header bg-primary text-white">
+                                            <h5 class="modal-title"><i class="fas fa-building me-2"></i>সেন্টার সম্পাদনা (Center #{{ c.center_code }})</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">সেন্টারের নাম</label>
+                                                <input type="text" name="center_name" class="form-control" value="{{ c.center_name }}" required>
+                                            </div>
+                                            <div class="row g-2 mb-3">
+                                                <div class="col">
+                                                    <label class="form-label fw-semibold">উপজেলা</label>
+                                                    <input type="text" name="upazila" class="form-control" value="{{ c.upazila }}" required>
+                                                </div>
+                                                <div class="col">
+                                                    <label class="form-label fw-semibold">জেলা</label>
+                                                    <input type="text" name="district" class="form-control" value="{{ c.district }}" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">বাতিল</button>
+                                            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save me-1"></i> তথ্য সংরক্ষণ করুন</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0 fw-bold text-success">
+                    <i class="fas fa-shield-alt text-success me-2"></i>
+                    {% if session.get('language') == 'en' %}Farmer Credit Portfolio & Risk Management{% else %}২. কৃষক ঋণ ঝুঁকি মূল্যায়ন ও সমস্যা সমাধান (Risk Resolution){% endif %}
+                </h5>
+                <small class="text-muted">
+                    {% if session.get('language') == 'en' %}Click "Fix & Manage" to verify KYC, adjust active loans, reassign centers, or send alerts.{% else %}KYC ভেরিফিকেশন, অতিরিক্ত ঋণ ঝুঁকি সমাধান, সেন্টার পরিবর্তন বা সতর্কবার্তা পাঠানোর জন্য "সমাধান ও ম্যানেজ" বাটনে চাপুন।{% endif %}
+                </small>
+            </div>
+            <span class="badge bg-success-subtle text-success fw-semibold">ক্রেডিট রিস্ক ম্যানেজমেন্ট</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>কৃষক কোড</th>
+                            <th>কৃষকের নাম</th>
+                            <th>ফোন</th>
+                            <th>সেন্টার</th>
+                            <th>সক্রিয় ঋণ (Exposure)</th>
+                            <th>KYC স্ট্যাটাস</th>
+                            <th>রিস্ক ক্যাটাগরি</th>
+                            <th>ক্রেডিট স্কোর</th>
+                            <th class="text-center">অ্যাকশন ও সমাধান</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in farmer_risk %}
+                        <tr>
+                            <td class="fw-bold text-secondary">#{{ f.farmer_code }}</td>
+                            <td class="fw-semibold">{{ f.farmer_name }}</td>
+                            <td><code>{{ f.login_phone }}</code></td>
+                            <td>{{ f.center_name }}</td>
+                            <td class="fw-bold {% if f.active_loan_exposure > 0 %}text-danger{% else %}text-muted{% endif %}">
+                                ৳{{ "{:,.2f}".format(f.active_loan_exposure) }}
+                            </td>
+                            <td>
+                                {% if f.kyc_status == 'VERIFIED' %}
+                                    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>VERIFIED</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>PENDING</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if f.risk_category == 'PRIME_RELIABLE' %}
+                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>PRIME RELIABLE</span>
+                                {% elif f.risk_category == 'MODERATE_ACTIVE' %}
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-info-circle me-1"></i>MODERATE ACTIVE</span>
+                                {% elif f.risk_category == 'HIGH_EXPOSURE' %}
+                                    <span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i>HIGH EXPOSURE</span>
+                                {% elif f.risk_category == 'KYC_UNVERIFIED_RISK' %}
+                                    <span class="badge bg-dark"><i class="fas fa-user-times me-1"></i>KYC PENDING</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">NEW APPLICANT</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height: 6px; width: 50px;">
+                                        <div class="progress-bar {% if f.estimated_credit_score >= 80 %}bg-success{% elif f.estimated_credit_score >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             role="progressbar" style="width: {{ f.estimated_credit_score }}%;"></div>
+                                    </div>
+                                    <span class="fw-bold small">{{ f.estimated_credit_score }}/100</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm {% if f.risk_category in ['HIGH_EXPOSURE', 'KYC_UNVERIFIED_RISK'] %}btn-danger{% else %}btn-outline-success{% endif %}" 
+                                        data-bs-toggle="modal" data-bs-target="#farmerFixModal{{ f.farmer_code }}">
+                                    <i class="fas fa-tools me-1"></i> সমাধান ও অ্যাকশন
+                                </button>
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="farmerFixModal{{ f.farmer_code }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form method="POST" action="{{ url_for('admin_manage_farmer', farmer_code=f.farmer_code) }}">
+                                        <input type="hidden" name="next_url" value="{{ request.path }}">
+                                        <div class="modal-header bg-success text-white">
+                                            <h5 class="modal-title">
+                                                <i class="fas fa-user-shield me-2"></i>কৃষক রিস্ক ম্যানেজমেন্ট (Farmer #{{ f.farmer_code }})
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body text-start">
+                                            <div class="p-3 bg-light rounded border mb-3">
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <small class="text-muted">কৃষকের নাম:</small>
+                                                        <div class="fw-bold">{{ f.farmer_name }}</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small class="text-muted">মোবাইল নম্বর:</small>
+                                                        <div class="fw-bold"><code>{{ f.login_phone }}</code></div>
+                                                    </div>
+                                                </div>
+                                                <div class="row mt-2">
+                                                    <div class="col-6">
+                                                        <small class="text-muted">বর্তমান সক্রিয় ঋণ:</small>
+                                                        <div class="fw-bold text-danger">৳{{ "{:,.2f}".format(f.active_loan_exposure) }}</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small class="text-muted">বর্তমান রিস্ক টায়ার:</small>
+                                                        <div class="fw-bold text-dark">{{ f.risk_category }}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold text-secondary">
+                                                    <i class="fas fa-id-card me-1"></i> KYC ভেরিফিকেশন স্ট্যাটাস পরিবর্তন:
+                                                </label>
+                                                <select name="kyc_status" class="form-select">
+                                                    <option value="VERIFIED" {% if f.kyc_status == 'VERIFIED' %}selected{% endif %}>✅ VERIFIED (অনুমোদিত)</option>
+                                                    <option value="PENDING" {% if f.kyc_status == 'PENDING' %}selected{% endif %}>⏳ PENDING (বিচারাধীন)</option>
+                                                    <option value="REJECTED" {% if f.kyc_status == 'REJECTED' %}selected{% endif %}>❌ REJECTED (বাতিল)</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold text-secondary">
+                                                    <i class="fas fa-map-marker-alt me-1"></i> অ্যাসাইনকৃত সেন্টার পরিবর্তন:
+                                                </label>
+                                                <select name="center_code" class="form-select">
+                                                    {% for c in all_centers %}
+                                                    <option value="{{ c[0] }}" {% if c[1] == f.center_name %}selected{% endif %}>
+                                                        {{ c[1] }} ({{ c[2] }}, {{ c[3] }})
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+
+                                            {% if f.active_loan_exposure > 0 %}
+                                            <div class="mb-3 p-2 bg-warning-subtle rounded border border-warning">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="close_active_loan" value="YES" id="closeLoan{{ f.farmer_code }}">
+                                                    <label class="form-check-label fw-bold text-dark" for="closeLoan{{ f.farmer_code }}">
+                                                        সক্রিয় ঋণ পরিশোধিত (CLOSED) হিসেবে মার্ক করুন
+                                                    </label>
+                                                </div>
+                                                <small class="text-muted d-block">প্রশাসনিক রিভিউ শেষে ঋণ অ্যাকাউন্ট ক্লোজ করতে টিক দিন।</small>
+                                            </div>
+                                            {% endif %}
+
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold text-secondary">
+                                                    <i class="fas fa-bell me-1"></i> কৃষককে সরাসরি সতর্কবার্তা / নোটিশ পাঠান:
+                                                </label>
+                                                <input type="text" name="alert_message" class="form-control" 
+                                                       placeholder="e.g. আপনার বকেয়া ঋণের কিস্তি আগামী ৫ দিনের মধ্যে পরিশোধ করুন।">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">বাতিল</button>
+                                            <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check-circle me-1"></i> সমস্যা সমাধান ও সংরক্ষণ</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0 fw-bold text-info-emphasis">
+                    <i class="fas fa-user-graduate text-info me-2"></i>
+                    {% if session.get('language') == 'en' %}Agricultural Advisor Performance & Controls{% else %}৩. কৃষি উপদেষ্টা সেবা নিয়ন্ত্রণ ও পারফরম্যান্স{% endif %}
+                </h5>
+                <small class="text-muted">
+                    {% if session.get('language') == 'en' %}Toggle availability status or edit advisor profiles directly.{% else %}উপদেষ্টার প্রাপ্যতা (Availability) সক্রিয়/নিষ্ক্রিয় বা প্রোফাইল আপডেট করতে "ম্যানেজ" বাটনে চাপুন।{% endif %}
+                </small>
+            </div>
+            <span class="badge bg-info-subtle text-info-emphasis fw-semibold">উপদেষ্টা কন্ট্রোল</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>আইডি</th>
+                            <th>উপদেষ্টা</th>
+                            <th>বিশেষজ্ঞতা</th>
+                            <th>রেটিং ও রিভিউ</th>
+                            <th>প্রাপ্যতা (Availability)</th>
+                            <th>সম্পূর্ণ সেশন</th>
+                            <th>মোট অর্জিত আয়</th>
+                            <th class="text-center">প্রশাসনিক অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in advisor_revenue %}
+                        <tr>
+                            <td class="fw-bold">#{{ a.advisor_id }}</td>
+                            <td class="fw-semibold">{{ a.advisor_name }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ a.specialization }}</span></td>
+                            <td>
+                                <span class="text-warning fw-bold"><i class="fas fa-star me-1"></i>{{ a.rating }}</span>
+                                <small class="text-muted">({{ a.total_reviews }} রিভিউ)</small>
+                            </td>
+                            <td>
+                                {% if a.is_available == 'YES' %}
+                                    <span class="badge bg-success">সক্রিয় (AVAILABLE)</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">নিষ্ক্রিয় (OFFLINE)</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-success">{{ a.completed_sessions }} টি</td>
+                            <td class="fw-bold text-primary">৳{{ "{:,.2f}".format(a.total_revenue) }}</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <form method="POST" action="{{ url_for('admin_toggle_advisor_status', advisor_id=a.advisor_id) }}" class="d-inline">
+                                        <input type="hidden" name="next_url" value="{{ request.path }}">
+                                        <button type="submit" class="btn btn-sm {% if a.is_available == 'YES' %}btn-outline-warning{% else %}btn-outline-success{% endif %}" 
+                                                title="স্ট্যাটাস পরিবর্তন">
+                                            {% if a.is_available == 'YES' %}<i class="fas fa-pause me-1"></i>নিষ্ক্রিয় করুন{% else %}<i class="fas fa-play me-1"></i>সক্রিয় করুন{% endif %}
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#editAdvisorModal{{ a.advisor_id }}">
+                                        <i class="fas fa-edit me-1"></i> এডিট
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="editAdvisorModal{{ a.advisor_id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form method="POST" action="{{ url_for('admin_edit_advisor', advisor_id=a.advisor_id) }}">
+                                        <input type="hidden" name="next_url" value="{{ request.path }}">
+                                        <div class="modal-header bg-info text-white">
+                                            <h5 class="modal-title"><i class="fas fa-user-tie me-2"></i>উপদেষ্টা প্রোফাইল সম্পাদনা (Advisor #{{ a.advisor_id }})</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body text-start">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">উপদেষ্টার নাম</label>
+                                                <input type="text" class="form-control" value="{{ a.advisor_name }}" disabled>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">বিশেষজ্ঞতা (Specialization)</label>
+                                                <input type="text" name="specialization" class="form-control" value="{{ a.specialization }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">অভিজ্ঞতা (বছর)</label>
+                                                <input type="number" name="experience_years" class="form-control" value="{{ a.experience_years or 5 }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">বাতিল</button>
+                                            <button type="submit" class="btn btn-info text-white btn-sm"><i class="fas fa-save me-1"></i> সংরক্ষণ করুন</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0 fw-bold text-dark">
+                    <i class="fas fa-calendar-alt text-danger me-2"></i>
+                    {% if session.get('language') == 'en' %}Projected Loan Schedule & Payment Recording{% else %}৪. ঋণ পরিশোধ কিস্তি পূর্বাভাস ও পেমেন্ট অ্যাকশন{% endif %}
+                </h5>
+                <small class="text-muted">
+                    {% if session.get('language') == 'en' %}Select a loan ID to calculate installments and record immediate repayments.{% else %}ঋণ নং নির্বাচন করে কিস্তির তালিকা দেখুন এবং সরাসরি কিস্তি পরিশোধ রেকর্ড করুন।{% endif %}
+                </small>
+            </div>
+            <span class="badge bg-secondary-subtle text-secondary fw-semibold">কিস্তি ক্যালকুলেটর</span>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('admin_analytics') }}" class="row g-2 mb-3 align-items-center">
+                <div class="col-auto">
+                    <label class="form-label mb-0 fw-semibold">ঋণ নং নির্বাচন করুন (Select Loan ID):</label>
+                </div>
+                <div class="col-auto">
+                    <input type="number" name="loan_no" class="form-control" placeholder="Loan No (e.g. 101)" value="{{ selected_loan_no }}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-dark btn-sm">
+                        <i class="fas fa-calculator me-1"></i> কিস্তি তালিকা দেখুন
+                    </button>
+                </div>
+            </form>
+
+            {% if recursive_schedule %}
+            <div class="p-3 bg-light rounded mb-3 border">
+                <div class="row text-center align-items-center">
+                    <div class="col-md-2">
+                        <small class="text-muted">ঋণ নং</small>
+                        <h6 class="fw-bold text-dark mb-0">#{{ recursive_schedule[0].loan_no }}</h6>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">কৃষকের নাম</small>
+                        <h6 class="fw-bold text-dark mb-0">{{ recursive_schedule[0].farmer_name }}</h6>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="text-muted">মূল ঋণের পরিমাণ</small>
+                        <h6 class="fw-bold text-success mb-0">৳{{ "{:,.2f}".format(recursive_schedule[0].loan_amount) }}</h6>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted">মোট মেয়াদ</small>
+                        <h6 class="fw-bold text-primary mb-0">{{ recursive_schedule[0].tenure }} মাস</h6>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-success btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#recordRepaymentModal">
+                            <i class="fas fa-hand-holding-usd me-1"></i> কিস্তি রেকর্ড
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="recordRepaymentModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="POST" action="{{ url_for('admin_record_loan_repayment', loan_no=recursive_schedule[0].loan_no) }}">
+                            <input type="hidden" name="next_url" value="{{ request.path }}">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title"><i class="fas fa-money-bill-wave me-2"></i>কিস্তি পরিশোধ রেকর্ড (Loan #{{ recursive_schedule[0].loan_no }})</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-start">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">কৃষক:</label>
+                                    <input type="text" class="form-control" value="{{ recursive_schedule[0].farmer_name }}" disabled>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">পরিশোধের পরিমাণ (BDT):</label>
+                                    <input type="number" step="0.01" name="amount_paid" class="form-control" 
+                                           value="{{ recursive_schedule[0].installment_amount }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">পেমেন্ট মাধ্যম (Payment Method):</label>
+                                    <select name="payment_method" class="form-select">
+                                        <option value="CASH">Cash (নগদ)</option>
+                                        <option value="MOBILE_BANKING">Mobile Banking (bKash/Nagad)</option>
+                                        <option value="BANK_TRANSFER">Bank Transfer</option>
+                                        <option value="CHEQUE">Cheque</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">ট্রানজেকশন রেফারেন্স / নোট:</label>
+                                    <input type="text" name="transaction_ref" class="form-control" 
+                                           placeholder="e.g. TRX-BKASH-983742" value="ADM-PAY-{{ recursive_schedule[0].loan_no }}">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">বাতিল</button>
+                                <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check me-1"></i> পরিশোধ নিশ্চিত করুন</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0 text-center">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>কিস্তি নং (Month)</th>
+                            <th>নির্ধারিত পরিশোধের তারিখ</th>
+                            <th>কিস্তির পরিমাণ (BDT)</th>
+                            <th>অবশিষ্ট ঋণ ব্যালেন্স (Remaining)</th>
+                            <th>স্ট্যাটাস পূর্বাভাস</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in recursive_schedule %}
+                        <tr>
+                            <td class="fw-bold">কিস্তি #{{ row.installment_no }}</td>
+                            <td><code>{{ row.due_date }}</code></td>
+                            <td class="fw-bold text-success">৳{{ "{:,.2f}".format(row.installment_amount) }}</td>
+                            <td class="fw-semibold text-danger">৳{{ "{:,.2f}".format(row.remaining_balance) }}</td>
+                            <td>
+                                {% if row.remaining_balance == 0.0 %}
+                                    <span class="badge bg-success"><i class="fas fa-flag-checkered me-1"></i>সম্পূর্ণ পরিশোধিত (CLOSED)</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark border">নির্ধারিত কিস্তি</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-secondary mb-0">কোনো ঋণ রেকর্ড পাওয়া যায়নি।</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

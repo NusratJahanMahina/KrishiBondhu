@@ -1,6 +1,5 @@
 # ============================================================
-# advisor_routes.py — Oracle-native, wired to real schema.
-# Notifications fire via DB triggers automatically.
+# advisor_routes.py — Oracle-native advisor routes.
 # ============================================================
 
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
@@ -8,12 +7,16 @@ from db_connect import get_connection
 from datetime import datetime
 from advisor_queries import (
     get_advisor_by_person, get_advisor_by_id, get_advisor_rates,
-    get_advisor_availability, list_all_advisors, upsert_advisor_rate,
-    replace_availability, get_bookings_for_advisor, get_bookings_for_farmer,
-    get_advisor_reviews, get_user_notifications, count_unread_notifications,
+    get_advisor_availability, list_all_advisors, list_all_specializations,
+    upsert_advisor_rate, replace_availability,
+    get_bookings_for_advisor, get_bookings_for_advisor_dashboard,
+    get_bookings_for_farmer, get_advisor_reviews,
+    get_user_notifications, count_unread_notifications,
     create_booking, update_booking_status, complete_booking,
-    upsert_booking_rating, update_advisor_profile, toggle_advisor_availability,
-    mark_notification_read, mark_all_notifications_read,
+    upsert_booking_rating, update_advisor_profile,
+    toggle_advisor_availability,
+    mark_notification_read,
+    mark_all_notifications_read as db_mark_all_read,
 )
 
 
@@ -50,6 +53,7 @@ def register_advisor_routes(app):
             cursor.close()
             conn.close()
 
+
     @app.route('/api/notifications/<notif_id>/read', methods=['POST'])
     def api_mark_read(notif_id):
         if 'user' not in session:
@@ -70,8 +74,9 @@ def register_advisor_routes(app):
             cursor.close()
             conn.close()
 
+
     @app.route('/api/notifications/read-all', methods=['POST'])
-    def api_mark_all_read():
+    def mark_all_notifications_read():
         if 'user' not in session:
             return jsonify({'error': 'Unauthorized'}), 401
         person_id = session['user'].get('person_id')
@@ -80,7 +85,7 @@ def register_advisor_routes(app):
             return jsonify({'error': 'DB error'}), 500
         cursor = conn.cursor()
         try:
-            mark_all_notifications_read(cursor, person_id)
+            db_mark_all_read(cursor, person_id)
             conn.commit()
             return jsonify({'success': True})
         except Exception as e:
@@ -89,6 +94,7 @@ def register_advisor_routes(app):
         finally:
             cursor.close()
             conn.close()
+
 
     # ---------- ADVISOR DASHBOARD ----------
 
@@ -127,7 +133,7 @@ def register_advisor_routes(app):
             rates.setdefault('DAILY', 3500.0)
 
             availability = get_advisor_availability(cursor, advisor_id)
-            all_bookings = get_bookings_for_advisor(cursor, advisor_id)
+            all_bookings = get_bookings_for_advisor_dashboard(cursor, advisor_id)
 
             pending, upcoming, completed, cancelled = [], [], [], []
             total_earnings = 0.0
@@ -143,7 +149,7 @@ def register_advisor_routes(app):
                     'farmer_id': r[13], 'booking_date': r[14],
                     'rating': r[15], 'review': r[16],
                 }
-                if b['booking_status'] == 'PENDING':    pending.append(b)
+                if b['booking_status'] == 'PENDING':     pending.append(b)
                 elif b['booking_status'] == 'CONFIRMED': upcoming.append(b)
                 elif b['booking_status'] == 'COMPLETED':
                     completed.append(b)
@@ -182,10 +188,11 @@ def register_advisor_routes(app):
             cursor.close()
             conn.close()
 
+
     # ---------- BOOKING ACTIONS ----------
 
     @app.route('/advisor/booking/<int:booking_id>/action', methods=['POST'])
-    def advisor_booking_action(booking_id):
+    def update_booking_action(booking_id):
         if 'user' not in session or session['user']['role'] != 'ADVISOR':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
@@ -214,8 +221,9 @@ def register_advisor_routes(app):
             conn.close()
         return redirect(url_for('advisor_dashboard'))
 
+
     @app.route('/advisor/booking/<int:booking_id>/notes', methods=['POST'])
-    def advisor_add_notes(booking_id):
+    def add_consultation_notes(booking_id):
         if 'user' not in session or session['user']['role'] != 'ADVISOR':
             return redirect(url_for('login_register'))
         notes = request.form.get('notes', '').strip()
@@ -234,10 +242,11 @@ def register_advisor_routes(app):
             conn.close()
         return redirect(url_for('advisor_dashboard'))
 
+
     # ---------- PROFILE / RATES / AVAILABILITY ----------
 
     @app.route('/advisor/status/toggle', methods=['POST'])
-    def advisor_toggle_status():
+    def toggle_advisor_status():
         if 'user' not in session or session['user']['role'] != 'ADVISOR':
             return jsonify({'error': 'Unauthorized'}), 401
         person_id = session['user']['person_id']
@@ -258,8 +267,9 @@ def register_advisor_routes(app):
             cursor.close()
             conn.close()
 
+
     @app.route('/advisor/profile/update', methods=['POST'])
-    def advisor_update_profile():
+    def update_advisor_profile():
         if 'user' not in session or session['user']['role'] != 'ADVISOR':
             return redirect(url_for('login_register'))
         person_id = session['user']['person_id']
@@ -287,8 +297,9 @@ def register_advisor_routes(app):
             conn.close()
         return redirect(url_for('advisor_dashboard'))
 
+
     @app.route('/advisor/rates/update', methods=['POST'])
-    def advisor_update_rates():
+    def update_advisor_rates():
         if 'user' not in session or session['user']['role'] != 'ADVISOR':
             return redirect(url_for('login_register'))
         person_id = session['user']['person_id']
@@ -318,8 +329,9 @@ def register_advisor_routes(app):
             conn.close()
         return redirect(url_for('advisor_dashboard'))
 
+
     @app.route('/advisor/availability/update', methods=['POST'])
-    def advisor_update_availability():
+    def update_advisor_availability():
         if 'user' not in session or session['user']['role'] != 'ADVISOR':
             return redirect(url_for('login_register'))
         person_id = session['user']['person_id']
@@ -345,6 +357,7 @@ def register_advisor_routes(app):
             conn.close()
         return redirect(url_for('advisor_dashboard'))
 
+
     # ---------- PUBLIC LISTING + PROFILE ----------
 
     @app.route('/advisors')
@@ -362,14 +375,18 @@ def register_advisor_routes(app):
             rows = list_all_advisors(cursor, search, specialization, only_available)
             advisors = [{
                 'advisor_id': r[0], 'first_name': r[1], 'last_name': r[2],
-                'phone': r[3], 'specialization': r[4], 'bio': r[5],
-                'experience_years': r[6], 'qualification': r[7],
-                'rating': float(r[8] or 5.0), 'total_bookings': r[9],
-                'is_available': r[10],
+                'phone': r[3], 'specialization': r[4] or 'কৃষি বিশেষজ্ঞ',
+                'bio': r[5] or '', 'experience_years': r[6] or 0,
+                'qualification': r[7] or 'বিএসসি ইন এগ্রিকালচার',
+                'rating': float(r[8] or 5.0), 'total_bookings': r[9] or 0,
+                'is_available': r[10] or 'YES',
                 'rates': get_advisor_rates(cursor, r[0]),
             } for r in rows]
+            specializations = list_all_specializations(cursor)
+
             return render_template('advisor/advisor_listing.html',
                                    advisors=advisors,
+                                   specializations=specializations,
                                    search_query=search,
                                    selected_specialization=specialization,
                                    availability='YES' if only_available else '',
@@ -377,6 +394,7 @@ def register_advisor_routes(app):
         finally:
             cursor.close()
             conn.close()
+
 
     @app.route('/advisor/<int:advisor_id>')
     @app.route('/advisor/<int:advisor_id>/profile')
@@ -401,6 +419,7 @@ def register_advisor_routes(app):
             cursor.close()
             conn.close()
 
+
     # ---------- BOOK ADVISOR ----------
 
     @app.route('/advisor/<int:advisor_id>/book', methods=['GET', 'POST'])
@@ -408,89 +427,84 @@ def register_advisor_routes(app):
         if 'user' not in session:
             return redirect(url_for('login_register'))
         if session['user']['role'] != 'FARMER':
-            flash(get_flash_message('শুধুমাত্র কৃষকরা বুক করতে পারবেন।',
-                                    'Only farmers can book.'), 'warning')
+            flash('শুধুমাত্র কৃষকরা বুক করতে পারবেন।', 'warning')
             return redirect(url_for('advisor_listing'))
 
-        farmer_code = session['user'].get('farmer_code')
-        if not farmer_code:
-            flash(get_flash_message('কৃষক কোড পাওয়া যায়নি।',
-                                    'Farmer code not found.'), 'danger')
+        person_id = session['user']['person_id']
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT farmer_code FROM FARMER WHERE person_id = :1", (person_id,))
+        row = cursor.fetchone()
+        if not row:
+            flash('Farmer profile not found.', 'danger')
+            cursor.close()
+            conn.close()
             return redirect(url_for('dashboard'))
+        farmer_code = row[0]
 
         if request.method == 'POST':
             try:
-                scheduled = request.form.get('scheduled_date')
+                scheduled  = request.form.get('scheduled_date')
                 start_time = request.form.get('start_time', '10:00')
-                end_time = request.form.get('end_time', '11:00')
-                rate_type = request.form.get('rate_type', 'HOURLY')
-                topic = request.form.get('consultation_topic', 'সাধারণ কৃষি পরামর্শ')
+                end_time   = request.form.get('end_time', '11:00')
+                rate_type  = request.form.get('rate_type', 'HOURLY')
+                topic      = request.form.get('consultation_topic', 'সাধারণ কৃষি পরামর্শ')
 
                 if rate_type == 'DAILY':
-                    duration = 8.0
+                    duration_hours = 8.0
                     end_time = '17:00'
                 else:
                     try:
-                        s = datetime.strptime(start_time, '%H:%M')
-                        e = datetime.strptime(end_time, '%H:%M')
-                        duration = max(1.0, (e - s).total_seconds() / 3600)
-                    except ValueError:
-                        duration = 1.0
+                        from datetime import datetime as _dt
+                        s_dt = _dt.strptime(start_time, '%H:%M')
+                        e_dt = _dt.strptime(end_time, '%H:%M')
+                        duration_hours = max(1.0, (e_dt - s_dt).total_seconds() / 3600)
+                    except Exception:
+                        duration_hours = 1.0
 
-                conn = get_connection()
-                cursor = conn.cursor()
+                cursor.execute("SELECT amount FROM ADVISOR_RATE WHERE advisor_id = :1 AND rate_type = :2",
+                               (advisor_id, rate_type))
+                rr = cursor.fetchone()
+                rate_amount = float(rr[0]) if rr else (500.0 if rate_type == 'HOURLY' else 3500.0)
+                total = rate_amount * (1 if rate_type == 'DAILY' else duration_hours)
 
-                cursor.execute("""
-                    SELECT AMOUNT FROM ADVISOR_RATE
-                    WHERE ADVISOR_ID = :1 AND RATE_TYPE = :2
-                """, (advisor_id, rate_type))
-                rate_row = cursor.fetchone()
-                rate_amount = float(rate_row[0]) if rate_row else (500.0 if rate_type == 'HOURLY' else 3500.0)
-                total = rate_amount * (1 if rate_type == 'DAILY' else duration)
+                cursor.execute("INSERT INTO ADVISOR_BOOKING (advisor_id, farmer_id, agent_id, scheduled_date, start_time, end_time, duration_hours, rate_type, total_amount, payment_status, booking_status, consultation_topic) VALUES (:1, :2, NULL, :3, :4, :5, :6, :7, :8, 'PENDING', 'PENDING', :9)",
+                               (advisor_id, farmer_code, scheduled, start_time, end_time,
+                                duration_hours, rate_type, total, topic))
 
-                agent_code = session['user'].get('agent_code')
-
-                booking_id = create_booking(
-                    cursor, advisor_id, farmer_code, agent_code,
-                    scheduled, start_time, end_time, duration,
-                    rate_type, total, topic
-                )
                 conn.commit()
-                flash(get_flash_message(f'বুকিং #{booking_id} পাঠানো হয়েছে।',
-                                        f'Booking #{booking_id} sent.'), 'success')
+                flash('বুকিং সফলভাবে পাঠানো হয়েছে! উপদেষ্টা শীঘ্রই নিশ্চিত করবেন।', 'success')
+                cursor.close()
+                conn.close()
                 return redirect(url_for('my_bookings'))
             except Exception as e:
-                try: conn.rollback()
-                except: pass
-                print(f"Book error: {e}")
-                import traceback; traceback.print_exc()
-                flash(f'Error: {e}', 'danger')
+                conn.rollback()
+                import traceback
+                traceback.print_exc()
+                flash('বুকিং ব্যর্থ: ' + str(e), 'danger')
+                cursor.close()
+                conn.close()
                 return redirect(url_for('advisor_listing'))
-            finally:
-                try: cursor.close(); conn.close()
-                except: pass
 
-        # GET — show form
-        conn = get_connection()
-        cursor = conn.cursor()
-        try:
-            adv = get_advisor_by_id(cursor, advisor_id)
-            if not adv:
-                flash('Advisor not found.', 'danger')
-                return redirect(url_for('advisor_listing'))
-            rates = get_advisor_rates(cursor, advisor_id)
-            availability = get_advisor_availability(cursor, advisor_id)
-            return render_template('advisor/advisor_booking.html',
-                                   advisor=adv, rates=rates,
-                                   availability=availability,
-                                   user=session['user'],
-                                   today_date=datetime.now().strftime('%Y-%m-%d'))
-        finally:
-            cursor.close()
-            conn.close()
+        cursor.execute("SELECT A.advisor_id, P.first_name, P.last_name, A.specialization FROM ADVISOR A JOIN PERSON P ON A.person_id = P.person_id WHERE A.advisor_id = :1", (advisor_id,))
+        adv = cursor.fetchone()
 
-    # ---------- MY BOOKINGS ----------
+        cursor.execute("SELECT rate_type, amount, currency FROM ADVISOR_RATE WHERE advisor_id = :1", (advisor_id,))
+        rates = cursor.fetchall()
 
+        cursor.execute("SELECT day_of_week, start_time, end_time FROM ADVISOR_AVAILABILITY WHERE advisor_id = :1 AND is_available = 'YES' ORDER BY day_of_week", (advisor_id,))
+        availability = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+        from datetime import datetime as _dt2
+        return render_template('advisor/advisor_booking.html',
+                               advisor=adv,
+                               rates=rates,
+                               availability=availability,
+                               user=session['user'],
+                               today_date=_dt2.now().strftime('%Y-%m-%d'))
     @app.route('/my-bookings')
     def my_bookings():
         if 'user' not in session:
@@ -535,6 +549,7 @@ def register_advisor_routes(app):
             cursor.close()
             conn.close()
 
+
     # ---------- RATE A BOOKING ----------
 
     @app.route('/advisor/<int:booking_id>/rate', methods=['POST'])
@@ -576,4 +591,3 @@ def register_advisor_routes(app):
             cursor.close()
             conn.close()
         return redirect(url_for('my_bookings'))
-    

@@ -111,77 +111,74 @@ def register_agent_routes(app):
         person_id = session['user']['person_id']
         user = session['user']
 
-        conn_check = get_connection()
-        cursor_check = conn_check.cursor()
-        v_status = get_agent_verification_status(cursor_check, person_id)
-        cursor_check.close()
-        conn_check.close()
-
         conn = get_connection()
+        cursor = conn.cursor()
+
+        v_status = get_agent_verification_status(cursor, person_id)
+        row = get_agent_dashboard_data(cursor, person_id)
 
         agent_data = {
-            'total_farmers': 0,
-            'kyc_done': 0,
-            'pending_kyc': 0,
-            'pending_loans': 0,
-            'loans_approved': 0,
-            'center_name': None,
-            'upazila': None,
-            'district': None,
-            'agent_code': None,
-            'phone': None,
-            'join_date': None,
-            'pending_deliveries': 0,
-            'performance_score': 0,
+            'total_farmers': 0, 'kyc_done': 0, 'pending_kyc': 0,
+            'pending_loans': 0, 'loans_approved': 0, 'center_name': None,
+            'upazila': None, 'district': None, 'agent_code': None,
+            'phone': None, 'join_date': None, 'pending_deliveries': 0
         }
-        my_farmers = []
-        posts = []
-        ranking = []
-        monthly_performance = []
-        followup_farmers = []
-        absorption_rate = []
-        risk_prediction = []
-        tasks = []
 
-        if conn:
-            cursor = conn.cursor()
+        if row:
+            agent_data['agent_code'] = row[0]
+            agent_data['center_name'] = row[1] or 'Not Assigned'
+            agent_data['upazila'] = row[2] or 'N/A'
+            agent_data['district'] = row[3] or 'N/A'
+            agent_data['phone'] = row[5]
+            agent_data['join_date'] = row[6].strftime('%d %b %Y') if row[6] else 'N/A'
+            agent_data['total_farmers'] = row[7] or 0
+            agent_data['kyc_done'] = row[8] or 0
+            agent_data['loans_approved'] = row[9] or 0
+            agent_data['pending_loans'] = row[10] or 0
+            agent_data['pending_deliveries'] = row[11] or 0
+
+        center_code = get_center_code(cursor, person_id) if row else None
+        if center_code:
             try:
-                row = get_agent_dashboard_data(cursor, person_id)
+                agent_data['pending_kyc'] = get_pending_kyc_count(cursor, center_code) or 0
+            except Exception:
+                agent_data['pending_kyc'] = 0
 
-                if row:
-                    agent_data['agent_code'] = row[0]
-                    agent_data['center_name'] = row[1] or 'Not Assigned'
-                    agent_data['upazila'] = row[2] or 'N/A'
-                    agent_data['district'] = row[3] or 'N/A'
-                    agent_data['working_status'] = row[4]
-                    agent_data['phone'] = row[5] or 'N/A'
-                    agent_data['join_date'] = row[6].strftime('%d %b %Y') if row[6] else 'N/A'
-                    agent_data['total_farmers'] = row[7] or 0
-                    agent_data['kyc_done'] = row[8] or 0
-                    agent_data['loans_approved'] = row[9] or 0
-                    agent_data['pending_loans'] = row[10] or 0
-                    agent_data['pending_deliveries'] = row[11] or 0
-                    agent_data['performance_score'] = row[12] or 0
+        try:
+            my_farmers = get_my_farmers(cursor, person_id) if row and row[0] else []
+        except Exception:
+            my_farmers = []
+        try:
+            posts = get_community_posts(cursor)
+        except Exception:
+            posts = []
+        try:
+            ranking = get_agent_ranking(cursor)
+        except Exception:
+            ranking = []
+        try:
+            monthly_performance = get_monthly_performance(cursor, person_id)
+        except Exception:
+            monthly_performance = []
+        try:
+            followup_farmers = get_followup_farmers(cursor, person_id)
+        except Exception:
+            followup_farmers = []
+        try:
+            absorption_rate = get_absorption_rate(cursor, person_id)
+        except Exception:
+            absorption_rate = []
+        try:
+            risk_prediction = get_risk_prediction(cursor, person_id)
+        except Exception:
+            risk_prediction = []
+        try:
+            tasks = get_agent_tasks(cursor, person_id)
+        except Exception:
+            tasks = []
 
-                if row and row[0]:
-                    center_code = get_center_code(cursor, person_id)
-                    if center_code:
-                        agent_data['pending_kyc'] = get_pending_kyc_count(cursor, center_code) or 0
-                    my_farmers = get_my_farmers(cursor, person_id)
-                    posts = get_community_posts(cursor)
-                    ranking = get_agent_ranking(cursor)
-                    monthly_performance = get_monthly_performance(cursor, person_id)
-                    followup_farmers = get_followup_farmers(cursor, person_id)
-                    absorption_rate = get_absorption_rate(cursor, person_id)
-                    risk_prediction = get_risk_prediction(cursor, person_id)
-                    tasks = get_agent_tasks(cursor, person_id)
-
-                cursor.close()
-                conn.close()
-            except Exception as e:
-                cursor.close()
-                conn.close()
-                print(f"Agent dashboard error: {e}")
+        cursor.close()
+        conn.close()
 
         return render_template('dashboard_agent.html',
                                user=user,
@@ -195,7 +192,6 @@ def register_agent_routes(app):
                                risk_prediction=risk_prediction,
                                v_status=v_status,
                                tasks=tasks)
-
 
     @app.route('/agent/kyc-requests')
     def agent_kyc_requests():
@@ -267,6 +263,7 @@ def register_agent_routes(app):
             return redirect(url_for('login_register'))
 
         person_id = session['user']['person_id']
+        print('=== KYC VERIFY === farmer_code:', farmer_code, 'land:', land_legal_status, '===', flush=True)
         conn = get_connection()
         cursor = conn.cursor()
         try:
@@ -568,80 +565,73 @@ def register_agent_routes(app):
     @app.route('/agent/verify-kyc', methods=['POST'])
     def agent_verify_kyc():
         if 'user' not in session or session['user']['role'] != 'AGENT':
-            flash('Unauthorized', 'danger')
+            flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
 
         farmer_code = request.form.get('farmer_code')
+        remarks = request.form.get('remarks', 'Field Officer Verified')
+
+        _raw = (request.form.get('land_legal_status') or 'OWNED').strip().upper()
+        _ok = ('OWNED', 'LEASED', 'SHARED', 'NO_LAND', 'GARDEN_ONLY', 'LIVESTOCK_ONLY')
+        land_legal_status = _raw if _raw in _ok else 'OWNED'
+
         nid_front = request.files.get('nid_front')
-        nid_back = request.files.get('nid_back')
-        land_doc = request.files.get('land_doc')
-        land_legal_status = request.form.get('land_legal_status')
-        nominee_name = request.form.get('nominee_name')
-        nominee_relation = request.form.get('nominee_relation')
-        nominee_nid = request.form.get('nominee_nid')
-        nominee_phone = request.form.get('nominee_phone')
-        remarks = request.form.get('remarks', '')
+        nid_back  = request.files.get('nid_back')
+        land_doc  = request.files.get('land_doc')
+        nf = nid_front.filename if (nid_front and nid_front.filename) else 'nid_front.jpg'
+        nb = nid_back.filename  if (nid_back  and nid_back.filename)  else 'nid_back.jpg'
+        ld = land_doc.filename  if (land_doc  and land_doc.filename)  else 'land_doc.pdf'
 
         conn = get_connection()
         cursor = conn.cursor()
-
         try:
             cursor.execute("SELECT agent_code FROM FIELD_AGENT WHERE person_id = :1",
                            (session['user']['person_id'],))
-            agent_row = cursor.fetchone()
-            agent_code = agent_row[0] if agent_row else None
+            ar = cursor.fetchone()
+            agent_code = ar[0] if ar else 'AG-001'
 
-            if not agent_code:
-                flash('Agent profile not found.', 'danger')
-                return redirect(url_for('agent_kyc_requests'))
+            cursor.execute("SELECT kyc_id FROM KYC WHERE farmer_code = :1", (farmer_code,))
+            exists = cursor.fetchone()
 
-            cursor.execute("SELECT IS_FARMER_KYC_VERIFIED(:1) FROM DUAL", (farmer_code,))
-            already = cursor.fetchone()[0]
-            if already == 'YES':
-                flash('This farmer is already KYC verified.', 'warning')
-                return redirect(url_for('agent_kyc_requests'))
+            if exists:
+                cursor.execute("""
+                    UPDATE KYC
+                       SET identity_verified  = 'VERIFIED',
+                           verified_by        = :ac,
+                           verified_date      = SYSDATE,
+                           nid_front_ref      = :nf,
+                           nid_back_ref       = :nb,
+                           land_dolil_ref     = :ld,
+                           land_legal_status  = :lls,
+                           remarks            = :rm
+                     WHERE farmer_code = :fc
+                """, {'ac': agent_code, 'nf': nf, 'nb': nb, 'ld': ld,
+                      'lls': land_legal_status, 'rm': remarks, 'fc': farmer_code})
+            else:
+                cursor.execute("""
+                    INSERT INTO KYC
+                        (kyc_id, farmer_code, agent_code, nid_front_ref, nid_back_ref,
+                         land_dolil_ref, land_legal_status, identity_verified,
+                         verified_by, verified_date, remarks)
+                    VALUES
+                        ('KYC-' || TO_CHAR(kyc_seq.NEXTVAL), :fc, :ac, :nf, :nb, :ld,
+                         :lls, 'VERIFIED', :ac2, SYSDATE, :rm)
+                """, {'fc': farmer_code, 'ac': agent_code, 'nf': nf, 'nb': nb,
+                      'ld': ld, 'lls': land_legal_status, 'ac2': agent_code, 'rm': remarks})
 
-            nid_front_path = nid_front.filename if nid_front else None
-            nid_back_path = nid_back.filename if nid_back else None
-            land_doc_path = land_doc.filename if land_doc else None
-
-            cursor.execute("""
-                UPDATE KYC
-                SET nid_front_ref = :1,
-                    nid_back_ref = :2,
-                    land_dolil_ref = :3,
-                    land_legal_status = :4,
-                    nominee_name = :5,
-                    nominee_relation = :6,
-                    nominee_nid = :7,
-                    nominee_phone = :8
-                WHERE farmer_code = :9
-            """, (nid_front_path, nid_back_path, land_doc_path, land_legal_status,
-                  nominee_name, nominee_relation, nominee_nid, nominee_phone, farmer_code))
             conn.commit()
-
-            can_verify = cursor.var(str)
-            message = cursor.var(str)
-            cursor.callproc('VALIDATE_KYC_FOR_VERIFY', (farmer_code, can_verify, message))
-
-            if can_verify.getvalue() != 'YES':
-                flash(message.getvalue(), 'danger')
-                return redirect(url_for('agent_kyc_requests'))
-
-            cursor.callproc('PROCESS_KYC_VERIFICATION',
-                            (farmer_code, agent_code, 'VERIFY', remarks))
-
-            flash(f'KYC verified. {message.getvalue()}', 'success')
-
+            flash(get_flash_message(
+                'কেওয়াইসি সফলভাবে যাচাই সম্পন্ন হয়েছে!',
+                'KYC verified successfully!'
+            ), 'success')
         except Exception as e:
             conn.rollback()
-            flash(f'Error verifying KYC: {str(e)}', 'danger')
+            import traceback; traceback.print_exc()
+            flash('Error verifying KYC: ' + str(e), 'danger')
         finally:
-            cursor.close()
-            conn.close()
+            cursor.close(); conn.close()
 
         return redirect(url_for('agent_kyc_requests'))
-
 
     @app.route('/agent/reject-kyc', methods=['POST'])
     def agent_reject_kyc():

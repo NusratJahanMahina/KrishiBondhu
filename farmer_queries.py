@@ -244,15 +244,7 @@ def add_item_to_purchase(cursor, purchase_id, inventory_id, quantity, unit_price
         VALUES (:1, :2, :3, :4, :5, :6)
     """, (item_id, purchase_id, inventory_id, quantity, unit_price, total_cost))
     
-    cursor.execute("""
-        UPDATE INVENTORY 
-        SET quantity = quantity - :1 
-        WHERE inventory_id = :2
-    """, (quantity, inventory_id))
-
-
-
-
+    # NOTE: stock is auto-decremented by TRG_INVENTORY_DECREMENT (Noor's trigger)
 def search_farmer_by_name(cursor, name_search):
     cursor.execute("""
         SELECT f.farmer_code, p.first_name, p.last_name, p.login_phone
