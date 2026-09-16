@@ -647,11 +647,14 @@ def register_farmer_routes(app):
                     conn.close()
         return jsonify({"notifications": notifs})
 
-    @app.route('/farmer/inventory')
+    @app.route('/farmer/inventory', methods=['GET'])
     def farmer_inventory():
         if 'user' not in session or session['user']['role'] != 'FARMER':
             flash(get_flash_message('অনুমোদিত নয়।', 'Unauthorized.'), 'danger')
             return redirect(url_for('login_register'))
+        
+        # Get search term from URL query string (e.g., /farmer/inventory?search=urea)
+        search_term = request.args.get('search', '').strip()
         
         conn = get_connection()
         inventory = []
@@ -664,7 +667,12 @@ def register_farmer_routes(app):
                 if farmer_code:
                     center_code = get_center_code_for_farmer(cursor, farmer_code)
                     if center_code:
-                        inventory = get_inventory_items(cursor, center_code)
+                        if search_term:
+                            # User searched → use search query
+                            inventory = search_inventory_items(cursor, center_code, search_term)
+                        else:
+                            # No search → show all items
+                            inventory = get_inventory_items(cursor, center_code)
                 cursor.close()
                 conn.close()
             except Exception as e:
@@ -676,6 +684,7 @@ def register_farmer_routes(app):
                               user=session['user'], 
                               inventory=inventory,
                               farmer_code=farmer_code,
+                              search_term=search_term,
                               active_tab='inventory')
 
     @app.route('/farmer/orders')
