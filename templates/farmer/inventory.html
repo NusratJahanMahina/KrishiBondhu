@@ -20,6 +20,29 @@
     .add-to-cart-btn:hover { background: #145214; }
     .add-to-cart-btn:disabled { background: #ccc; }
 
+    /* Search Bar Styles */
+    .search-bar {
+        background: #fff;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .search-bar .input-group-text {
+        background: #e8f5e9;
+        color: #1b5e20;
+        border: 1px solid #dee2e6;
+        border-right: none;
+    }
+    .search-bar .form-control {
+        border-left: none;
+        padding: 10px 15px;
+    }
+    .search-bar .form-control:focus {
+        box-shadow: none;
+        border-color: #dee2e6;
+    }
+
     .cart-sidebar { position: fixed; top: 0; right: -400px; width: 400px; height: 100vh; background: #fff; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1050; display: flex; flex-direction: column; }
     .cart-sidebar.show { right: 0; }
     .cart-header { background: #1b5e20; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -40,6 +63,36 @@
 </style>
 
 <div class="inventory-container">
+
+    <!-- Search Bar -->
+    <div class="search-bar">
+        <form method="GET" action="{{ url_for('farmer_inventory') }}">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" 
+                       name="search" 
+                       class="form-control" 
+                       placeholder="Search by item name or manufacturer (e.g., Urea, BRRI, Bayer)..."
+                       value="{{ search_term }}">
+                <button type="submit" class="btn btn-success px-4">
+                    <i class="fas fa-search me-1"></i> Search
+                </button>
+                {% if search_term %}
+                    <a href="{{ url_for('farmer_inventory') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i> Clear
+                    </a>
+                {% endif %}
+            </div>
+            {% if search_term %}
+                <small class="text-muted mt-2 d-block">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Showing results for "<strong>{{ search_term }}</strong>" ({{ inventory|length }} item(s) found)
+                </small>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Filter Bar -->
     <div class="filter-bar">
         <div class="row align-items-center">
             <div class="col-md-6">
@@ -57,7 +110,6 @@
 
     <div class="row g-4" id="productGrid">
         {% for item in inventory %}
-        <!-- item[0]=id, item[1]=name, item[2]=qty, item[3]=price, item[4]=category, item[5]=unit, item[6]=min_stock -->
         <div class="col-md-6 col-lg-3 product-item" data-category="{{ item[4]|default('OTHER')|upper }}">
             <div class="product-card">
                 <div class="product-img">
@@ -86,6 +138,22 @@
                         <i class="fas fa-cart-plus me-1"></i> Add to Cart
                     </button>
                 </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- No results -->
+        <div class="col-12">
+            <div class="text-center py-5 bg-white rounded shadow-sm">
+                <i class="fas fa-search text-muted fa-4x mb-3"></i>
+                <h5 class="text-muted">No items found</h5>
+                {% if search_term %}
+                    <p class="text-muted">No items match your search "<strong>{{ search_term }}</strong>".</p>
+                    <a href="{{ url_for('farmer_inventory') }}" class="btn btn-success">
+                        <i class="fas fa-arrow-left me-1"></i> View All Items
+                    </a>
+                {% else %}
+                    <p class="text-muted">There are no items in your center's inventory right now.</p>
+                {% endif %}
             </div>
         </div>
         {% endfor %}

@@ -25,7 +25,6 @@ def get_recent_activity(cursor, farmer_code):
     return cursor.fetchall()
 
 def get_farmer_loans(cursor, farmer_code):
-    """Uses the VIEW_FARMER_LOAN_DETAILS view (simplified version)"""
     cursor.execute("""
         SELECT 
             loan_no,
@@ -176,6 +175,38 @@ def get_inventory_items(cursor, center_code):
         ORDER BY i.name
     """, (center_code,))
     return cursor.fetchall()
+
+
+def search_inventory_items(cursor, center_code, search_term):
+    """Search inventory by name or manufacturer (case-insensitive partial match)"""
+    cursor.execute("""
+        SELECT 
+            i.inventory_id,
+            i.name,
+            i.quantity,
+            i.price_per_unit,
+            CASE 
+                WHEN s.inventory_id IS NOT NULL THEN 'SEED'
+                WHEN f.inventory_id IS NOT NULL THEN 'FERTILIZER'
+                WHEN c.inventory_id IS NOT NULL THEN 'CHEMICAL'
+                ELSE 'OTHER'
+            END AS category,
+            i.unit,
+            i.min_stock_level
+        FROM INVENTORY i
+        LEFT JOIN SEED_INVENTORY s ON i.inventory_id = s.inventory_id
+        LEFT JOIN FERTILIZER_INVENTORY f ON i.inventory_id = f.inventory_id
+        LEFT JOIN CHEMICAL_INVENTORY c ON i.inventory_id = c.inventory_id
+        WHERE i.center_code = :1 
+        AND i.quantity > 0
+        AND (
+            UPPER(i.name) LIKE UPPER('%' || :2 || '%')
+            OR UPPER(i.manufacturer) LIKE UPPER('%' || :2 || '%')
+        )
+        ORDER BY i.name
+    """, (center_code, search_term))
+    return cursor.fetchall()
+
 
 def get_farmer_agent_code(cursor, farmer_code):
     cursor.execute("SELECT agent_code FROM FARMER WHERE farmer_code = :1", (farmer_code,))
