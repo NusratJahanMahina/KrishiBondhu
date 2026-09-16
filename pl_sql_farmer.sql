@@ -54,7 +54,7 @@ begin
          v_overdue
         from dual;
         
-        -- Calculate earned and penalty points
+        
       v_earned := least(
          v_repayments * 10,
          50
@@ -67,7 +67,7 @@ begin
          20
       );
         
-        -- Final score (clamped between 1 and 100)
+        
       v_score := greatest(
          1,
          least(
@@ -76,7 +76,7 @@ begin
          )
       );
         
-        -- Update or Insert
+       
       merge into credit_score cs
       using (
          select v_farmer_code as farmer_code

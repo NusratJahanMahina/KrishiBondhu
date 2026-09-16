@@ -208,10 +208,7 @@ def get_center_list(cursor, is_super=False, center_code=None):
         """, (center_code,))
     return cursor.fetchall()
 
-
-# ============================================
 # SEARCH
-# ============================================
 
 
 def search_farmers(cursor, keyword):

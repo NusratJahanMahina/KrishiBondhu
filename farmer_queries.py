@@ -144,9 +144,7 @@ def mark_notifications_read(cursor, farmer_code):
     cursor.execute("UPDATE NOTIFICATION SET is_read = 'YES' WHERE farmer_code = :1 AND is_read = 'NO'", (farmer_code,))
 
 
-# ============================================
-# INVENTORY & ORDERS
-# ============================================
+
 
 def get_center_code_for_farmer(cursor, farmer_code):
     cursor.execute("SELECT center_code FROM FARMER WHERE farmer_code = :1", (farmer_code,))
@@ -222,9 +220,7 @@ def add_item_to_purchase(cursor, purchase_id, inventory_id, quantity, unit_price
     """, (quantity, inventory_id))
 
 
-# ============================================
-# REFERRAL QUERIES
-# ============================================
+
 
 def search_farmer_by_name(cursor, name_search):
     cursor.execute("""
