@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if session.get('language') == 'en' %}My Consultations & Bookings - KrishiBondhu{% else %}আমার পরামর্শ সেশন ও বুকিং তালিকা - কৃষিবন্ধু{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div>
+                    <h2 class="fw-bold mb-1" style="color: var(--primary-green);">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        {% if session.get('language') == 'en' %}My Consultations & Bookings{% else %}আমার পরামর্শ সেশন ও বুকিং তালিকা{% endif %}
+                    </h2>
+                    <p class="text-muted small mb-0">
+                        {% if session.get('language') == 'en' %}Track consultation schedules, specialist recommendations, and advisory notes.{% else %}বিশেষজ্ঞের পরামর্শ সেশনের সময়সূচী, প্রেসক্রিপশন নোট এবং পেমেন্ট স্ট্যাটাস দেখুন।{% endif %}
+                    </p>
+                </div>
+                <a href="{{ url_for('advisor_listing') }}" class="btn btn-success fw-bold text-white shadow-sm">
+                    <i class="fas fa-user-plus me-1"></i>
+                    {% if session.get('language') == 'en' %}Book New Advisor{% else %}নতুন পরামর্শক বুকিং নিন{% endif %}
+                </a>
+            </div>
+            
+            {% if bookings %}
+            <!-- Bookings Table -->
+            <div class="card shadow-sm border-0" style="border-radius: 16px; overflow: hidden; border-top: 4px solid var(--accent-green) !important;">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background: linear-gradient(135deg, var(--light-green), var(--soft-green));">
+                            <tr>
+                                <th style="color: var(--primary-green); font-weight: 600;">{% if session.get('language') == 'en' %}ID{% else %}আইডি{% endif %}</th>
+                                <th style="color: var(--primary-green); font-weight: 600;">{% if user_role == 'FARMER' %}{% if session.get('language') == 'en' %}Specialist Advisor{% else %}বিশেষজ্ঞ পরামর্শক{% endif %}{% else %}{% if session.get('language') == 'en' %}Farmer{% else %}কৃষক{% endif %}{% endif %}</th>
+                                <th style="color: var(--primary-green); font-weight: 600;">{% if session.get('language') == 'en' %}Specialization{% else %}বিশেষজ্ঞতা{% endif %}</th>
+                                <th style="color: var(--primary-green); font-weight: 600;">{% if session.get('language') == 'en' %}Date & Time{% else %}তারিখ ও সময়{% endif %}</th>
+                                <th style="color: var(--primary-green); font-weight: 600;">{% if session.get('language') == 'en' %}Type{% else %}ধরন{% endif %}</th>
+                                <th style="color: var(--primary-green); font-weight: 600;">{% if session.get('language') == 'en' %}Fee{% else %}ফি{% endif %}</th>
+                                <th style="color: var(--primary-green); font-weight: 600;">{% if session.get('language') == 'en' %}Payment{% else %}পরিশোধ{% endif %}</th>
+                                <th style="color: var(--primary-green); font-weight: 600;">{% if session.get('language') == 'en' %}Status{% else %}অবস্থা{% endif %}</th>
+                                <th style="color: var(--primary-green); font-weight: 600;">{% if session.get('language') == 'en' %}Actions{% else %}পদক্ষেপ{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr>
+                                <td>
+                                    <strong>#{{ booking[0] }}</strong>
+                                </td>
+                                <td>
+                                    <strong>{{ booking[9] }} {{ booking[10] }}</strong>
+                                    <br>
+                                    <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>{{ booking[3] }}</small>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{ booking[11] }}</span></td>
+                                <td>
+                                    <strong class="text-dark">{{ booking[1] }}</strong>
+                                    <br>
+                                    <small class="text-muted"><i class="fas fa-clock me-1"></i>{{ booking[2] }} - {{ booking[3] }}</small>
+                                </td>
+                                <td>
+                                    {% if booking[4] == 'HOURLY' %}
+                                        <span class="badge" style="background: var(--secondary-green);">{% if session.get('language') == 'en' %}Hourly{% else %}ঘণ্টাভিত্তিক{% endif %}</span>
+                                    {% else %}
+                                        <span class="badge" style="background: var(--accent-green);">{% if session.get('language') == 'en' %}Daily (8h){% else %}সারাদিন (৮ঘণ্টা){% endif %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong class="text-success">৳{{ booking[5] }}</strong>
+                                </td>
+                                <td>
+                                    {% if booking[6] == 'PAID' %}
+                                        <span class="badge bg-success">{% if session.get('language') == 'en' %}Paid{% else %}পরিশোধিত{% endif %}</span>
+                                    {% elif booking[6] == 'PENDING' %}
+                                        <span class="badge bg-warning text-dark">{% if session.get('language') == 'en' %}Pending{% else %}অপেক্ষমাণ{% endif %}</span>
+                                    {% elif booking[6] == 'REFUNDED' %}
+                                        <span class="badge bg-info text-dark">{% if session.get('language') == 'en' %}Refunded{% else %}ফেরত দেওয়া হয়েছে{% endif %}</span>
+                                    {% elif booking[6] == 'CANCELLED' %}
+                                        <span class="badge bg-danger">{% if session.get('language') == 'en' %}Cancelled{% else %}বাতিল{% endif %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if booking[7] == 'COMPLETED' %}
+                                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>{% if session.get('language') == 'en' %}Completed{% else %}সম্পন্ন{% endif %}</span>
+                                    {% elif booking[7] == 'PENDING' %}
+                                        <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>{% if session.get('language') == 'en' %}Pending{% else %}অপেক্ষমাণ{% endif %}</span>
+                                    {% elif booking[7] == 'CONFIRMED' %}
+                                        <span class="badge bg-primary"><i class="fas fa-calendar-check me-1"></i>{% if session.get('language') == 'en' %}Confirmed{% else %}নিশ্চিতকৃত{% endif %}</span>
+                                    {% elif booking[7] == 'CANCELLED' %}
+                                        <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>{% if session.get('language') == 'en' %}Cancelled{% else %}বাতিল{% endif %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" 
+                                           data-bs-target="#bookingDetail{{ loop.index }}">
+                                            <i class="fas fa-eye me-1"></i> {% if session.get('language') == 'en' %}Details{% else %}বিস্তারিত{% endif %}
+                                        </button>
+                                        {% if user_role == 'FARMER' and booking[7] == 'COMPLETED' and booking[8] != 'RATED' %}
+                                        <button class="btn btn-warning btn-sm text-dark fw-semibold" data-bs-toggle="modal"
+                                                data-bs-target="#rateBooking{{ loop.index }}">
+                                            <i class="fas fa-star me-1"></i> {% if session.get('language') == 'en' %}Rate{% else %}রিভিউ দিন{% endif %}
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <!-- Booking Detail Modal -->
+                            <div class="modal fade" id="bookingDetail{{ loop.index }}" tabindex="-1">
+                                <div class="modal-dialog modal-lg modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+                                        <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--primary-green), var(--secondary-green)); border: none;">
+                                            <h5 class="modal-title fw-bold">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                {% if session.get('language') == 'en' %}Booking #{{ booking[0] }} Details{% else %}পরামর্শ সেশন #{{ booking[0] }}-এর বিস্তারিত তথ্য{% endif %}
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="row g-3 mb-3">
+                                                <div class="col-md-6">
+                                                    <div class="p-3 bg-light rounded border">
+                                                        <span class="text-muted small d-block">{% if user_role == 'FARMER' %}{% if session.get('language') == 'en' %}Specialist Advisor{% else %}বিশেষজ্ঞ কৃষি বিজ্ঞানী{% endif %}{% else %}{% if session.get('language') == 'en' %}Farmer{% else %}কৃষকের নাম{% endif %}{% endif %}</span>
+                                                        <h6 class="fw-bold text-success mb-1">{{ booking[9] }} {{ booking[10] }}</h6>
+                                                        <small class="text-muted">{{ booking[11] }}</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="p-3 bg-light rounded border">
+                                                        <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Scheduled Date & Time{% else %}নির্ধারিত সময়সূচী{% endif %}</span>
+                                                        <h6 class="fw-bold text-dark mb-1">{{ booking[1] }}</h6>
+                                                        <small class="text-muted">{{ booking[2] }} - {{ booking[3] }}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Topic & Issues -->
+                                            <div class="mb-3">
+                                                <h6 class="fw-bold text-dark"><i class="fas fa-comment-medical text-success me-2"></i>{% if session.get('language') == 'en' %}Consultation Topic / Problem Description{% else %}ফসলের সমস্যা বা আলোচনার বিষয়বস্তু{% endif %}</h6>
+                                                <div class="p-3 bg-light rounded border text-dark">
+                                                    {{ booking[8] or ('ফসলের সাধারণ রোগবালাই ও উৎপাদনশীলতা বৃদ্ধি পরামর্শ।' if session.get('language') != 'en' else 'General crop disease and productivity consultation.') }}
+                                                </div>
+                                            </div>
+                                            
+                                            {% if booking[14] %}
+                                            <!-- Advisor Prescription / Notes -->
+                                            <div class="alert alert-success mb-3 p-3 border-0" style="border-radius: 12px; background: #e8f5e9;">
+                                                <h6 class="fw-bold text-success mb-2">
+                                                    <i class="fas fa-prescription-bottle-alt me-2"></i>
+                                                    {% if session.get('language') == 'en' %}Advisor Prescription & Recommendations:{% else %}বিশেষজ্ঞের প্রেসক্রিপশন ও সমাধান নোট:{% endif %}
+                                                </h6>
+                                                <p class="mb-0 text-dark" style="line-height: 1.6;">{{ booking[14] }}</p>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <!-- Payment & Status Breakdown -->
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <div class="p-3 bg-light rounded border">
+                                                        <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Session Status{% else %}সেশনের বর্তমান অবস্থা{% endif %}</span>
+                                                        <span class="badge bg-success mt-1">{{ booking[7] }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="p-3 bg-light rounded border">
+                                                        <span class="text-muted small d-block">{% if session.get('language') == 'en' %}Total Fee{% else %}মোট পরিশোধিত ফি{% endif %}</span>
+                                                        <h5 class="fw-bold text-success mt-1 mb-0">৳{{ booking[5] }}</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer bg-light">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language') == 'en' %}Close{% else %}বন্ধ করুন{% endif %}</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Rate Booking Modal -->
+                            {% if user_role == 'FARMER' and booking[7] == 'COMPLETED' %}
+                            <div class="modal fade" id="rateBooking{{ loop.index }}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
+                                        <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--secondary-green), var(--accent-green)); border: none;">
+                                            <h5 class="modal-title fw-bold">
+                                                <i class="fas fa-star me-2"></i>
+                                                {% if session.get('language') == 'en' %}Rate Your Experience{% else %}পরামর্শকের সেবা মূল্যায়ন ও মতামত দিন{% endif %}
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form method="POST" action="{{ url_for('rate_booking', booking_id=booking[0]) }}">
+                                            <div class="modal-body p-4">
+                                                <p class="text-muted small mb-3">
+                                                    {% if session.get('language') == 'en' %}
+                                                        How was your consultation experience with {{ booking[9] }} {{ booking[10] }}?
+                                                    {% else %}
+                                                        {{ booking[9] }} {{ booking[10] }}-এর কাছ থেকে প্রাপ্ত পরামর্শ আপনার কতটুকু উপকারে এসেছে?
+                                                    {% endif %}
+                                                </p>
+                                                
+                                                <div class="mb-3 text-center p-3 bg-light rounded border">
+                                                    <label class="form-label fw-bold d-block mb-2">{% if session.get('language') == 'en' %}Select Star Rating{% else %}স্টার রেটিং দিন{% endif %}</label>
+                                                    <div id="rating-stars{{ loop.index }}" class="rating-stars" style="font-size: 2.2rem;">
+                                                        {% for i in range(1, 6) %}
+                                                        <i class="far fa-star text-warning" style="cursor: pointer; margin: 0 4px;" 
+                                                           onclick="setRating({{ i }}, {{ loop.index }})"></i>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <input type="hidden" id="rating-input{{ loop.index }}" name="rating" value="0">
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="review{{ loop.index }}" class="form-label fw-bold small">{% if session.get('language') == 'en' %}Your Review / Comment (Optional){% else %}আপনার বিস্তারিত মতামত বা অভিজ্ঞতা (ঐচ্ছিক){% endif %}</label>
+                                                    <textarea class="form-control" id="review{{ loop.index }}" 
+                                                              name="review" rows="3" 
+                                                              placeholder="{% if session.get('language') == 'en' %}Share how this consultation helped your crops...{% else %}পরামর্শকের দিকনির্দেশনা ও ব্যবহার কেমন ছিল লিখুন...{% endif %}"></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer bg-light">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% if session.get('language') == 'en' %}Cancel{% else %}বাতিল{% endif %}</button>
+                                                <button type="submit" class="btn btn-success fw-bold" id="submit-rating{{ loop.index }}" disabled>
+                                                    <i class="fas fa-paper-plane me-1"></i> {% if session.get('language') == 'en' %}Submit Rating{% else %}মতামত জমা দিন{% endif %}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            {% else %}
+            <!-- No Bookings Message -->
+            <div class="card shadow-sm border-0 py-5 text-center" style="border-radius: 16px;">
+                <div class="card-body">
+                    <i class="fas fa-calendar-times text-muted fa-4x mb-3"></i>
+                    <h4 class="fw-bold text-dark mb-2">{% if session.get('language') == 'en' %}No Consultations Yet{% else %}এখনও কোনো পরামর্শ সেশন নেই{% endif %}</h4>
+                    <p class="text-muted mb-4">
+                        {% if user_role == 'FARMER' %}
+                            {% if session.get('language') == 'en' %}You haven't booked any agricultural specialists yet. Explore advisors and schedule a session!{% else %}আপনি এখনও কোনো কৃষি বিজ্ঞানীর পরামর্শ সেশন বুক করেননি। বিশেষজ্ঞদের তালিকা দেখে এখনই বুকিং নিন!{% endif %}
+                        {% else %}
+                            {% if session.get('language') == 'en' %}No consultation bookings found.{% else %}কোনো পরামর্শ বুকিং পাওয়া যায়নি।{% endif %}
+                        {% endif %}
+                    </p>
+                    {% if user_role == 'FARMER' %}
+                    <a href="{{ url_for('advisor_listing') }}" class="btn btn-success fw-bold px-4 py-2">
+                        <i class="fas fa-search me-1"></i> {% if session.get('language') == 'en' %}Find Agricultural Advisors{% else %}কৃষি পরামর্শক খুঁজুন{% endif %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function setRating(rating, index) {
+        const input = document.getElementById('rating-input' + index);
+        const stars = document.querySelectorAll('#rating-stars' + index + ' i');
+        
+        input.value = rating;
+        
+        stars.forEach((star, i) => {
+            if (i < rating) {
+                star.classList.remove('far');
+                star.classList.add('fas');
+            } else {
+                star.classList.remove('fas');
+                star.classList.add('far');
+            }
+        });
+        
+        const submitBtn = document.getElementById('submit-rating' + index);
+        if (submitBtn) submitBtn.disabled = false;
+    }
+</script>
+
+<style>
+    .rating-stars i {
+        transition: transform 0.2s, color 0.2s;
+    }
+    .rating-stars i:hover {
+        transform: scale(1.2);
+    }
+</style>
+{% endblock %}
